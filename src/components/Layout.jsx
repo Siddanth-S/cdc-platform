@@ -1,0 +1,142 @@
+import { Outlet, useNavigate, useLocation, useOutlet } from 'react-router-dom';
+import Navbar from './Navbar';
+import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { MessageSquare, Menu, X, ChevronLeft, MessageCircle } from 'lucide-react';
+import { db } from '../firebase';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { AnimatePresence, motion } from 'framer-motion';
+
+export default function Layout() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const element = useOutlet();
+  const mainContentRef = useRef(null);
+  const [dms, setDms] = useState([]);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
+
+  useEffect(() => {
+    if (!user?.email) return;
+
+    // Use Firebase Real-time Listener for DMs where user is a participant
+    const q = query(collection(db, 'dms'), where('participants', 'array-contains', user.email));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const dmsData = [];
+      snapshot.forEach(doc => {
+        dmsData.push({ id: doc.id, ...doc.data() });
+      });
+      // Sort by latest message timestamp if possible
+      dmsData.sort((a, b) => {
+        const lastA = a.messages?.[a.messages.length - 1]?.timestamp || 0;
+        const lastB = b.messages?.[b.messages.length - 1]?.timestamp || 0;
+        return new Date(lastB) - new Date(lastA);
+      });
+      setDms(dmsData);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  // Close sidebar on navigation on mobile
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [location]);
+
+  return (
+    <div className="app-container" style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+      <Navbar />
+      
+      {/* Mobile Toggle Bar */}
+      <div className="mobile-toggle" style={{ padding: '0.5rem 1rem', display: 'none', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.2)' }}>
+        <span style={{ fontSize: '0.9rem', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <MessageSquare size={16} className="text-primary" /> Direct Messages
+        </span>
+        <button onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)} style={{ background: 'none', border: 'none', color: 'var(--text-primary)' }}>
+          {mobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      </div>
+
+      <div className="app-body" style={{ display: 'flex', flex: 1, overflow: 'hidden', width: '100%', position: 'relative' }}>
+        
+        {/* Floating Action Button when sidebar is closed on desktop */}
+        {!desktopSidebarOpen && (
+          <button 
+            className="cyber-fab animate-fade-in"
+            onClick={() => setDesktopSidebarOpen(true)}
+          >
+            <MessageCircle size={20} />
+            <span>Open Chats</span>
+          </button>
+        )}
+
+        {/* Left Sidebar for Chats */}
+        <div className={`sidebar cyber-sidebar ${mobileSidebarOpen ? 'mobile-open' : ''} ${!desktopSidebarOpen ? 'desktop-closed' : ''}`} style={{ margin: '0 1rem 1rem 1rem', borderRadius: '16px', height: '100%' }}>
+          <div style={{ padding: '1.25rem', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', fontSize: '1.1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <MessageSquare size={20} className="text-primary" /> Direct Messages
+            </div>
+            <button 
+              className="desktop-close-btn"
+              onClick={() => setDesktopSidebarOpen(false)}
+              style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', padding: '0.25rem', borderRadius: '4px', transition: 'background 0.2s' }}
+              onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+              onMouseOut={e => e.currentTarget.style.background = 'none'}
+              title="Collapse Sidebar"
+            >
+              <ChevronLeft size={20} />
+            </button>
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '0' }}>
+            {dms.length === 0 ? (
+              <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                No active chats yet. Click on a Secondary SPOC in a drive to message them.
+              </div>
+            ) : (
+              dms.map(dm => {
+                const otherPerson = dm.participants.find(p => p !== user?.email);
+                const isActive = location.pathname === `/dm/${dm.id}`;
+                return (
+                  <div 
+                    key={dm.id} 
+                    className={`cyber-dm-item ${isActive ? 'active' : ''}`}
+                    onClick={() => navigate(`/dm/${dm.id}`)}
+                  >
+                    <div style={{ fontSize: '0.9rem', fontWeight: '600', color: isActive ? 'var(--primary-color)' : 'var(--text-primary)', marginBottom: '0.25rem' }}>
+                      {otherPerson?.split('@')[0]}
+                    </div>
+                    {dm.messages.length > 0 && (
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {dm.messages[dm.messages.length - 1].sender === user?.email ? 'You: ' : ''}
+                        {dm.messages[dm.messages.length - 1].text || 'Attachment'}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <main className="main-content" style={{ overflow: 'hidden', padding: 0 }} ref={mainContentRef}>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              style={{ height: '100%', width: '100%', overflowY: 'auto', padding: '1.5rem 1.5rem 2rem 1.5rem' }}
+            >
+              {element}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+
+      </div>
+    </div>
+  );
+}
