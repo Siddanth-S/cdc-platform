@@ -208,11 +208,11 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <button 
-                  className="pin-btn" 
                   onClick={(e) => togglePin(e, drive)} 
-                  title={isDrivePinned(drive) ? "Pinned" : "Pin Drive"}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center', transition: 'all 0.3s ease', zIndex: 2 }}
+                  title={isPinned ? "Unpin drive" : "Pin drive"}
                 >
-                  <Pin size={18} fill={isDrivePinned(drive) ? '#eab308' : 'none'} color={isDrivePinned(drive) ? '#eab308' : 'var(--text-secondary)'} />
+                  <Pin size={18} fill={isPinned ? 'var(--warning-color)' : 'none'} color={isPinned ? 'var(--warning-color)' : 'var(--text-secondary)'} style={{ filter: isPinned ? 'drop-shadow(0 0 8px rgba(245, 158, 11, 0.6))' : 'none' }} />
                 </button>
               </div>
 
