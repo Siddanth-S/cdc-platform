@@ -98,19 +98,24 @@ export default function Layout() {
               dms.map(dm => {
                 const otherPerson = dm.participants.find(p => p !== user?.email);
                 const isActive = location.pathname === `/dm/${dm.id}`;
+                const lastMessage = dm.messages.length > 0 ? dm.messages[dm.messages.length - 1] : null;
+                const lastRead = Number(localStorage.getItem(`read_dm_${dm.id}`) || 0);
+                const isUnread = lastMessage && lastMessage.sender !== user?.email && new Date(lastMessage.timestamp).getTime() > lastRead && !isActive;
+
                 return (
                   <div 
                     key={dm.id} 
                     className={`cyber-dm-item ${isActive ? 'active' : ''}`}
                     onClick={() => navigate(`/dm/${dm.id}`)}
                   >
-                    <div style={{ fontSize: '0.9rem', fontWeight: '600', color: isActive ? 'var(--primary-color)' : 'var(--text-primary)', marginBottom: '0.25rem' }}>
-                      {otherPerson?.split('@')[0]}
+                    <div style={{ fontSize: '0.9rem', fontWeight: isUnread ? '800' : '600', color: isUnread ? '#fff' : (isActive ? 'var(--primary-color)' : 'var(--text-primary)'), marginBottom: '0.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>{otherPerson?.split('@')[0]}</span>
+                      {isUnread && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#38bdf8', boxShadow: '0 0 8px #38bdf8' }} />}
                     </div>
-                    {dm.messages.length > 0 && (
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {dm.messages[dm.messages.length - 1].sender === user?.email ? 'You: ' : ''}
-                        {dm.messages[dm.messages.length - 1].text || 'Attachment'}
+                    {lastMessage && (
+                      <div style={{ fontSize: '0.75rem', color: isUnread ? '#e2e8f0' : 'var(--text-secondary)', fontWeight: isUnread ? '600' : '400', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {lastMessage.sender === user?.email ? 'You: ' : ''}
+                        {lastMessage.text || 'Attachment'}
                       </div>
                     )}
                   </div>

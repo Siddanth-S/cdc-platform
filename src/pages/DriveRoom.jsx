@@ -13,7 +13,19 @@ export default function DriveRoom() {
   const [currentDrive, setCurrentDrive] = useState(null);
   const [showSpocModal, setShowSpocModal] = useState(false);
   const [newSpocEmail, setNewSpocEmail] = useState('');
-  const joinTime = useRef(Date.now());
+  
+  // Capture the last read time when component mounts, so we know which messages are "new" to glow
+  const [lastRead] = useState(() => Number(localStorage.getItem(`read_drive_${id}`) || 0));
+
+  useEffect(() => {
+    // Continuously update the read receipt while actively viewing this drive
+    const interval = setInterval(() => {
+      localStorage.setItem(`read_drive_${id}`, Date.now());
+    }, 1000);
+    // Also do it immediately on mount
+    localStorage.setItem(`read_drive_${id}`, Date.now());
+    return () => clearInterval(interval);
+  }, [id]);
 
   const [showSecSpocModal, setShowSecSpocModal] = useState(false);
   const [newSecSpocEmail, setNewSecSpocEmail] = useState('');
@@ -264,7 +276,8 @@ export default function DriveRoom() {
           {messages.map(msg => {
             const isMe = msg.sender === user?.email;
             const displayRole = msg.role === 'HEAD' ? 'ADMIN' : (msg.role === 'COORDINATOR' ? 'SPOC' : msg.role);
-            const isNew = !isMe && msg.timestamp && (msg.timestamp.toMillis ? msg.timestamp.toMillis() : Date.now()) > joinTime.current;
+            const msgTime = msg.timestamp && msg.timestamp.toMillis ? msg.timestamp.toMillis() : Date.now();
+            const isNew = !isMe && msg.timestamp && msgTime > lastRead;
             
             return (
               <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', animation: 'fadeIn 0.3s ease-out' }}>

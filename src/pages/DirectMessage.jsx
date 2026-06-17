@@ -15,7 +15,19 @@ export default function DirectMessage() {
   const [selectedFile, setSelectedFile] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
-  const joinTime = useRef(Date.now());
+  
+  // Capture the last read time when component mounts, so we know which messages are "new" to glow
+  const [lastRead] = useState(() => Number(localStorage.getItem(`read_dm_${id}`) || 0));
+
+  useEffect(() => {
+    // Continuously update the read receipt while actively viewing this DM
+    const interval = setInterval(() => {
+      localStorage.setItem(`read_dm_${id}`, Date.now());
+    }, 1000);
+    // Also do it immediately on mount
+    localStorage.setItem(`read_dm_${id}`, Date.now());
+    return () => clearInterval(interval);
+  }, [id]);
 
   useEffect(() => {
     if (!user?.email || !id) return;
@@ -115,7 +127,9 @@ export default function DirectMessage() {
         <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', zIndex: 10 }}>
           {dmData.messages?.map(msg => {
             const isMe = msg.sender === user?.email;
-            const isNew = !isMe && msg.timestamp && (new Date(msg.timestamp).getTime()) > joinTime.current;
+            const msgTime = new Date(msg.timestamp).getTime();
+            // It is unread (and should glow) if it was sent AFTER the last time we read this room (prior to opening it just now)
+            const isNew = !isMe && msg.timestamp && msgTime > lastRead;
             
             return (
               <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', animation: 'fadeIn 0.3s ease-out' }}>
