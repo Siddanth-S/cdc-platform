@@ -280,7 +280,7 @@ p {
   .mobile-toggle {
     display: flex !important;
   }
-  .sidebar {
+  .sidebar, .cyber-sidebar {
     position: absolute;
     top: 0;
     left: 0;
@@ -292,7 +292,7 @@ p {
     background: rgba(10, 10, 15, 0.95);
     backdrop-filter: blur(16px);
   }
-  .sidebar.mobile-open {
+  .sidebar.mobile-open, .cyber-sidebar.mobile-open {
     transform: translateX(0);
   }
   .main-content {
@@ -709,8 +709,19 @@ p {
     display: none !important;
   }
   
-  /* Adjust cyber sidebar mobile dimensions */
+  /* Adjust cyber sidebar mobile dimensions and drawer logic */
+  .cyber-sidebar {
+    position: absolute !important;
+    z-index: 1000 !important;
+    top: 0;
+    left: 0;
+    height: 100%;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    transform: translateX(-100%);
+  }
   .cyber-sidebar.mobile-open {
+    transform: translateX(0) !important;
     width: 260px !important;
   }
   
