@@ -70,9 +70,16 @@ export default function Dashboard() {
     setNewDrive({ company: '', role: '', coordinator: '' });
   };
 
-  const togglePin = (e, driveId) => {
+  const isDrivePinned = (drive) => {
+    const isSpoc = drive.coordinator === user?.email || drive.secondarySpocs?.includes(user?.email);
+    return isSpoc || pinnedDrives.includes(String(drive.id));
+  };
+
+  const togglePin = (e, drive) => {
     e.stopPropagation();
-    const strId = String(driveId);
+    const strId = String(drive.id);
+    const isSpoc = drive.coordinator === user?.email || drive.secondarySpocs?.includes(user?.email);
+    if (isSpoc) return; // SPOC drives cannot be unpinned
     if (pinnedDrives.includes(strId)) {
       setPinnedDrives(pinnedDrives.filter(id => id !== strId));
     } else {
@@ -115,11 +122,13 @@ export default function Dashboard() {
       const matchSearch = d.company.toLowerCase().includes(searchQuery.toLowerCase()) || d.role.toLowerCase().includes(searchQuery.toLowerCase());
       if (!matchSearch) return false;
       if (filterMode === 'JOINED' && !joinedDrives.includes(strId)) return false;
+      const isSpoc = d.coordinator === user?.email || d.secondarySpocs?.includes(user?.email);
+      if (filterMode === 'SPOC' && !isSpoc) return false;
       return true;
     })
     .sort((a, b) => {
-      const aPinned = pinnedDrives.includes(String(a.id));
-      const bPinned = pinnedDrives.includes(String(b.id));
+      const aPinned = isDrivePinned(a);
+      const bPinned = isDrivePinned(b);
       if (aPinned && !bPinned) return -1;
       if (!aPinned && bPinned) return 1;
       return 0;
@@ -168,13 +177,19 @@ export default function Dashboard() {
           >
             My Joined Drives
           </button>
+          <button 
+            className={`segmented-btn ${filterMode === 'SPOC' ? 'active' : ''}`}
+            onClick={() => setFilterMode('SPOC')}
+          >
+            SPOC Duties
+          </button>
         </div>
       </div>
 
       <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
         {displayDrives.map(drive => {
           const isJoined = joinedDrives.includes(String(drive.id)) || user?.role === 'HEAD';
-          const isPinned = pinnedDrives.includes(String(drive.id));
+          const isPinned = isDrivePinned(drive);
           
           return (
             <div 
@@ -193,11 +208,11 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <button 
-                  onClick={(e) => togglePin(e, String(drive.id))} 
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center', transition: 'all 0.3s ease', zIndex: 2 }}
-                  title={isPinned ? "Unpin drive" : "Pin drive"}
+                  className="pin-btn" 
+                  onClick={(e) => togglePin(e, drive)} 
+                  title={isDrivePinned(drive) ? "Pinned" : "Pin Drive"}
                 >
-                  <Pin size={18} fill={isPinned ? 'var(--warning-color)' : 'none'} color={isPinned ? 'var(--warning-color)' : 'var(--text-secondary)'} style={{ filter: isPinned ? 'drop-shadow(0 0 8px rgba(245, 158, 11, 0.6))' : 'none' }} />
+                  <Pin size={18} fill={isDrivePinned(drive) ? '#eab308' : 'none'} color={isDrivePinned(drive) ? '#eab308' : 'var(--text-secondary)'} />
                 </button>
               </div>
 
