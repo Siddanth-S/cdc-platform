@@ -15,6 +15,7 @@ export default function DirectMessage() {
   const [selectedFile, setSelectedFile] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const joinTime = useRef(Date.now());
 
   useEffect(() => {
     if (!user?.email || !id) return;
@@ -114,10 +115,15 @@ export default function DirectMessage() {
         <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', zIndex: 10 }}>
           {dmData.messages?.map(msg => {
             const isMe = msg.sender === user?.email;
+            const isNew = !isMe && msg.timestamp && (new Date(msg.timestamp).getTime()) > joinTime.current;
             
             return (
               <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', animation: 'fadeIn 0.3s ease-out' }}>
-                <div className="drive-msg-bubble" style={{ 
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.35rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  {msg.sender.split('@')[0]}
+                  {isNew && <span style={{ color: '#38bdf8', fontWeight: 'bold', fontSize: '0.65rem' }}>NEW</span>}
+                </div>
+                <div className={`drive-msg-bubble ${isNew ? 'new-msg-glow' : ''}`} style={{ 
                   background: isMe ? 'linear-gradient(135deg, var(--primary-color), #2563eb)' : 'rgba(15, 23, 42, 0.7)', 
                   color: isMe ? '#fff' : 'var(--text-primary)',
                   border: isMe ? 'none' : '1px solid rgba(96, 165, 250, 0.15)',

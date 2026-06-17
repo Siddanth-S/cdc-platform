@@ -13,6 +13,7 @@ export default function DriveRoom() {
   const [currentDrive, setCurrentDrive] = useState(null);
   const [showSpocModal, setShowSpocModal] = useState(false);
   const [newSpocEmail, setNewSpocEmail] = useState('');
+  const joinTime = useRef(Date.now());
 
   const [showSecSpocModal, setShowSecSpocModal] = useState(false);
   const [newSecSpocEmail, setNewSecSpocEmail] = useState('');
@@ -263,11 +264,13 @@ export default function DriveRoom() {
           {messages.map(msg => {
             const isMe = msg.sender === user?.email;
             const displayRole = msg.role === 'HEAD' ? 'ADMIN' : (msg.role === 'COORDINATOR' ? 'SPOC' : msg.role);
+            const isNew = !isMe && msg.timestamp && (msg.timestamp.toMillis ? msg.timestamp.toMillis() : Date.now()) > joinTime.current;
             
             return (
               <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', animation: 'fadeIn 0.3s ease-out' }}>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.35rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   {msg.sender.split('@')[0]} 
+                  {isNew && <span style={{ color: '#38bdf8', fontWeight: 'bold', fontSize: '0.65rem' }}>NEW</span>}
                   <span style={{ 
                     background: msg.role === 'HEAD' ? 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)' : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', 
                     color: '#fff', 
@@ -281,7 +284,7 @@ export default function DriveRoom() {
                     {displayRole}
                   </span>
                 </div>
-                <div className="drive-msg-bubble" style={{ 
+                <div className={`drive-msg-bubble ${isNew ? 'new-msg-glow' : ''}`} style={{ 
                   background: isMe ? 'linear-gradient(135deg, var(--primary-color), #2563eb)' : 'rgba(15, 23, 42, 0.7)', 
                   color: isMe ? '#fff' : 'var(--text-primary)',
                   border: isMe ? 'none' : '1px solid rgba(96, 165, 250, 0.15)',
