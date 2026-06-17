@@ -17,17 +17,18 @@ export default function DirectMessage() {
   const fileInputRef = useRef(null);
   
   // Capture the last read time when component mounts, so we know which messages are "new" to glow
-  const [lastRead] = useState(() => Number(localStorage.getItem(`read_dm_${id}`) || 0));
+  const [lastRead] = useState(() => Number(localStorage.getItem(`read_dm_${id}_${user?.email}`) || 0));
 
   useEffect(() => {
+    if (!user?.email) return;
     // Continuously update the read receipt while actively viewing this DM
     const interval = setInterval(() => {
-      localStorage.setItem(`read_dm_${id}`, Date.now());
+      localStorage.setItem(`read_dm_${id}_${user.email}`, Date.now());
     }, 1000);
     // Also do it immediately on mount
-    localStorage.setItem(`read_dm_${id}`, Date.now());
+    localStorage.setItem(`read_dm_${id}_${user.email}`, Date.now());
     return () => clearInterval(interval);
-  }, [id]);
+  }, [id, user?.email]);
 
   useEffect(() => {
     if (!user?.email || !id) return;

@@ -15,17 +15,18 @@ export default function DriveRoom() {
   const [newSpocEmail, setNewSpocEmail] = useState('');
   
   // Capture the last read time when component mounts, so we know which messages are "new" to glow
-  const [lastRead] = useState(() => Number(localStorage.getItem(`read_drive_${id}`) || 0));
+  const [lastRead] = useState(() => Number(localStorage.getItem(`read_drive_${id}_${user?.email}`) || 0));
 
   useEffect(() => {
+    if (!user?.email) return;
     // Continuously update the read receipt while actively viewing this drive
     const interval = setInterval(() => {
-      localStorage.setItem(`read_drive_${id}`, Date.now());
+      localStorage.setItem(`read_drive_${id}_${user.email}`, Date.now());
     }, 1000);
     // Also do it immediately on mount
-    localStorage.setItem(`read_drive_${id}`, Date.now());
+    localStorage.setItem(`read_drive_${id}_${user.email}`, Date.now());
     return () => clearInterval(interval);
-  }, [id]);
+  }, [id, user?.email]);
 
   const [showSecSpocModal, setShowSecSpocModal] = useState(false);
   const [newSecSpocEmail, setNewSecSpocEmail] = useState('');

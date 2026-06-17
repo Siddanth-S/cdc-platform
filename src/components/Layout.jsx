@@ -99,7 +99,7 @@ export default function Layout() {
                 const otherPerson = dm.participants.find(p => p !== user?.email);
                 const isActive = location.pathname === `/dm/${dm.id}`;
                 const lastMessage = dm.messages.length > 0 ? dm.messages[dm.messages.length - 1] : null;
-                const lastRead = Number(localStorage.getItem(`read_dm_${dm.id}`) || 0);
+                const lastRead = Number(localStorage.getItem(`read_dm_${dm.id}_${user?.email}`) || 0);
                 const isUnread = lastMessage && lastMessage.sender !== user?.email && new Date(lastMessage.timestamp).getTime() > lastRead && !isActive;
 
                 return (
