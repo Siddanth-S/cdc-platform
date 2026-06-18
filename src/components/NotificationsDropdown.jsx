@@ -68,42 +68,55 @@ export default function NotificationsDropdown() {
         onClick={() => setIsOpen(!isOpen)}
         style={{
           position: 'relative',
-          background: isOpen ? 'rgba(56, 189, 248, 0.1)' : 'transparent',
-          border: 'none',
-          color: isOpen ? '#38bdf8' : 'var(--text-secondary)',
-          padding: '0.5rem',
+          background: isOpen ? 'rgba(6, 182, 212, 0.15)' : 'rgba(6, 182, 212, 0.05)',
+          border: '1px solid ' + (isOpen ? 'var(--secondary-color)' : 'transparent'),
+          color: isOpen ? '#fff' : 'var(--secondary-color)',
+          padding: '0.4rem',
           borderRadius: '50%',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          transition: 'all 0.2s ease'
+          transition: 'all 0.3s ease',
+          boxShadow: isOpen ? '0 0 20px rgba(6, 182, 212, 0.5)' : '0 0 10px rgba(6, 182, 212, 0.2)'
         }}
         onMouseOver={e => {
           if (!isOpen) {
             e.currentTarget.style.color = '#fff';
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+            e.currentTarget.style.background = 'rgba(6, 182, 212, 0.2)';
+            e.currentTarget.style.boxShadow = '0 0 15px rgba(6, 182, 212, 0.4)';
+            e.currentTarget.style.border = '1px solid var(--secondary-color)';
           }
         }}
         onMouseOut={e => {
           if (!isOpen) {
-            e.currentTarget.style.color = 'var(--text-secondary)';
-            e.currentTarget.style.background = 'transparent';
+            e.currentTarget.style.color = 'var(--secondary-color)';
+            e.currentTarget.style.background = 'rgba(6, 182, 212, 0.05)';
+            e.currentTarget.style.boxShadow = '0 0 10px rgba(6, 182, 212, 0.2)';
+            e.currentTarget.style.border = '1px solid transparent';
           }
         }}
       >
-        <Bell size={20} />
+        <Bell size={24} />
         {unreadCount > 0 && (
           <span style={{
             position: 'absolute',
-            top: '4px', right: '4px',
-            background: '#06b6d4',
-            width: '8px',
-            height: '8px',
+            top: '0px', right: '0px',
+            background: '#ef4444',
+            color: '#fff',
+            fontSize: '0.65rem',
+            fontWeight: 'bold',
+            width: '16px',
+            height: '16px',
             borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             border: '2px solid var(--bg-color)',
-            boxShadow: '0 0 8px rgba(6, 182, 212, 0.6)'
-          }} />
+            boxShadow: '0 0 10px rgba(239, 68, 68, 0.8)'
+          }}>
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
         )}
       </button>
 

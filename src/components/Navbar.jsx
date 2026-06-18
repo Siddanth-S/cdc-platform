@@ -97,7 +97,6 @@ export default function Navbar() {
       </Link>
       
       <div className="flex items-center gap-4">
-        <NotificationsDropdown />
         <div className="navbar-user-info" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <div style={{ fontWeight: '500', fontSize: '0.9rem' }}>{user?.email.split('@')[0]}</div>
           <div style={{ fontSize: '0.75rem', color: 'var(--primary-color)', fontWeight: '600', letterSpacing: '0.5px' }}>{user?.role}</div>
@@ -191,6 +190,8 @@ export default function Navbar() {
             </div>
           )}
         </div>
+        
+        <NotificationsDropdown />
       </div>
 
       {showProfileModal && (

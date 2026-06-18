@@ -6,6 +6,9 @@ import { db } from '../firebase';
 import { collection, onSnapshot, doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { parseEmailProfile } from '../utils/profileParser';
 
+const btechBranches = ['CSE', 'IT', 'AI', 'DS', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'META', 'MINING'];
+const pgBranches = ['Construction Tech & Management', 'MBA', 'Environmental Eng', 'Geotechnical Eng', 'Transportation Eng', 'Structural Eng', 'Power Electronics', 'Mechanical Design', 'Thermal Eng', 'Manufacturing Eng', 'Mechatronics', 'Water Resources', 'Marine Structures', 'Geoinformatics', 'MCA', 'Chemistry', 'Physics', 'Signal Processing & ML', 'Communication Eng & Networks', 'VLSI Design', 'Information Security', 'Industrial Biotechnology', 'Environmental Science & Tech', 'Materials Eng', 'Nanotechnology'];
+
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -52,7 +55,7 @@ export default function Dashboard() {
   }, []);
 
   const [showModal, setShowModal] = useState(false);
-  const [newDrive, setNewDrive] = useState({ company: '', role: '', coordinator: '', stage: 'Registrations Open', eligibleBranches: ['CSE', 'IT', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'META', 'MINING'] });
+  const [newDrive, setNewDrive] = useState({ company: '', role: '', coordinator: '', secondarySpoc1: '', secondarySpoc2: '', eligibleBranches: [...btechBranches, ...pgBranches] });
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState('ALL');
@@ -107,14 +110,13 @@ export default function Dashboard() {
       company: newDrive.company,
       role: newDrive.role,
       coordinator: newDrive.coordinator,
-      secondarySpocs: [],
+      secondarySpocs: [newDrive.secondarySpoc1, newDrive.secondarySpoc2],
       joined: 0,
-      stage: newDrive.stage,
       eligibleBranches: newDrive.eligibleBranches,
       status: 'Active'
     });
     setShowModal(false);
-    setNewDrive({ company: '', role: '', coordinator: '', stage: 'Registrations Open', eligibleBranches: ['CSE', 'IT', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'META', 'MINING'] });
+    setNewDrive({ company: '', role: '', coordinator: '', secondarySpoc1: '', secondarySpoc2: '', eligibleBranches: [...btechBranches, ...pgBranches] });
   };
 
   const isDrivePinned = (drive) => {
@@ -259,11 +261,6 @@ export default function Dashboard() {
                       {drive.company}
                     </h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.35rem', flexWrap: 'wrap' }}>
-                      {drive.stage && (
-                        <span style={{ fontSize: '0.65rem', background: 'var(--primary-color)', color: '#fff', padding: '0.15rem 0.4rem', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                          {drive.stage}
-                        </span>
-                      )}
                       <span style={{ 
                         fontSize: '0.65rem', 
                         background: drive.status === 'Closed' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)', 
@@ -277,6 +274,21 @@ export default function Dashboard() {
                       }}>
                         {drive.status === 'Closed' ? 'Closed' : 'Active'}
                       </span>
+                      {userProfile?.branch !== 'ADMIN' && (
+                        <span style={{ 
+                          fontSize: '0.65rem', 
+                          background: isEligible ? 'rgba(56, 189, 248, 0.15)' : 'rgba(244, 63, 94, 0.15)', 
+                          color: isEligible ? '#38bdf8' : '#f43f5e', 
+                          border: `1px solid ${isEligible ? 'rgba(56, 189, 248, 0.4)' : 'rgba(244, 63, 94, 0.4)'}`,
+                          padding: '0.15rem 0.5rem', 
+                          borderRadius: '12px', 
+                          textTransform: 'uppercase', 
+                          letterSpacing: '0.5px',
+                          boxShadow: isEligible ? '0 0 8px rgba(56, 189, 248, 0.3)' : '0 0 8px rgba(244, 63, 94, 0.3)'
+                        }}>
+                          {isEligible ? 'Eligible' : 'Not Eligible'}
+                        </span>
+                      )}
                     </div>
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>{drive.role}</div>
                   </div>
@@ -348,34 +360,84 @@ export default function Dashboard() {
             </div>
             <form onSubmit={handleCreate}>
               <div className="input-group">
-                <label className="input-label">Company Name</label>
+                <label className="input-label">Company Name *</label>
                 <input required className="input-field" value={newDrive.company} onChange={e => setNewDrive({...newDrive, company: e.target.value})} />
               </div>
               <div className="input-group">
-                <label className="input-label">Role</label>
+                <label className="input-label">Role *</label>
                 <input required className="input-field" value={newDrive.role} onChange={e => setNewDrive({...newDrive, role: e.target.value})} />
               </div>
               <div className="input-group">
-                <label className="input-label">Stage</label>
-                <select className="input-field" value={newDrive.stage} onChange={e => setNewDrive({...newDrive, stage: e.target.value})}>
-                  <option value="Registrations Open">Registrations Open</option>
-                  <option value="Online Test">Online Test</option>
-                  <option value="Interviews">Interviews</option>
-                  <option value="Results Out">Results Out</option>
-                  <option value="Closed">Closed</option>
-                </select>
+                <label className="input-label" style={{ marginBottom: '0.5rem' }}>Eligible Branches *</label>
+                <div style={{ maxHeight: '180px', overflowY: 'auto', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
+                    <div style={{ fontWeight: 'bold', color: 'var(--primary-color)', fontSize: '0.85rem' }}>B.Tech Branches</div>
+                    <button type="button" onClick={() => {
+                      const hasAllBtech = btechBranches.every(b => newDrive.eligibleBranches.includes(b));
+                      if (hasAllBtech) {
+                        setNewDrive({...newDrive, eligibleBranches: newDrive.eligibleBranches.filter(b => !btechBranches.includes(b))});
+                      } else {
+                        const newArr = [...new Set([...newDrive.eligibleBranches, ...btechBranches])];
+                        setNewDrive({...newDrive, eligibleBranches: newArr});
+                      }
+                    }} style={{ fontSize: '0.7rem', background: 'none', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', borderRadius: '4px', cursor: 'pointer', padding: '0.1rem 0.4rem' }}>
+                      Toggle B.Tech
+                    </button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '1rem' }}>
+                    {btechBranches.map(b => (
+                      <label key={b} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={newDrive.eligibleBranches.includes(b)} onChange={(e) => {
+                          if (e.target.checked) setNewDrive({...newDrive, eligibleBranches: [...newDrive.eligibleBranches, b]});
+                          else setNewDrive({...newDrive, eligibleBranches: newDrive.eligibleBranches.filter(eb => eb !== b)});
+                        }} style={{ accentColor: 'var(--primary-color)', cursor: 'pointer' }} />
+                        {b}
+                      </label>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
+                    <div style={{ fontWeight: 'bold', color: 'var(--primary-color)', fontSize: '0.85rem' }}>PG Branches</div>
+                    <button type="button" onClick={() => {
+                      const hasAllPg = pgBranches.every(b => newDrive.eligibleBranches.includes(b));
+                      if (hasAllPg) {
+                        setNewDrive({...newDrive, eligibleBranches: newDrive.eligibleBranches.filter(b => !pgBranches.includes(b))});
+                      } else {
+                        const newArr = [...new Set([...newDrive.eligibleBranches, ...pgBranches])];
+                        setNewDrive({...newDrive, eligibleBranches: newArr});
+                      }
+                    }} style={{ fontSize: '0.7rem', background: 'none', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', borderRadius: '4px', cursor: 'pointer', padding: '0.1rem 0.4rem' }}>
+                      Toggle PG
+                    </button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                    {pgBranches.map(b => (
+                      <label key={b} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={newDrive.eligibleBranches.includes(b)} onChange={(e) => {
+                          if (e.target.checked) setNewDrive({...newDrive, eligibleBranches: [...newDrive.eligibleBranches, b]});
+                          else setNewDrive({...newDrive, eligibleBranches: newDrive.eligibleBranches.filter(eb => eb !== b)});
+                        }} style={{ accentColor: 'var(--primary-color)', cursor: 'pointer' }} />
+                        {b.length > 25 ? b.substring(0, 22) + '...' : b}
+                      </label>
+                    ))}
+                  </div>
+                  
+                </div>
               </div>
               <div className="input-group">
-                <label className="input-label">Eligible Branches (Ctrl/Cmd+Click to select multiple)</label>
-                <select multiple className="input-field" style={{ height: '100px' }} value={newDrive.eligibleBranches} onChange={e => setNewDrive({...newDrive, eligibleBranches: Array.from(e.target.selectedOptions, option => option.value)})}>
-                  {['CSE', 'IT', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'META', 'MINING'].map(b => (
-                    <option key={b} value={b}>{b}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="input-group">
-                <label className="input-label">Assign SPOC (Email)</label>
+                <label className="input-label">Primary SPOC (Email) *</label>
                 <input required type="email" className="input-field" value={newDrive.coordinator} onChange={e => setNewDrive({...newDrive, coordinator: e.target.value})} placeholder="student@nitk.edu.in" />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="input-group">
+                  <label className="input-label">Secondary SPOC 1 (Email) *</label>
+                  <input required type="email" className="input-field" value={newDrive.secondarySpoc1} onChange={e => setNewDrive({...newDrive, secondarySpoc1: e.target.value})} placeholder="spoc1@nitk.edu.in" />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Secondary SPOC 2 (Email) *</label>
+                  <input required type="email" className="input-field" value={newDrive.secondarySpoc2} onChange={e => setNewDrive({...newDrive, secondarySpoc2: e.target.value})} placeholder="spoc2@nitk.edu.in" />
+                </div>
               </div>
               <div className="flex gap-2 justify-between mt-4">
                 <button type="button" className="btn btn-secondary w-full" onClick={() => setShowModal(false)}>Cancel</button>

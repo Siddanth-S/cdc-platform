@@ -30,6 +30,7 @@ export default function DriveRoom() {
 
   const [showSecSpocModal, setShowSecSpocModal] = useState(false);
   const [newSecSpocEmail, setNewSecSpocEmail] = useState('');
+  const [editingSpocIndex, setEditingSpocIndex] = useState(0);
 
   const [showLeaveModal, setShowLeaveModal] = useState(false);
 
@@ -199,17 +200,20 @@ export default function DriveRoom() {
     setShowSpocModal(false);
   };
 
-  const handleAddSecSpoc = async (e) => {
+  const handleChangeSecSpoc = async (e) => {
     e.preventDefault();
     try {
+      const updatedSpocs = [...(currentDrive.secondarySpocs || ['', ''])];
+      updatedSpocs[editingSpocIndex] = newSecSpocEmail;
+      
       await updateDoc(doc(db, 'drives', id), {
-        secondarySpocs: arrayUnion(newSecSpocEmail)
+        secondarySpocs: updatedSpocs
       });
 
       // Notify the new secondary SPOC
       await addDoc(collection(db, 'notifications'), {
         recipient: newSecSpocEmail,
-        message: `You have been assigned as a SECONDARY SPOC for ${currentDrive.company}.`,
+        message: `You have been assigned as Secondary SPOC ${editingSpocIndex + 1} for ${currentDrive.company}.`,
         type: 'SPOC_ASSIGNED',
         read: false,
         timestamp: new Date().toISOString()
@@ -218,7 +222,7 @@ export default function DriveRoom() {
       // Notify the HEAD (activity log)
       await addDoc(collection(db, 'notifications'), {
         recipient: user.email,
-        message: `Activity: You assigned ${newSecSpocEmail} as SECONDARY SPOC for ${currentDrive.company}.`,
+        message: `Activity: You changed Secondary SPOC ${editingSpocIndex + 1} to ${newSecSpocEmail} for ${currentDrive.company}.`,
         type: 'ACTIVITY',
         read: false,
         timestamp: new Date().toISOString()
@@ -333,21 +337,23 @@ export default function DriveRoom() {
       {(currentDrive.secondarySpocs?.length > 0 || user?.role === 'HEAD') && (
         <div style={{ padding: '0.75rem 1.5rem', marginBottom: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Secondary SPOCs:</div>
-          {currentDrive.secondarySpocs?.map(spoc => (
-            <div key={spoc} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', padding: '0.4rem 0.75rem', borderRadius: '20px', fontSize: '0.8rem', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
-              <span>{spoc.split('@')[0]}</span>
-              {spoc !== user?.email && (
+          {currentDrive.secondarySpocs?.map((spoc, index) => (
+            <div key={`${spoc}-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', padding: '0.4rem 0.75rem', borderRadius: '20px', fontSize: '0.8rem', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+              <span>{spoc ? spoc.split('@')[0] : `Pending SPOC ${index + 1}`}</span>
+              
+              {spoc && spoc !== user?.email && (
                 <button onClick={() => handleInitiateDM(spoc)} style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Message Secondary SPOC">
                   <MessageSquarePlus size={14} />
                 </button>
               )}
+
+              {user?.role === 'HEAD' && (
+                <button onClick={() => { setEditingSpocIndex(index); setNewSecSpocEmail(spoc || ''); setShowSecSpocModal(true); }} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', marginLeft: '0.25rem', fontSize: '0.7rem', textDecoration: 'underline' }}>
+                  Change
+                </button>
+              )}
             </div>
           ))}
-          {user?.role === 'HEAD' && (
-            <button onClick={() => setShowSecSpocModal(true)} style={{ background: 'none', border: '1px dashed var(--border-color)', color: 'var(--text-secondary)', cursor: 'pointer', padding: '0.35rem 0.75rem', borderRadius: '20px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              + Add
-            </button>
-          )}
         </div>
       )}
 
@@ -530,17 +536,17 @@ export default function DriveRoom() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div className="glass-card animate-fade-in" style={{ width: '100%', maxWidth: '400px', padding: '2rem' }}>
             <div className="flex justify-between items-center mb-4">
-              <h2 style={{ margin: 0 }}>Add Secondary SPOC</h2>
+              <h2 style={{ margin: 0 }}>Change Secondary SPOC {editingSpocIndex + 1}</h2>
               <button onClick={() => setShowSecSpocModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '1.5rem' }}>&times;</button>
             </div>
-            <form onSubmit={handleAddSecSpoc}>
+            <form onSubmit={handleChangeSecSpoc}>
               <div className="input-group">
-                <label className="input-label">Secondary SPOC Email</label>
+                <label className="input-label">New SPOC Email</label>
                 <input required type="email" className="input-field" value={newSecSpocEmail} onChange={e => setNewSecSpocEmail(e.target.value)} placeholder="student@nitk.edu.in" />
               </div>
               <div className="flex gap-2 justify-between mt-4">
                 <button type="button" className="btn btn-secondary w-full" onClick={() => setShowSecSpocModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary w-full">Add SPOC</button>
+                <button type="submit" className="btn btn-primary w-full">Update SPOC</button>
               </div>
             </form>
           </div>
