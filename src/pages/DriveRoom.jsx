@@ -400,54 +400,66 @@ export default function DriveRoom() {
                 onMouseLeave={() => { setHoveredMsgId(null); setShowReactionPickerId(null); }}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', animation: 'fadeIn 0.3s ease-out', position: 'relative' }}
               >
-                <div className={`drive-msg-bubble ${isNew ? 'new-msg-glow' : ''}`} style={{ 
+                <div className="drive-msg-bubble" style={{ 
                   background: isMe ? 'linear-gradient(135deg, var(--primary-color), #2563eb)' : 'rgba(15, 23, 42, 0.7)', 
                   color: isMe ? '#fff' : 'var(--text-primary)',
                   border: isMe ? 'none' : '1px solid rgba(96, 165, 250, 0.15)',
-                  padding: '0.85rem 1.15rem', 
+                  padding: '0.5rem 0.75rem', 
                   borderRadius: '16px', 
                   borderBottomRightRadius: isMe ? '4px' : '16px',
                   borderBottomLeftRadius: !isMe ? '4px' : '16px',
-                  maxWidth: '85%',
+                  maxWidth: '75%',
                   wordBreak: 'break-word',
                   boxShadow: isMe ? '0 4px 15px rgba(59, 130, 246, 0.3)' : '0 4px 15px rgba(0,0,0,0.2)',
                   backdropFilter: 'blur(8px)',
                   position: 'relative',
-                  marginTop: '0.5rem'
+                  marginTop: '0.2rem'
                 }}>
                   {/* Internal Sender Tag */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', opacity: 0.9 }}>
-                    {(msg.role !== 'HEAD' && msg.role !== 'SPOC') && (
-                      <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: isMe ? '#e0f2fe' : '#38bdf8' }}>
-                        {msg.sender.split('@')[0]}
-                      </span>
-                    )}
-                    {isNew && <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '0.6rem', background: '#38bdf8', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>NEW</span>}
-                    <span style={{ 
-                      background: msg.role === 'HEAD' ? 'rgba(225, 29, 72, 0.9)' : 'rgba(59, 130, 246, 0.9)', 
-                      color: '#fff', 
-                      padding: '0.15rem 0.4rem', 
-                      borderRadius: '8px', 
-                      fontSize: '0.6rem', 
-                      fontWeight: '700',
-                      letterSpacing: '0.5px'
-                    }}>
-                      {displayRole}
-                    </span>
-                  </div>
+                  {(msg.role === 'HEAD' || msg.role === 'SPOC' || msg.role === 'COORDINATOR' || (!isMe && msg.role !== 'HEAD' && msg.role !== 'SPOC' && msg.role !== 'COORDINATOR')) && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem', opacity: 0.9 }}>
+                      {(!isMe && msg.role !== 'HEAD' && msg.role !== 'SPOC' && msg.role !== 'COORDINATOR') && (
+                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#38bdf8' }}>
+                          {msg.sender.split('@')[0]}
+                        </span>
+                      )}
+                      {(msg.role === 'HEAD' || msg.role === 'SPOC' || msg.role === 'COORDINATOR') && (
+                        <span style={{ 
+                          background: 'rgba(56, 189, 248, 0.15)', 
+                          color: '#38bdf8', 
+                          border: '1px solid rgba(56, 189, 248, 0.3)',
+                          padding: '0.1rem 0.3rem', 
+                          borderRadius: '6px', 
+                          fontSize: '0.55rem', 
+                          fontWeight: '800',
+                          letterSpacing: '0.5px'
+                        }}>
+                          {displayRole}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   {msg.replyTo && (
-                    <div style={{ background: 'rgba(0,0,0,0.2)', borderLeft: '3px solid rgba(255,255,255,0.4)', padding: '0.4rem 0.6rem', borderRadius: '4px', marginBottom: '0.5rem', fontSize: '0.8rem', opacity: 0.8 }}>
+                    <div style={{ background: 'rgba(0,0,0,0.2)', borderLeft: '3px solid rgba(255,255,255,0.4)', padding: '0.3rem 0.5rem', borderRadius: '4px', marginBottom: '0.3rem', fontSize: '0.75rem', opacity: 0.8 }}>
                       <div style={{ fontWeight: 'bold', marginBottom: '0.1rem' }}>{msg.replyTo.sender.split('@')[0]}</div>
                       <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{msg.replyTo.text}</div>
                     </div>
                   )}
-                  {msg.text && <div style={{ marginBottom: msg.fileName ? '0.5rem' : 0 }}>{msg.text}</div>}
-                  {msg.fileName && (
-                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.5rem 0.75rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}>
-                      <Paperclip size={14} />
-                      <a href={msg.fileData} download={msg.fileName} style={{ color: 'inherit', textDecoration: 'underline' }}>{msg.fileName}</a>
+                  
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: '0.9rem', lineHeight: '1.3' }}>
+                      {msg.text}
+                      {msg.fileName && (
+                        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.3rem 0.5rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', marginTop: msg.text ? '0.3rem' : '0' }}>
+                          <Paperclip size={12} />
+                          <a href={msg.fileData} download={msg.fileName} style={{ color: 'inherit', textDecoration: 'underline' }}>{msg.fileName}</a>
+                        </div>
+                      )}
                     </div>
-                  )}
+                    <div style={{ fontSize: '0.6rem', opacity: 0.7, textAlign: 'right', whiteSpace: 'nowrap', alignSelf: 'flex-end', marginBottom: '-2px' }}>
+                      {msg.timestamp ? new Date(msg.timestamp.toMillis ? msg.timestamp.toMillis() : msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                    </div>
+                  </div>
 
                   {hoveredMsgId === msg.id && (
                     <div style={{ 
