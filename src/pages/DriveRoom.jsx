@@ -403,9 +403,10 @@ export default function DriveRoom() {
 
                   {hoveredMsgId === msg.id && (
                     <div style={{ 
-                      display: 'flex', background: 'rgba(30, 41, 59, 0.9)', padding: '0.3rem', borderRadius: '20px', gap: '0.3rem', border: '1px solid rgba(255,255,255,0.1)', animation: 'fadeIn 0.2s', zIndex: 10,
+                      display: 'flex', alignItems: 'center', background: 'rgba(30, 41, 59, 0.9)', padding: '0.3rem', borderRadius: '20px', gap: '0.3rem', border: '1px solid rgba(255,255,255,0.1)', animation: 'fadeIn 0.2s', zIndex: 10,
                       position: 'absolute', top: '50%', transform: 'translateY(-50%)',
-                      [isMe ? 'right' : 'left']: 'calc(100% + 0.5rem)'
+                      [isMe ? 'right' : 'left']: 'calc(100% + 0.5rem)',
+                      whiteSpace: 'nowrap', width: 'max-content'
                     }}>
                       <button onClick={() => setReplyToMsg(msg)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: '#38bdf8', padding: '0 0.3rem' }}>Reply</button>
                       {['👍', '❤️', '🎉'].map(emoji => (
