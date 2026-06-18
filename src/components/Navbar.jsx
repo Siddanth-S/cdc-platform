@@ -11,7 +11,7 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [profileForm, setProfileForm] = useState({ name: '', branch: '', gradYear: '' });
+  const [profileForm, setProfileForm] = useState({ name: '', degree: '', branch: '', gradYear: '' });
 
   const handleLogout = () => {
     logout();
@@ -23,10 +23,10 @@ export default function Navbar() {
       const docSnap = await getDoc(doc(db, 'users', user.email));
       if (docSnap.exists() && docSnap.data().branch !== 'ADMIN') {
         const data = docSnap.data();
-        setProfileForm({ name: data.name || '', branch: data.branch || '', gradYear: data.gradYear || '' });
+        setProfileForm({ name: data.name || '', degree: data.degree || '', branch: data.branch || '', gradYear: data.gradYear || '' });
       } else {
         const parsed = parseEmailProfile(user.email);
-        if (parsed) setProfileForm(parsed);
+        if (parsed) setProfileForm({ name: parsed.name || '', degree: parsed.degree || '', branch: parsed.branch || '', gradYear: parsed.gradYear || '' });
       }
     } catch(err) {
       console.error(err);
@@ -40,6 +40,7 @@ export default function Navbar() {
     try {
       await setDoc(doc(db, 'users', user.email), { 
         name: profileForm.name,
+        degree: profileForm.degree,
         branch: profileForm.branch,
         gradYear: profileForm.gradYear
       }, { merge: true });
@@ -99,6 +100,24 @@ export default function Navbar() {
               </div>
               
               <div>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Degree</label>
+                <select 
+                  className="input-field" 
+                  style={{ width: '100%' }}
+                  value={profileForm.degree}
+                  onChange={e => setProfileForm({...profileForm, degree: e.target.value})}
+                  required
+                >
+                  <option value="" disabled>Select Degree</option>
+                  <option value="B.Tech">B.Tech</option>
+                  <option value="M.Tech">M.Tech</option>
+                  <option value="MCA">MCA</option>
+                  <option value="MBA">MBA</option>
+                  <option value="MSc">MSc</option>
+                </select>
+              </div>
+
+              <div>
                 <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Branch</label>
                 <select 
                   className="input-field" 
@@ -108,19 +127,46 @@ export default function Navbar() {
                   required
                 >
                   <option value="" disabled>Select Branch</option>
-                  <option value="CSE">Computer Science (CSE)</option>
-                  <option value="IT">Information Technology (IT)</option>
-                  <option value="AI">Artificial Intelligence (AI)</option>
-                  <option value="DS">Computational Data Science (DS)</option>
-                  <option value="ECE">Electronics (ECE)</option>
-                  <option value="EEE">Electrical (EEE)</option>
-                  <option value="MECH">Mechanical (MECH)</option>
-                  <option value="CIVIL">Civil Engineering (CIVIL)</option>
-                  <option value="CHEM">Chemical Engineering (CHEM)</option>
-                  <option value="META">Metallurgy (META)</option>
-                  <option value="MINING">Mining Engineering (MINING)</option>
-                  <option value="MBA">School of Management (MBA)</option>
-                  <option value="MCA">Master of Computer Applications (MCA)</option>
+                  <optgroup label="B.Tech Branches">
+                    <option value="CSE">Computer Science (CSE)</option>
+                    <option value="IT">Information Technology (IT)</option>
+                    <option value="AI">Artificial Intelligence (AI)</option>
+                    <option value="DS">Computational Data Science (DS)</option>
+                    <option value="ECE">Electronics (ECE)</option>
+                    <option value="EEE">Electrical (EEE)</option>
+                    <option value="MECH">Mechanical (MECH)</option>
+                    <option value="CIVIL">Civil Engineering (CIVIL)</option>
+                    <option value="CHEM">Chemical Engineering (CHEM)</option>
+                    <option value="META">Metallurgy (META)</option>
+                    <option value="MINING">Mining Engineering (MINING)</option>
+                  </optgroup>
+                  <optgroup label="PG Branches (M.Tech/MCA/MBA/MSc)">
+                    <option value="Construction Tech & Management">Construction Tech & Management</option>
+                    <option value="MBA">MBA</option>
+                    <option value="Environmental Eng">Environmental Eng</option>
+                    <option value="Geotechnical Eng">Geotechnical Eng</option>
+                    <option value="Transportation Eng">Transportation Eng</option>
+                    <option value="Structural Eng">Structural Eng</option>
+                    <option value="Power Electronics">Power Electronics</option>
+                    <option value="Mechanical Design">Mechanical Design</option>
+                    <option value="Thermal Eng">Thermal Eng</option>
+                    <option value="Manufacturing Eng">Manufacturing Eng</option>
+                    <option value="Mechatronics">Mechatronics</option>
+                    <option value="Water Resources">Water Resources</option>
+                    <option value="Marine Structures">Marine Structures</option>
+                    <option value="Geoinformatics">Geoinformatics</option>
+                    <option value="MCA">MCA</option>
+                    <option value="Chemistry">Chemistry</option>
+                    <option value="Physics">Physics</option>
+                    <option value="Signal Processing & ML">Signal Processing & ML</option>
+                    <option value="Communication Eng & Networks">Communication Eng & Networks</option>
+                    <option value="VLSI Design">VLSI Design</option>
+                    <option value="Information Security">Information Security</option>
+                    <option value="Industrial Biotechnology">Industrial Biotechnology</option>
+                    <option value="Environmental Science & Tech">Environmental Science & Tech</option>
+                    <option value="Materials Eng">Materials Eng</option>
+                    <option value="Nanotechnology">Nanotechnology</option>
+                  </optgroup>
                 </select>
               </div>
 

@@ -4,7 +4,7 @@ export function parseEmailProfile(email) {
   const username = email.split('@')[0];
   const parts = username.split('.');
   if (parts.length < 2) {
-    return { name: username, branch: '', gradYear: '' };
+    return { name: username, degree: '', branch: '', gradYear: '' };
   }
   
   const namePart = parts[0];
@@ -15,15 +15,33 @@ export function parseEmailProfile(email) {
   const joiningYear = parseInt(`20${joiningYearStr}`);
   
   const programCode = rollSection.substring(2, 3);
-  let additionalYears = 4; // Default BTech
-  if (['2', '4', '5', '6'].includes(programCode)) {
-    additionalYears = 2; // MTech, MCA, MBA, MSc
-  }
   
+  let additionalYears = 4; // Default BTech
+  let degree = 'B.Tech';
+
+  if (programCode === '1') {
+    additionalYears = 4;
+    degree = 'B.Tech';
+  } else if (programCode === '2' || programCode === '3') {
+    additionalYears = 2;
+    degree = 'M.Tech';
+  } else if (programCode === '4') {
+    additionalYears = 2;
+    degree = 'MCA';
+  } else if (programCode === '5') {
+    additionalYears = 2;
+    degree = 'MBA';
+  } else if (programCode === '6') {
+    additionalYears = 2;
+    degree = 'MSc';
+  }
+
   const gradYear = isNaN(joiningYear) ? '' : joiningYear + additionalYears;
   
   const branchCode = rollSection.substring(3, 5).toLowerCase();
+  
   const branchMap = {
+    // B.Tech
     'cs': 'CSE',
     'it': 'IT',
     'ai': 'AI',
@@ -35,14 +53,39 @@ export function parseEmailProfile(email) {
     'ch': 'CHEM',
     'mt': 'META',
     'mn': 'MINING',
+    // PG
+    'cm': 'Construction Tech & Management',
     'sm': 'MBA',
-    'ca': 'MCA'
+    'en': 'Environmental Eng',
+    'gt': 'Geotechnical Eng',
+    'ts': 'Transportation Eng',
+    'st': 'Structural Eng',
+    'pe': 'Power Electronics',
+    'md': 'Mechanical Design',
+    'th': 'Thermal Eng',
+    'mf': 'Manufacturing Eng',
+    'mc': 'Mechatronics',
+    'wr': 'Water Resources',
+    'ms': 'Marine Structures',
+    'gf': 'Geoinformatics',
+    'ca': 'MCA',
+    'cy': 'Chemistry',
+    'ph': 'Physics',
+    'sp': 'Signal Processing & ML',
+    'cn': 'Communication Eng & Networks',
+    'vl': 'VLSI Design',
+    'is': 'Information Security',
+    'ib': 'Industrial Biotechnology',
+    'es': 'Environmental Science & Tech',
+    'ml': 'Materials Eng',
+    'nt': 'Nanotechnology'
   };
   
   const branch = branchMap[branchCode] || branchCode.toUpperCase();
   
   return {
     name: namePart.charAt(0).toUpperCase() + namePart.slice(1),
+    degree,
     branch,
     gradYear: gradYear.toString()
   };
