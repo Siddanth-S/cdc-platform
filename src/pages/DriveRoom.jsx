@@ -555,32 +555,32 @@ export default function DriveRoom() {
       </div>
 
       {showSettingsModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="glass-card animate-fade-in" style={{ width: '100%', maxWidth: '400px', padding: '2rem' }}>
-            <div className="flex justify-between items-center mb-6">
-              <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.5rem' }}>
-                <Settings className="text-primary" size={24} /> Manage Drive
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="cyber-modal-container animate-fade-in" style={{ width: '100%', maxWidth: '420px', padding: '2.5rem' }}>
+            <div className="flex justify-between items-center mb-8" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
+              <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.75rem', fontWeight: '700', letterSpacing: '0.5px' }}>
+                <Settings className="text-primary" size={28} /> Manage Drive
               </h2>
-              <button onClick={() => setShowSettingsModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '1.5rem' }}>&times;</button>
+              <button onClick={() => setShowSettingsModal(false)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', cursor: 'pointer', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.5)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}><X size={18} /></button>
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {(isHead || isPriSpoc) && (
-                <button onClick={() => { setShowSettingsModal(false); setEditBranches(currentDrive.eligibleBranches || []); setShowEditBranchesModal(true); }} className="btn-glass primary" style={{ width: '100%', justifyContent: 'flex-start', padding: '1rem', fontSize: '1rem' }}>
-                  <Edit3 size={18} /> Edit Eligibility
+                <button onClick={() => { setShowSettingsModal(false); setEditBranches(currentDrive.eligibleBranches || []); setShowEditBranchesModal(true); }} className="cyber-menu-btn">
+                  <Edit3 size={20} className="text-primary" /> Edit Eligibility
                 </button>
               )}
               
               {isHead && (
                 <>
-                  <button onClick={() => { setShowSettingsModal(false); setNewSpocEmail(currentDrive.coordinator); setShowSpocModal(true); }} className="btn-glass" style={{ width: '100%', justifyContent: 'flex-start', padding: '1rem', fontSize: '1rem' }}>
-                    <UserCog size={18} /> Change Primary SPOC
+                  <button onClick={() => { setShowSettingsModal(false); setNewSpocEmail(currentDrive.coordinator); setShowSpocModal(true); }} className="cyber-menu-btn">
+                    <UserCog size={20} className="text-primary" /> Change Primary SPOC
                   </button>
-                  <button onClick={() => { setShowSettingsModal(false); setEditingSpocIndex(0); setNewSecSpocEmail(currentDrive.secondarySpocs?.[0] || ''); setShowSecSpocModal(true); }} className="btn-glass" style={{ width: '100%', justifyContent: 'flex-start', padding: '1rem', fontSize: '1rem' }}>
-                    <Users size={18} /> Change Secondary SPOC 1
+                  <button onClick={() => { setShowSettingsModal(false); setEditingSpocIndex(0); setNewSecSpocEmail(currentDrive.secondarySpocs?.[0] || ''); setShowSecSpocModal(true); }} className="cyber-menu-btn">
+                    <Users size={20} className="text-primary" /> Change Secondary SPOC 1
                   </button>
-                  <button onClick={() => { setShowSettingsModal(false); setEditingSpocIndex(1); setNewSecSpocEmail(currentDrive.secondarySpocs?.[1] || ''); setShowSecSpocModal(true); }} className="btn-glass" style={{ width: '100%', justifyContent: 'flex-start', padding: '1rem', fontSize: '1rem' }}>
-                    <Users size={18} /> Change Secondary SPOC 2
+                  <button onClick={() => { setShowSettingsModal(false); setEditingSpocIndex(1); setNewSecSpocEmail(currentDrive.secondarySpocs?.[1] || ''); setShowSecSpocModal(true); }} className="cyber-menu-btn">
+                    <Users size={20} className="text-primary" /> Change Secondary SPOC 2
                   </button>
                 </>
               )}
@@ -594,10 +594,10 @@ export default function DriveRoom() {
                       triggerToast(`Drive ${currentDrive.status === 'Closed' ? 'Reopened' : 'Closed'}!`);
                     } catch(err) { console.error(err); }
                   }}
-                  className={`btn-glass ${currentDrive.status === 'Closed' ? 'primary' : 'danger'}`}
-                  style={{ width: '100%', justifyContent: 'flex-start', padding: '1rem', fontSize: '1rem', marginTop: '1rem' }}
+                  className={`cyber-menu-btn ${currentDrive.status === 'Closed' ? '' : 'danger'}`}
+                  style={{ marginTop: '0.5rem' }}
                 >
-                  <Power size={18} /> {currentDrive.status === 'Closed' ? 'Reopen Drive' : 'Close Drive'}
+                  <Power size={20} className={currentDrive.status === 'Closed' ? 'text-primary' : 'text-danger'} /> {currentDrive.status === 'Closed' ? 'Reopen Drive' : 'Close Drive'}
                 </button>
               )}
             </div>
