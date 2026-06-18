@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Building2, Plus, Users, Search, Pin, CheckCircle2 } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, onSnapshot, doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
+import { parseEmailProfile } from '../utils/profileParser';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -13,28 +14,28 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [selectedBranch, setSelectedBranch] = useState('');
+  const [profileForm, setProfileForm] = useState({ name: '', branch: '', gradYear: '' });
 
-  // Fetch User Profile
+  // Sync User Profile
   useEffect(() => {
     if (!user?.email) return;
-    const fetchProfile = async () => {
-      try {
-        const docSnap = await getDoc(doc(db, 'users', user.email));
-        if (docSnap.exists()) {
-          setUserProfile(docSnap.data());
+    const unsubscribe = onSnapshot(doc(db, 'users', user.email), (docSnap) => {
+      if (docSnap.exists()) {
+        setUserProfile(docSnap.data());
+        setShowProfileModal(false);
+      } else {
+        if (user.role === 'HEAD') {
+          setUserProfile({ branch: 'ADMIN' });
         } else {
-          if (user.role === 'HEAD') {
-            setUserProfile({ branch: 'ADMIN' });
-          } else {
-            setShowProfileModal(true);
-          }
+          const parsed = parseEmailProfile(user.email);
+          if (parsed) setProfileForm(parsed);
+          setShowProfileModal(true);
         }
-      } catch (err) {
-        console.error("Error fetching profile", err);
       }
-    };
-    fetchProfile();
+    }, (err) => {
+      console.error("Error syncing profile", err);
+    });
+    return () => unsubscribe();
   }, [user]);
 
   // Sync with Firestore
@@ -75,10 +76,13 @@ export default function Dashboard() {
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
-    if (!selectedBranch) return;
+    if (!profileForm.branch) return;
     try {
-      await setDoc(doc(db, 'users', user.email), { branch: selectedBranch });
-      setUserProfile({ branch: selectedBranch });
+      await setDoc(doc(db, 'users', user.email), { 
+        name: profileForm.name,
+        branch: profileForm.branch,
+        gradYear: profileForm.gradYear
+      });
       setShowProfileModal(false);
     } catch (err) {
       console.error(err);
@@ -111,15 +115,12 @@ export default function Dashboard() {
   };
 
   const isDrivePinned = (drive) => {
-    const isSpoc = drive.coordinator === user?.email || drive.secondarySpocs?.includes(user?.email);
-    return isSpoc || pinnedDrives.includes(String(drive.id));
+    return pinnedDrives.includes(String(drive.id));
   };
 
   const togglePin = (e, drive) => {
     e.stopPropagation();
     const strId = String(drive.id);
-    const isSpoc = drive.coordinator === user?.email || drive.secondarySpocs?.includes(user?.email);
-    if (isSpoc) return; // SPOC drives cannot be unpinned
     if (pinnedDrives.includes(strId)) {
       setPinnedDrives(pinnedDrives.filter(id => id !== strId));
     } else {
@@ -251,8 +252,10 @@ export default function Dashboard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <Building2 className="text-primary" size={24} />
                   <div>
-                    <h3 style={{ margin: 0, fontSize: '1.1rem', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.1rem', letterSpacing: '0.5px' }}>
                       {drive.company}
+                    </h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.35rem', flexWrap: 'wrap' }}>
                       {drive.stage && (
                         <span style={{ fontSize: '0.65rem', background: 'var(--primary-color)', color: '#fff', padding: '0.15rem 0.4rem', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                           {drive.stage}
@@ -271,7 +274,7 @@ export default function Dashboard() {
                       }}>
                         {drive.status === 'Closed' ? 'Closed' : 'Active'}
                       </span>
-                    </h3>
+                    </div>
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>{drive.role}</div>
                   </div>
                 </div>
@@ -405,28 +408,58 @@ export default function Dashboard() {
           <div className="glass-card animate-fade-in" style={{ width: '100%', maxWidth: '400px', padding: '2.5rem 2rem', textAlign: 'center' }}>
             <h2 style={{ margin: '0 0 1rem 0', fontSize: '1.5rem', color: '#fff' }}>Complete Your Profile</h2>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontSize: '0.95rem' }}>
-              Please select your branch to view eligible placement drives.
+              Please verify your details extracted from your email to continue.
             </p>
-            <form onSubmit={handleSaveProfile}>
-              <select 
-                className="input-field" 
-                style={{ marginBottom: '1.5rem', width: '100%' }}
-                value={selectedBranch}
-                onChange={e => setSelectedBranch(e.target.value)}
-                required
-              >
-                <option value="" disabled>Select Branch</option>
-                <option value="CSE">Computer Science (CSE)</option>
-                <option value="IT">Information Technology (IT)</option>
-                <option value="ECE">Electronics (ECE)</option>
-                <option value="EEE">Electrical (EEE)</option>
-                <option value="MECH">Mechanical (MECH)</option>
-                <option value="CIVIL">Civil Engineering (CIVIL)</option>
-                <option value="CHEM">Chemical Engineering (CHEM)</option>
-                <option value="META">Metallurgy (META)</option>
-                <option value="MINING">Mining Engineering (MINING)</option>
-              </select>
-              <button type="submit" className="btn btn-primary w-full" style={{ padding: '0.8rem' }}>Save & Continue</button>
+            <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
+              <div>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Name</label>
+                <input 
+                  type="text" 
+                  className="cyber-input" 
+                  value={profileForm.name}
+                  onChange={e => setProfileForm({...profileForm, name: e.target.value})}
+                  required
+                />
+              </div>
+              
+              <div>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Branch</label>
+                <select 
+                  className="input-field" 
+                  style={{ width: '100%' }}
+                  value={profileForm.branch}
+                  onChange={e => setProfileForm({...profileForm, branch: e.target.value})}
+                  required
+                >
+                  <option value="" disabled>Select Branch</option>
+                  <option value="CSE">Computer Science (CSE)</option>
+                  <option value="IT">Information Technology (IT)</option>
+                  <option value="AI">Artificial Intelligence (AI)</option>
+                  <option value="DS">Computational Data Science (DS)</option>
+                  <option value="ECE">Electronics (ECE)</option>
+                  <option value="EEE">Electrical (EEE)</option>
+                  <option value="MECH">Mechanical (MECH)</option>
+                  <option value="CIVIL">Civil Engineering (CIVIL)</option>
+                  <option value="CHEM">Chemical Engineering (CHEM)</option>
+                  <option value="META">Metallurgy (META)</option>
+                  <option value="MINING">Mining Engineering (MINING)</option>
+                  <option value="MBA">School of Management (MBA)</option>
+                  <option value="MCA">Master of Computer Applications (MCA)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Expected Graduation Year</label>
+                <input 
+                  type="text" 
+                  className="cyber-input" 
+                  value={profileForm.gradYear}
+                  onChange={e => setProfileForm({...profileForm, gradYear: e.target.value})}
+                  required
+                />
+              </div>
+
+              <button type="submit" className="btn btn-primary w-full" style={{ padding: '0.8rem', marginTop: '1rem' }}>Save & Continue</button>
             </form>
           </div>
         </div>
