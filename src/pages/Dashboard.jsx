@@ -239,7 +239,7 @@ export default function Dashboard() {
             />
           </div>
           <div style={{ position: 'relative' }}>
-            <button onClick={() => setShowFilterDropdown(!showFilterDropdown)} className="btn btn-secondary" style={{ padding: '0 1rem', height: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button onClick={() => setShowFilterDropdown(!showFilterDropdown)} className="cyber-input" style={{ padding: '0 1rem', height: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', background: showFilterDropdown ? 'rgba(56, 189, 248, 0.15)' : 'transparent', color: showFilterDropdown ? '#fff' : 'var(--text-primary)', border: showFilterDropdown ? '1px solid var(--primary-color)' : '1px solid var(--border-color)', transition: 'all 0.3s ease' }}>
               <Filter size={18} /> Filter
             </button>
             {showFilterDropdown && (

@@ -935,3 +935,13 @@ p {
   box-shadow: 0 25px 50px rgba(0,0,0,0.6), 0 0 40px rgba(59, 130, 246, 0.2), inset 0 0 20px rgba(255,255,255,0.05);
   border-radius: 20px;
 }
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 5px rgba(56, 189, 248, 0.5); }
+  50% { box-shadow: 0 0 20px rgba(56, 189, 248, 1), 0 0 30px rgba(56, 189, 248, 0.8); }
+  100% { box-shadow: 0 0 5px rgba(56, 189, 248, 0.5); }
+}
+.logo-glow-pulse {
+  animation: pulse-glow 1.5s infinite;
+  color: var(--primary-color) !important;
+}

@@ -159,8 +159,14 @@ export default function DirectMessage() {
           <ArrowLeft size={24} />
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{ background: 'var(--primary-color)', padding: '0.5rem', borderRadius: '50%', display: 'flex' }}>
-             <User size={20} color="#fff" />
+          <div style={{
+            width: '45px', height: '45px', borderRadius: '50%',
+            background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(37, 99, 235, 0.2))',
+            border: '1px solid rgba(56, 189, 248, 0.3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'var(--primary-color)', fontWeight: 'bold', fontSize: '1.2rem', flexShrink: 0
+          }}>
+            {otherPerson?.charAt(0).toUpperCase()}
           </div>
           <div>
             <h2 style={{ margin: 0, fontSize: '1.25rem' }}>{otherPerson?.split('@')[0]}</h2>
@@ -188,37 +194,40 @@ export default function DirectMessage() {
                   background: isMe ? 'linear-gradient(135deg, var(--primary-color), #2563eb)' : 'rgba(15, 23, 42, 0.7)', 
                   color: isMe ? '#fff' : 'var(--text-primary)',
                   border: isMe ? 'none' : '1px solid rgba(96, 165, 250, 0.15)',
-                  padding: '0.85rem 1.15rem', 
+                  padding: '0.5rem 0.75rem', 
                   borderRadius: '16px', 
                   borderBottomRightRadius: isMe ? '4px' : '16px',
                   borderBottomLeftRadius: !isMe ? '4px' : '16px',
-                  maxWidth: '85%',
+                  maxWidth: '75%',
                   wordBreak: 'break-word',
                   boxShadow: isMe ? '0 4px 15px rgba(59, 130, 246, 0.3)' : '0 4px 15px rgba(0,0,0,0.2)',
                   backdropFilter: 'blur(8px)',
-                  marginTop: '0.5rem',
+                  marginTop: '0.2rem',
                   position: 'relative'
                 }}>
-                  {/* Internal Sender Tag */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', opacity: 0.9 }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: isMe ? '#e0f2fe' : '#38bdf8' }}>
-                      {msg.sender.split('@')[0]}
-                    </span>
-                    {isNew && <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '0.6rem', background: '#38bdf8', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>NEW</span>}
-                  </div>
                   {msg.replyTo && (
-                    <div style={{ background: 'rgba(0,0,0,0.2)', borderLeft: '3px solid rgba(255,255,255,0.4)', padding: '0.4rem 0.6rem', borderRadius: '4px', marginBottom: '0.5rem', fontSize: '0.8rem', opacity: 0.8 }}>
+                    <div style={{ background: 'rgba(0,0,0,0.2)', borderLeft: '3px solid rgba(255,255,255,0.4)', padding: '0.3rem 0.5rem', borderRadius: '4px', marginBottom: '0.3rem', fontSize: '0.75rem', opacity: 0.8 }}>
                       <div style={{ fontWeight: 'bold', marginBottom: '0.1rem' }}>{msg.replyTo.sender.split('@')[0]}</div>
                       <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{msg.replyTo.text}</div>
                     </div>
                   )}
-                  {msg.text && <div style={{ marginBottom: msg.fileName ? '0.5rem' : 0 }}>{msg.text}</div>}
-                  {msg.fileName && (
-                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.5rem 0.75rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}>
-                      <Paperclip size={14} />
-                      <a href={msg.fileData} download={msg.fileName} style={{ color: 'inherit', textDecoration: 'underline' }}>{msg.fileName}</a>
+                  
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: '0.9rem', lineHeight: '1.3' }}>
+                      {msg.text}
+                      {msg.fileName && (
+                        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.3rem 0.5rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', marginTop: msg.text ? '0.3rem' : '0' }}>
+                          <Paperclip size={12} />
+                          <a href={msg.fileData} download={msg.fileName} style={{ color: 'inherit', textDecoration: 'underline' }}>{msg.fileName}</a>
+                        </div>
+                      )}
                     </div>
-                  )}
+                    <div style={{ fontSize: '0.6rem', opacity: 0.7, textAlign: 'right', whiteSpace: 'nowrap', alignSelf: 'flex-end', marginBottom: '-2px' }}>
+                      {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                  
+                  {isNew && <span style={{ position: 'absolute', top: '-5px', right: '-5px', color: '#fff', fontWeight: 'bold', fontSize: '0.55rem', background: '#38bdf8', padding: '0.1rem 0.3rem', borderRadius: '4px', boxShadow: '0 0 5px #38bdf8' }}>NEW</span>}
 
                   {hoveredMsgId === msg.id && (
                     <div style={{ 
