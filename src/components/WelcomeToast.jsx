@@ -6,14 +6,23 @@ export default function WelcomeToast({ user }) {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    if (user) {
+    if (user && !sessionStorage.getItem('has_seen_welcome')) {
       const timer = setTimeout(() => setShow(true), 400);
-      const hide = setTimeout(() => setShow(false), 4500);
+      const hide = setTimeout(() => {
+        setShow(false);
+        sessionStorage.setItem('has_seen_welcome', 'true');
+      }, 4500);
       return () => { clearTimeout(timer); clearTimeout(hide); };
     }
-  }, [user?.uid]);
+  }, [user]);
 
-  const name = user?.displayName || user?.email?.split('@')[0] || 'User';
+  const formatName = (email) => {
+    if (!email) return '';
+    const namePart = email.split('@')[0].split('.')[0].replace(/[0-9]/g, '');
+    return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+  };
+
+  const name = formatName(user?.email) || 'User';
   const subtitle = user?.role === 'HEAD' ? 'Admin access active' : user?.role === 'COORDINATOR' ? 'SPOC duties loaded' : 'Your drives are ready';
 
   return (
@@ -32,7 +41,10 @@ export default function WelcomeToast({ user }) {
             cursor: 'pointer',
             animation: 'welcome-glow 2s ease-in-out infinite alternate'
           }}
-          onClick={() => setShow(false)}
+          onClick={() => {
+            setShow(false);
+            sessionStorage.setItem('has_seen_welcome', 'true');
+          }}
         >
           <div style={{
             display: 'flex',
