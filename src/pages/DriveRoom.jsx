@@ -1,9 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Send, ArrowLeft, ShieldAlert, Paperclip, X, MessageSquarePlus, LogOut } from 'lucide-react';
+import { Send, ArrowLeft, ShieldAlert, Paperclip, X, MessageSquarePlus, LogOut, Plus, Edit3 } from 'lucide-react';
 import { db } from '../firebase';
-import { doc, onSnapshot, updateDoc, collection, addDoc, query, orderBy, getDocs, setDoc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, onSnapshot, doc, getDocs, setDoc, updateDoc, increment, arrayUnion, arrayRemove, deleteField } from 'firebase/firestore';
+
+const btechBranches = ['CSE', 'IT', 'AI', 'DS', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'META', 'MINING'];
+const pgBranches = ['Construction Tech & Management', 'MBA', 'Environmental Eng', 'Geotechnical Eng', 'Transportation Eng', 'Structural Eng', 'Power Electronics', 'Mechanical Design', 'Thermal Eng', 'Manufacturing Eng', 'Mechatronics', 'Water Resources', 'Marine Structures', 'Geoinformatics', 'MCA', 'Chemistry', 'Physics', 'Signal Processing & ML', 'Communication Eng & Networks', 'VLSI Design', 'Information Security', 'Industrial Biotechnology', 'Environmental Science & Tech', 'Materials Eng', 'Nanotechnology'];
 
 export default function DriveRoom() {
   const { id } = useParams();
@@ -34,6 +37,21 @@ export default function DriveRoom() {
 
   const [showLeaveModal, setShowLeaveModal] = useState(false);
 
+  const [showEditBranchesModal, setShowEditBranchesModal] = useState(false);
+  const [editBranches, setEditBranches] = useState([]);
+  
+  const [toastMsg, setToastMsg] = useState('');
+  const [isToastFading, setIsToastFading] = useState(false);
+
+  const triggerToast = (msg) => {
+    setToastMsg(msg);
+    setIsToastFading(false);
+    setTimeout(() => {
+      setIsToastFading(true);
+      setTimeout(() => setToastMsg(''), 400);
+    }, 3000);
+  };
+
 
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -43,6 +61,7 @@ export default function DriveRoom() {
   
   const [hoveredMsgId, setHoveredMsgId] = useState(null);
   const [replyToMsg, setReplyToMsg] = useState(null);
+  const [showReactionPickerId, setShowReactionPickerId] = useState(null);
   const fileInputRef = useRef(null);
 
   // Sync Current Drive
@@ -135,12 +154,15 @@ export default function DriveRoom() {
     setReplyToMsg(null);
   };
 
-  const handleReaction = async (msgId, emoji) => {
+  const handleReaction = async (msgId, emoji, currentReactions) => {
     try {
       const safeEmail = user.email.replace(/\./g, '_');
+      const hasReactedWithThisEmoji = currentReactions && currentReactions[safeEmail] === emoji;
+      
       await updateDoc(doc(db, 'drives', id, 'messages', msgId), {
-        [`reactions.${safeEmail}`]: emoji
+        [`reactions.${safeEmail}`]: hasReactedWithThisEmoji ? deleteField() : emoji
       });
+      setShowReactionPickerId(null);
     } catch (err) {
       console.error("Reaction error", err);
     }
@@ -176,28 +198,41 @@ export default function DriveRoom() {
         coordinator: newSpocEmail
       });
 
-      // Notify the new SPOC
       await addDoc(collection(db, 'notifications'), {
         recipient: newSpocEmail,
-        message: `You have been assigned as the PRIMARY SPOC for ${currentDrive.company}.`,
+        message: `You have been assigned as the new PRIMARY SPOC for ${currentDrive.company}.`,
         type: 'SPOC_ASSIGNED',
         read: false,
         timestamp: new Date().toISOString()
       });
 
-      // Notify the HEAD (activity log)
       await addDoc(collection(db, 'notifications'), {
         recipient: user.email,
-        message: `Activity: You assigned ${newSpocEmail} as PRIMARY SPOC for ${currentDrive.company}.`,
+        message: `Activity: You changed the Primary SPOC to ${newSpocEmail} for ${currentDrive.company}.`,
         type: 'ACTIVITY',
         read: false,
         timestamp: new Date().toISOString()
       });
 
+      triggerToast("Primary SPOC changed successfully!");
     } catch (err) {
       console.error(err);
     }
+    setNewSpocEmail('');
     setShowSpocModal(false);
+  };
+
+  const handleEditBranchesSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await updateDoc(doc(db, 'drives', id), {
+        eligibleBranches: editBranches
+      });
+      triggerToast("Eligibility branches updated successfully!");
+      setShowEditBranchesModal(false);
+    } catch(err) {
+      console.error(err);
+    }
   };
 
   const handleChangeSecSpoc = async (e) => {
@@ -228,6 +263,7 @@ export default function DriveRoom() {
         timestamp: new Date().toISOString()
       });
 
+      triggerToast(`Secondary SPOC ${editingSpocIndex + 1} updated!`);
     } catch (err) {
       console.error(err);
     }
@@ -294,6 +330,13 @@ export default function DriveRoom() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
+      {toastMsg && (
+        <div className={`modern-toast ${isToastFading ? 'fade-out' : ''}`}>
+          <div style={{ background: 'var(--success-color)', width: '8px', height: '8px', borderRadius: '50%', boxShadow: '0 0 10px var(--success-color)' }} />
+          {toastMsg}
+        </div>
+      )}
+
       <div className="glass-panel" style={{ padding: '1rem 1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <button onClick={() => navigate('/dashboard')} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>
@@ -306,7 +349,15 @@ export default function DriveRoom() {
             </p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {isPriSpoc && (
+            <button 
+              onClick={() => { setEditBranches(currentDrive.eligibleBranches || []); setShowEditBranchesModal(true); }}
+              className="btn-glass primary" 
+            >
+              <Edit3 size={16} /> Edit Eligibility
+            </button>
+          )}
           {(isHead || isPriSpoc) && (
             <button 
               onClick={async () => {
@@ -314,19 +365,18 @@ export default function DriveRoom() {
                   await updateDoc(doc(db, 'drives', id), { status: currentDrive.status === 'Closed' ? 'Active' : 'Closed' });
                 } catch(err) { console.error(err); }
               }}
-              className="btn" 
-              style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', background: currentDrive.status === 'Closed' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: currentDrive.status === 'Closed' ? '#4ade80' : '#ef4444', border: `1px solid ${currentDrive.status === 'Closed' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}` }}
+              className={`btn-glass ${currentDrive.status === 'Closed' ? 'primary' : 'danger'}`}
             >
               {currentDrive.status === 'Closed' ? 'Reopen Drive' : 'Close Drive'}
             </button>
           )}
           {user?.role === 'HEAD' && (
-            <button onClick={() => { setNewSpocEmail(currentDrive.coordinator); setShowSpocModal(true); }} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
+            <button onClick={() => { setNewSpocEmail(currentDrive.coordinator); setShowSpocModal(true); }} className="btn-glass">
               Change Primary SPOC
             </button>
           )}
           {canLeave && (
-            <button onClick={() => setShowLeaveModal(true)} className="btn" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', background: 'rgba(244, 63, 94, 0.1)', color: 'var(--warning-color)', border: '1px solid rgba(244, 63, 94, 0.2)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button onClick={() => setShowLeaveModal(true)} className="btn-glass danger">
               <LogOut size={16} /> Leave Drive
             </button>
           )}
@@ -374,26 +424,9 @@ export default function DriveRoom() {
               <div 
                 key={msg.id} 
                 onMouseEnter={() => setHoveredMsgId(msg.id)}
-                onMouseLeave={() => setHoveredMsgId(null)}
+                onMouseLeave={() => { setHoveredMsgId(null); setShowReactionPickerId(null); }}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', animation: 'fadeIn 0.3s ease-out', position: 'relative' }}
               >
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.35rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  {msg.sender.split('@')[0]} 
-                  {isNew && <span style={{ color: '#38bdf8', fontWeight: 'bold', fontSize: '0.65rem' }}>NEW</span>}
-                  <span style={{ 
-                    background: msg.role === 'HEAD' ? 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)' : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', 
-                    color: '#fff', 
-                    padding: '0.2rem 0.6rem', 
-                    borderRadius: '12px', 
-                    fontSize: '0.65rem', 
-                    fontWeight: '700',
-                    letterSpacing: '0.5px',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                  }}>
-                    {displayRole}
-                  </span>
-                </div>
-                
                 <div className={`drive-msg-bubble ${isNew ? 'new-msg-glow' : ''}`} style={{ 
                   background: isMe ? 'linear-gradient(135deg, var(--primary-color), #2563eb)' : 'rgba(15, 23, 42, 0.7)', 
                   color: isMe ? '#fff' : 'var(--text-primary)',
@@ -406,8 +439,27 @@ export default function DriveRoom() {
                   wordBreak: 'break-word',
                   boxShadow: isMe ? '0 4px 15px rgba(59, 130, 246, 0.3)' : '0 4px 15px rgba(0,0,0,0.2)',
                   backdropFilter: 'blur(8px)',
-                  position: 'relative'
+                  position: 'relative',
+                  marginTop: '0.5rem'
                 }}>
+                  {/* Internal Sender Tag */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', opacity: 0.9 }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: isMe ? '#e0f2fe' : '#38bdf8' }}>
+                      {msg.sender.split('@')[0]}
+                    </span>
+                    {isNew && <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '0.6rem', background: '#38bdf8', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>NEW</span>}
+                    <span style={{ 
+                      background: msg.role === 'HEAD' ? 'rgba(225, 29, 72, 0.9)' : 'rgba(59, 130, 246, 0.9)', 
+                      color: '#fff', 
+                      padding: '0.15rem 0.4rem', 
+                      borderRadius: '8px', 
+                      fontSize: '0.6rem', 
+                      fontWeight: '700',
+                      letterSpacing: '0.5px'
+                    }}>
+                      {displayRole}
+                    </span>
+                  </div>
                   {msg.replyTo && (
                     <div style={{ background: 'rgba(0,0,0,0.2)', borderLeft: '3px solid rgba(255,255,255,0.4)', padding: '0.4rem 0.6rem', borderRadius: '4px', marginBottom: '0.5rem', fontSize: '0.8rem', opacity: 0.8 }}>
                       <div style={{ fontWeight: 'bold', marginBottom: '0.1rem' }}>{msg.replyTo.sender.split('@')[0]}</div>
@@ -424,15 +476,27 @@ export default function DriveRoom() {
 
                   {hoveredMsgId === msg.id && (
                     <div style={{ 
-                      display: 'flex', alignItems: 'center', background: 'rgba(30, 41, 59, 0.9)', padding: '0.3rem', borderRadius: '20px', gap: '0.3rem', border: '1px solid rgba(255,255,255,0.1)', animation: 'fadeIn 0.2s', zIndex: 10,
+                      display: 'flex', alignItems: 'center', background: 'rgba(30, 41, 59, 0.95)', padding: '0.3rem 0.5rem', borderRadius: '20px', gap: '0.4rem', border: '1px solid rgba(56, 189, 248, 0.3)', animation: 'fadeIn 0.2s', zIndex: 10,
                       position: 'absolute', top: '50%', transform: 'translateY(-50%)',
                       [isMe ? 'right' : 'left']: 'calc(100% + 0.5rem)',
-                      whiteSpace: 'nowrap', width: 'max-content'
+                      whiteSpace: 'nowrap', width: 'max-content',
+                      boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
                     }}>
-                      <button onClick={() => setReplyToMsg(msg)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: '#38bdf8', padding: '0 0.3rem' }}>Reply</button>
-                      {['👍', '❤️', '🎉'].map(emoji => (
-                        <button key={emoji} onClick={() => handleReaction(msg.id, emoji)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', padding: '0 0.2rem' }}>{emoji}</button>
+                      <button onClick={() => setReplyToMsg(msg)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: '#38bdf8', padding: '0 0.3rem', fontWeight: 'bold' }}>Reply</button>
+                      <div style={{ width: '1px', height: '14px', background: 'rgba(255,255,255,0.2)', margin: '0 0.2rem' }} />
+                      {['👍', '❤️', '😂'].map(emoji => (
+                        <button key={emoji} onClick={() => handleReaction(msg.id, emoji, msg.reactions)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', padding: '0 0.2rem', transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>{emoji}</button>
                       ))}
+                      <div style={{ position: 'relative' }}>
+                        <button onClick={() => setShowReactionPickerId(showReactionPickerId === msg.id ? null : msg.id)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: '#fff', padding: '0.2rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: '0.2rem' }}><Plus size={14} /></button>
+                        {showReactionPickerId === msg.id && (
+                          <div style={{ position: 'absolute', bottom: 'calc(100% + 10px)', left: '50%', transform: 'translateX(-50%)', background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(56, 189, 248, 0.4)', borderRadius: '24px', padding: '0.5rem', display: 'flex', gap: '0.4rem', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+                            {['🎉', '🔥', '👀', '💯', '🙏'].map(emoji => (
+                              <button key={emoji} onClick={() => handleReaction(msg.id, emoji, msg.reactions)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', padding: '0.2rem', transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.3)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>{emoji}</button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -547,6 +611,76 @@ export default function DriveRoom() {
               <div className="flex gap-2 justify-between mt-4">
                 <button type="button" className="btn btn-secondary w-full" onClick={() => setShowSecSpocModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary w-full">Update SPOC</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showEditBranchesModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="glass-card animate-fade-in" style={{ width: '100%', maxWidth: '500px', padding: '2rem' }}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Edit3 size={20} className="text-primary" /> Edit Eligibility</h2>
+              <button onClick={() => setShowEditBranchesModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '1.5rem' }}>&times;</button>
+            </div>
+            <form onSubmit={handleEditBranchesSubmit}>
+              <div style={{ maxHeight: '350px', overflowY: 'auto', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', marginBottom: '1rem' }}>
+                  
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
+                  <div style={{ fontWeight: 'bold', color: 'var(--primary-color)', fontSize: '0.85rem' }}>B.Tech Branches</div>
+                  <button type="button" onClick={() => {
+                    const hasAllBtech = btechBranches.every(b => editBranches.includes(b));
+                    if (hasAllBtech) {
+                      setEditBranches(editBranches.filter(b => !btechBranches.includes(b)));
+                    } else {
+                      setEditBranches([...new Set([...editBranches, ...btechBranches])]);
+                    }
+                  }} style={{ fontSize: '0.7rem', background: 'none', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', borderRadius: '4px', cursor: 'pointer', padding: '0.1rem 0.4rem' }}>
+                    Toggle B.Tech
+                  </button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '1rem' }}>
+                  {btechBranches.map(b => (
+                    <label key={b} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={editBranches.includes(b)} onChange={(e) => {
+                        if (e.target.checked) setEditBranches([...editBranches, b]);
+                        else setEditBranches(editBranches.filter(eb => eb !== b));
+                      }} style={{ accentColor: 'var(--primary-color)', cursor: 'pointer' }} />
+                      {b}
+                    </label>
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
+                  <div style={{ fontWeight: 'bold', color: 'var(--primary-color)', fontSize: '0.85rem' }}>PG Branches</div>
+                  <button type="button" onClick={() => {
+                    const hasAllPg = pgBranches.every(b => editBranches.includes(b));
+                    if (hasAllPg) {
+                      setEditBranches(editBranches.filter(b => !pgBranches.includes(b)));
+                    } else {
+                      setEditBranches([...new Set([...editBranches, ...pgBranches])]);
+                    }
+                  }} style={{ fontSize: '0.7rem', background: 'none', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', borderRadius: '4px', cursor: 'pointer', padding: '0.1rem 0.4rem' }}>
+                    Toggle PG
+                  </button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  {pgBranches.map(b => (
+                    <label key={b} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={editBranches.includes(b)} onChange={(e) => {
+                        if (e.target.checked) setEditBranches([...editBranches, b]);
+                        else setEditBranches(editBranches.filter(eb => eb !== b));
+                      }} style={{ accentColor: 'var(--primary-color)', cursor: 'pointer' }} />
+                      {b.length > 25 ? b.substring(0, 22) + '...' : b}
+                    </label>
+                  ))}
+                </div>
+                
+              </div>
+              <div className="flex gap-3 justify-center">
+                <button type="button" onClick={() => setShowEditBranchesModal(false)} className="btn btn-secondary w-full" style={{ padding: '0.8rem' }}>Cancel</button>
+                <button type="submit" className="btn btn-primary w-full" style={{ padding: '0.8rem' }}>Save Eligibility</button>
               </div>
             </form>
           </div>

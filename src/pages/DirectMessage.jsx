@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Send, ArrowLeft, Paperclip, X, User } from 'lucide-react';
+import { Send, ArrowLeft, Paperclip, X, User, Plus } from 'lucide-react';
 import { db } from '../firebase';
 import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 
@@ -16,6 +16,7 @@ export default function DirectMessage() {
   const [isTyping, setIsTyping] = useState(false);
   const [hoveredMsgId, setHoveredMsgId] = useState(null);
   const [replyToMsg, setReplyToMsg] = useState(null);
+  const [showReactionPickerId, setShowReactionPickerId] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   
@@ -108,7 +109,15 @@ export default function DirectMessage() {
       const msg = updatedMessages[msgIndex];
       const safeEmail = user.email.replace(/\./g, '_');
       if (!msg.reactions) msg.reactions = {};
-      msg.reactions[safeEmail] = emoji;
+      
+      const hasReactedWithThisEmoji = msg.reactions[safeEmail] === emoji;
+      if (hasReactedWithThisEmoji) {
+        delete msg.reactions[safeEmail];
+      } else {
+        msg.reactions[safeEmail] = emoji;
+      }
+      
+      setShowReactionPickerId(null);
       
       await updateDoc(doc(db, 'dms', id), { messages: updatedMessages });
     } catch (err) {
@@ -171,13 +180,9 @@ export default function DirectMessage() {
               <div 
                 key={msg.id} 
                 onMouseEnter={() => setHoveredMsgId(msg.id)}
-                onMouseLeave={() => setHoveredMsgId(null)}
+                onMouseLeave={() => { setHoveredMsgId(null); setShowReactionPickerId(null); }}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', animation: 'fadeIn 0.3s ease-out', position: 'relative' }}
               >
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.35rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  {msg.sender.split('@')[0]}
-                  {isNew && <span style={{ color: '#38bdf8', fontWeight: 'bold', fontSize: '0.65rem' }}>NEW</span>}
-                </div>
                 
                 <div className={`drive-msg-bubble ${isNew ? 'new-msg-glow' : ''}`} style={{ 
                   background: isMe ? 'linear-gradient(135deg, var(--primary-color), #2563eb)' : 'rgba(15, 23, 42, 0.7)', 
@@ -191,9 +196,16 @@ export default function DirectMessage() {
                   wordBreak: 'break-word',
                   boxShadow: isMe ? '0 4px 15px rgba(59, 130, 246, 0.3)' : '0 4px 15px rgba(0,0,0,0.2)',
                   backdropFilter: 'blur(8px)',
-                  marginTop: '0.25rem',
+                  marginTop: '0.5rem',
                   position: 'relative'
                 }}>
+                  {/* Internal Sender Tag */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', opacity: 0.9 }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: isMe ? '#e0f2fe' : '#38bdf8' }}>
+                      {msg.sender.split('@')[0]}
+                    </span>
+                    {isNew && <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '0.6rem', background: '#38bdf8', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>NEW</span>}
+                  </div>
                   {msg.replyTo && (
                     <div style={{ background: 'rgba(0,0,0,0.2)', borderLeft: '3px solid rgba(255,255,255,0.4)', padding: '0.4rem 0.6rem', borderRadius: '4px', marginBottom: '0.5rem', fontSize: '0.8rem', opacity: 0.8 }}>
                       <div style={{ fontWeight: 'bold', marginBottom: '0.1rem' }}>{msg.replyTo.sender.split('@')[0]}</div>
@@ -210,15 +222,27 @@ export default function DirectMessage() {
 
                   {hoveredMsgId === msg.id && (
                     <div style={{ 
-                      display: 'flex', alignItems: 'center', background: 'rgba(30, 41, 59, 0.9)', padding: '0.3rem', borderRadius: '20px', gap: '0.3rem', border: '1px solid rgba(255,255,255,0.1)', animation: 'fadeIn 0.2s', zIndex: 10,
+                      display: 'flex', alignItems: 'center', background: 'rgba(30, 41, 59, 0.95)', padding: '0.3rem 0.5rem', borderRadius: '20px', gap: '0.4rem', border: '1px solid rgba(56, 189, 248, 0.3)', animation: 'fadeIn 0.2s', zIndex: 10,
                       position: 'absolute', top: '50%', transform: 'translateY(-50%)',
                       [isMe ? 'right' : 'left']: 'calc(100% + 0.5rem)',
-                      whiteSpace: 'nowrap', width: 'max-content'
+                      whiteSpace: 'nowrap', width: 'max-content',
+                      boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
                     }}>
-                      <button onClick={() => setReplyToMsg(msg)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: '#38bdf8', padding: '0 0.3rem' }}>Reply</button>
-                      {['👍', '❤️', '🎉'].map(emoji => (
-                        <button key={emoji} onClick={() => handleReaction(msg.id, emoji)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', padding: '0 0.2rem' }}>{emoji}</button>
+                      <button onClick={() => setReplyToMsg(msg)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: '#38bdf8', padding: '0 0.3rem', fontWeight: 'bold' }}>Reply</button>
+                      <div style={{ width: '1px', height: '14px', background: 'rgba(255,255,255,0.2)', margin: '0 0.2rem' }} />
+                      {['👍', '❤️', '😂'].map(emoji => (
+                        <button key={emoji} onClick={() => handleReaction(msg.id, emoji)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', padding: '0 0.2rem', transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>{emoji}</button>
                       ))}
+                      <div style={{ position: 'relative' }}>
+                        <button onClick={() => setShowReactionPickerId(showReactionPickerId === msg.id ? null : msg.id)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: '#fff', padding: '0.2rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: '0.2rem' }}><Plus size={14} /></button>
+                        {showReactionPickerId === msg.id && (
+                          <div style={{ position: 'absolute', bottom: 'calc(100% + 10px)', left: '50%', transform: 'translateX(-50%)', background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(56, 189, 248, 0.4)', borderRadius: '24px', padding: '0.5rem', display: 'flex', gap: '0.4rem', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+                            {['🎉', '🔥', '👀', '💯', '🙏'].map(emoji => (
+                              <button key={emoji} onClick={() => handleReaction(msg.id, emoji)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', padding: '0.2rem', transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.3)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>{emoji}</button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

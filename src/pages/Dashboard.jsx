@@ -57,6 +57,18 @@ export default function Dashboard() {
   const [showModal, setShowModal] = useState(false);
   const [newDrive, setNewDrive] = useState({ company: '', role: '', coordinator: '', secondarySpoc1: '', secondarySpoc2: '', eligibleBranches: [...btechBranches, ...pgBranches] });
   
+  const [toastMsg, setToastMsg] = useState('');
+  const [isToastFading, setIsToastFading] = useState(false);
+
+  const triggerToast = (msg) => {
+    setToastMsg(msg);
+    setIsToastFading(false);
+    setTimeout(() => {
+      setIsToastFading(true);
+      setTimeout(() => setToastMsg(''), 400);
+    }, 3000);
+  };
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState('ALL');
 
@@ -116,6 +128,7 @@ export default function Dashboard() {
       status: 'Active'
     });
     setShowModal(false);
+    triggerToast(`Drive for ${newDrive.company} created successfully!`);
     setNewDrive({ company: '', role: '', coordinator: '', secondarySpoc1: '', secondarySpoc2: '', eligibleBranches: [...btechBranches, ...pgBranches] });
   };
 
@@ -193,13 +206,20 @@ export default function Dashboard() {
 
   return (
     <div>
+      {toastMsg && (
+        <div className={`modern-toast ${isToastFading ? 'fade-out' : ''}`}>
+          <div style={{ background: 'var(--success-color)', width: '8px', height: '8px', borderRadius: '50%', boxShadow: '0 0 10px var(--success-color)' }} />
+          {toastMsg}
+        </div>
+      )}
+
       <div className="flex justify-between items-center mb-4">
         <div>
           <h1 className="cyber-glitch-text" style={{ fontSize: '2.5rem', marginBottom: '0.25rem' }}>Company Drives</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Join drives to receive real-time updates.</p>
         </div>
         {user?.role === 'HEAD' && (
-          <button onClick={() => setShowModal(true)} className="btn btn-primary">
+          <button onClick={() => setShowModal(true)} className="btn btn-create-glow" style={{ padding: '0.75rem 1.5rem', fontSize: '1rem', fontWeight: 'bold' }}>
             <Plus size={18} /> Create Drive
           </button>
         )}
@@ -257,7 +277,16 @@ export default function Dashboard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <Building2 className="text-primary" size={24} />
                   <div>
-                    <h3 style={{ margin: 0, fontSize: '1.1rem', letterSpacing: '0.5px' }}>
+                    <h3 style={{ 
+                      margin: 0, 
+                      fontSize: '1.25rem', 
+                      letterSpacing: '0.5px', 
+                      background: 'linear-gradient(135deg, #fff 0%, #94a3b8 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      fontWeight: '700',
+                      textShadow: '0 2px 10px rgba(255,255,255,0.1)'
+                    }}>
                       {drive.company}
                     </h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.35rem', flexWrap: 'wrap' }}>
