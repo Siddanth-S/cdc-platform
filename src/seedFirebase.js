@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { collection, getDocs, doc, setDoc, addDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, addDoc, getDoc } from 'firebase/firestore';
 
 const BTECH_BRANCHES = ['CSE', 'IT', 'AI', 'DS', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'META', 'MINING'];
 const PG_BRANCHES = ['MBA', 'MCA', 'Construction Tech & Management', 'Structural Eng', 'Power Electronics', 'Thermal Eng', 'Mechatronics', 'VLSI Design', 'Information Security'];
@@ -94,90 +94,84 @@ const INITIAL_DMS = [
 
 export const seedDatabase = async () => {
   try {
-    const isSeeded = localStorage.getItem('db_seeded_v3');
-    if (isSeeded) {
-      console.log("DB already seeded with v3.");
+    // Check if Firestore already has data — use a sentinel doc instead of localStorage
+    const sentinelRef = doc(db, '_meta', 'seed_status');
+    const sentinelSnap = await getDoc(sentinelRef);
+    if (sentinelSnap.exists() && sentinelSnap.data().version === 'v3') {
+      // Already seeded, do nothing
       return;
     }
-    
-    console.log("Starting DB reset and seed...");
 
-    // 1. Delete all existing drives
-    const drivesRef = collection(db, 'drives');
-    const drivesSnapshot = await getDocs(drivesRef);
-    for (const d of drivesSnapshot.docs) {
-      const msgsRef = collection(db, 'drives', d.id, 'messages');
-      const msgsSnap = await getDocs(msgsRef);
-      for (const m of msgsSnap.docs) {
-        await deleteDoc(m.ref);
-      }
-      await deleteDoc(d.ref);
-    }
-    
-    // 2. Delete all existing DMs
-    const dmsRef = collection(db, 'dms');
-    const dmsSnapshot = await getDocs(dmsRef);
-    for (const d of dmsSnapshot.docs) {
-      await deleteDoc(d.ref);
+    // Also check if drives collection already has 40+ docs (safety check)
+    const drivesSnapshot = await getDocs(collection(db, 'drives'));
+    if (drivesSnapshot.size >= 40) {
+      // Mark as seeded and return
+      await setDoc(sentinelRef, { version: 'v3', seededAt: new Date().toISOString() });
+      return;
     }
 
-    // 3. Seed 50+ new drives
+    console.log("Seeding database with 51 companies...");
+
+    // Seed drives (only add if doc doesn't already exist)
     let idCounter = 1;
     for (const company of COMPANIES) {
-      const branches = company.branches || BTECH_BRANCHES;
-      const role = company.roles[Math.floor(Math.random() * company.roles.length)];
-      
-      const spocIndex = idCounter % MOCK_USERS.length;
-      const sec1Index = (idCounter + 1) % MOCK_USERS.length;
-      const sec2Index = (idCounter + 2) % MOCK_USERS.length;
-
-      const driveData = {
-        id: String(idCounter),
-        company: company.name,
-        role: role,
-        coordinator: MOCK_USERS[spocIndex],
-        secondarySpocs: [MOCK_USERS[sec1Index], MOCK_USERS[sec2Index]],
-        joined: Math.floor(Math.random() * 400) + 50,
-        eligibleBranches: branches
-      };
-
       const driveDocRef = doc(db, 'drives', String(idCounter));
-      await setDoc(driveDocRef, driveData);
-
-      // Seed the welcome message in the group
-      const msgsRef = collection(db, 'drives', String(idCounter), 'messages');
-      await addDoc(msgsRef, {
-        sender: 'head1@nitk.edu.in',
-        role: 'HEAD',
-        text: `Welcome to the ${company.name} drive! Only admins and the assigned SPOCs can post messages here.`,
-        timestamp: new Date().toISOString()
-      });
+      const existing = await getDoc(driveDocRef);
       
-      // Random dummy chat if this user is a SPOC
-      if (idCounter % 3 === 0) {
+      if (!existing.exists()) {
+        const branches = company.branches || BTECH_BRANCHES;
+        const role = company.roles[Math.floor(Math.random() * company.roles.length)];
+        
+        const spocIndex = idCounter % MOCK_USERS.length;
+        const sec1Index = (idCounter + 1) % MOCK_USERS.length;
+        const sec2Index = (idCounter + 2) % MOCK_USERS.length;
+
+        const driveData = {
+          id: String(idCounter),
+          company: company.name,
+          role: role,
+          coordinator: MOCK_USERS[spocIndex],
+          secondarySpocs: [MOCK_USERS[sec1Index], MOCK_USERS[sec2Index]],
+          joined: Math.floor(Math.random() * 400) + 50,
+          eligibleBranches: branches
+        };
+
+        await setDoc(driveDocRef, driveData);
+
+        // Seed the welcome message in the group
+        const msgsRef = collection(db, 'drives', String(idCounter), 'messages');
         await addDoc(msgsRef, {
-          sender: MOCK_USERS[spocIndex],
-          role: 'SPOC',
-          text: `Hi everyone, I am the primary SPOC for ${company.name}. Please let me know if you have any questions!`,
-          timestamp: new Date(Date.now() + 5000).toISOString()
+          sender: 'head1@nitk.edu.in',
+          role: 'HEAD',
+          text: `Welcome to the ${company.name} drive! Only admins and the assigned SPOCs can post messages here.`,
+          timestamp: new Date().toISOString()
         });
+
+        if (idCounter % 3 === 0) {
+          await addDoc(msgsRef, {
+            sender: MOCK_USERS[spocIndex],
+            role: 'SPOC',
+            text: `Hi everyone, I am the primary SPOC for ${company.name}. Please let me know if you have any questions!`,
+            timestamp: new Date(Date.now() + 5000).toISOString()
+          });
+        }
       }
 
       idCounter++;
     }
 
-    // 4. Seed DMs
+    // Seed DMs (only if they don't exist)
     for (const dm of INITIAL_DMS) {
-      await setDoc(doc(db, 'dms', dm.id), dm);
+      const dmRef = doc(db, 'dms', dm.id);
+      const dmSnap = await getDoc(dmRef);
+      if (!dmSnap.exists()) {
+        await setDoc(dmRef, dm);
+      }
     }
 
-    localStorage.setItem('db_seeded_v3', 'true');
-    console.log("Database reset and seeded with 50+ companies successfully!");
-    
-    // Slight delay before reload to ensure writes finished
-    setTimeout(() => {
-      window.location.reload();
-    }, 1500);
+    // Mark as seeded in Firestore
+    await setDoc(sentinelRef, { version: 'v3', seededAt: new Date().toISOString() });
+    console.log("Database seeded with 51 companies successfully!");
 
   } catch (error) {
     console.error("Error seeding database:", error);
