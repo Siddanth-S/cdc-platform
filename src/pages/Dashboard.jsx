@@ -198,8 +198,10 @@ export default function Dashboard() {
       return true;
     })
     .sort((a, b) => {
-      const aPinned = isDrivePinned(a);
-      const bPinned = isDrivePinned(b);
+      const aIsSpoc = a.coordinator === user?.email || a.secondarySpocs?.includes(user?.email);
+      const bIsSpoc = b.coordinator === user?.email || b.secondarySpocs?.includes(user?.email);
+      const aPinned = isDrivePinned(a) || aIsSpoc;
+      const bPinned = isDrivePinned(b) || bIsSpoc;
       if (aPinned && !bPinned) return -1;
       if (!aPinned && bPinned) return 1;
       return 0;
@@ -260,19 +262,18 @@ export default function Dashboard() {
           <button className={`segmented-btn ${filterMode === 'CLOSED' ? 'active' : ''}`} onClick={() => {setFilterMode('CLOSED'); setShowFilterDropdown(false);}}>
             Closed
           </button>
-          {user?.role !== 'STUDENT' && (
-            <button className={`segmented-btn ${filterMode === 'SPOC' ? 'active' : ''}`} onClick={() => {setFilterMode('SPOC'); setShowFilterDropdown(false);}}>
-              SPOC
-            </button>
-          )}
+          <button className={`segmented-btn ${filterMode === 'SPOC' ? 'active' : ''}`} onClick={() => {setFilterMode('SPOC'); setShowFilterDropdown(false);}}>
+            SPOC
+          </button>
         </div>
       </div>
 
       <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
         {displayDrives.map(drive => {
-          const isJoined = joinedDrives.includes(String(drive.id)) || user?.role === 'HEAD';
-          const isPinned = isDrivePinned(drive);
-          const isEligible = user?.role === 'HEAD' || !drive.eligibleBranches || (userProfile?.branch && drive.eligibleBranches.includes(userProfile.branch));
+          const isSpoc = drive.coordinator === user?.email || drive.secondarySpocs?.includes(user?.email);
+          const isJoined = joinedDrives.includes(String(drive.id)) || user?.role === 'HEAD' || isSpoc;
+          const isPinned = isDrivePinned(drive) || isSpoc;
+          const isEligible = user?.role === 'HEAD' || !drive.eligibleBranches || (userProfile?.branch && drive.eligibleBranches.includes(userProfile.branch)) || isSpoc;
           
           return (
             <div 
@@ -312,6 +313,21 @@ export default function Dashboard() {
                       }}>
                         {drive.status === 'Closed' ? 'Closed' : 'Active'}
                       </span>
+                      {isSpoc && (
+                        <span style={{ 
+                          fontSize: '0.65rem', 
+                          background: 'rgba(168, 85, 247, 0.2)', 
+                          color: '#c084fc', 
+                          border: '1px solid rgba(168, 85, 247, 0.5)',
+                          padding: '0.15rem 0.5rem', 
+                          borderRadius: '12px', 
+                          textTransform: 'uppercase', 
+                          letterSpacing: '0.5px',
+                          boxShadow: '0 0 8px rgba(168, 85, 247, 0.3)'
+                        }}>
+                          SPOC: You
+                        </span>
+                      )}
                       {userProfile?.branch !== 'ADMIN' && (
                         <span style={{ 
                           fontSize: '0.65rem', 
