@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
@@ -13,8 +13,15 @@ export default function Login() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { loginWithGoogle, loginWithEmail, signUp, resetPassword } = useAuth();
+  const { loginWithGoogle, loginWithEmail, signUp, resetPassword, user } = useAuth();
   const navigate = useNavigate();
+
+  // Navigate AFTER user state is fully set by onAuthStateChanged
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleGoogleSignIn = async () => {
     setError('');
@@ -22,7 +29,7 @@ export default function Login() {
     setIsLoading(true);
     try {
       await loginWithGoogle();
-      navigate('/dashboard');
+      // navigation handled by useEffect when user state updates
     } catch (err) {
       setError(err.message);
     } finally {
@@ -37,7 +44,7 @@ export default function Login() {
     setIsLoading(true);
     try {
       await loginWithEmail(email, password);
-      navigate('/dashboard');
+      // navigation handled by useEffect when user state updates
     } catch (err) {
       setError(err.message);
     } finally {
