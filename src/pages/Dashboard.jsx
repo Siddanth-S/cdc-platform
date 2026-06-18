@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Building2, Plus, Users, Search, Pin, CheckCircle2 } from 'lucide-react';
 import { db } from '../firebase';
-import { collection, onSnapshot, doc, setDoc, updateDoc, increment } from 'firebase/firestore';
+import { collection, onSnapshot, doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -11,6 +11,31 @@ export default function Dashboard() {
   
   const [drives, setDrives] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [selectedBranch, setSelectedBranch] = useState('');
+
+  // Fetch User Profile
+  useEffect(() => {
+    if (!user?.email) return;
+    const fetchProfile = async () => {
+      try {
+        const docSnap = await getDoc(doc(db, 'users', user.email));
+        if (docSnap.exists()) {
+          setUserProfile(docSnap.data());
+        } else {
+          if (user.role === 'HEAD') {
+            setUserProfile({ branch: 'ADMIN' });
+          } else {
+            setShowProfileModal(true);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching profile", err);
+      }
+    };
+    fetchProfile();
+  }, [user]);
 
   // Sync with Firestore
   useEffect(() => {
@@ -26,7 +51,7 @@ export default function Dashboard() {
   }, []);
 
   const [showModal, setShowModal] = useState(false);
-  const [newDrive, setNewDrive] = useState({ company: '', role: '', coordinator: '' });
+  const [newDrive, setNewDrive] = useState({ company: '', role: '', coordinator: '', stage: 'Registrations Open', eligibleBranches: ['CSE', 'IT', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'META', 'MINING'] });
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState('ALL');
@@ -48,6 +73,18 @@ export default function Dashboard() {
 
   const [driveToJoin, setDriveToJoin] = useState(null);
 
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    if (!selectedBranch) return;
+    try {
+      await setDoc(doc(db, 'users', user.email), { branch: selectedBranch });
+      setUserProfile({ branch: selectedBranch });
+      setShowProfileModal(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     if (user?.email) {
       localStorage.setItem(`pinned_${user.email}`, JSON.stringify(pinnedDrives));
@@ -64,10 +101,13 @@ export default function Dashboard() {
       role: newDrive.role,
       coordinator: newDrive.coordinator,
       secondarySpocs: [],
-      joined: 0
+      joined: 0,
+      stage: newDrive.stage,
+      eligibleBranches: newDrive.eligibleBranches,
+      status: 'Active'
     });
     setShowModal(false);
-    setNewDrive({ company: '', role: '', coordinator: '' });
+    setNewDrive({ company: '', role: '', coordinator: '', stage: 'Registrations Open', eligibleBranches: ['CSE', 'IT', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'META', 'MINING'] });
   };
 
   const isDrivePinned = (drive) => {
@@ -121,9 +161,16 @@ export default function Dashboard() {
       const strId = String(d.id);
       const matchSearch = d.company.toLowerCase().includes(searchQuery.toLowerCase()) || d.role.toLowerCase().includes(searchQuery.toLowerCase());
       if (!matchSearch) return false;
+      
       if (filterMode === 'JOINED' && !joinedDrives.includes(strId)) return false;
       const isSpoc = d.coordinator === user?.email || d.secondarySpocs?.includes(user?.email);
       if (filterMode === 'SPOC' && !isSpoc) return false;
+      if (filterMode === 'ACTIVE' && d.status === 'Closed') return false;
+      if (filterMode === 'CLOSED' && d.status !== 'Closed') return false;
+      if (filterMode === 'ELIGIBLE') {
+        const branch = userProfile?.branch;
+        if (!branch || (d.eligibleBranches && !d.eligibleBranches.includes(branch))) return false;
+      }
       return true;
     })
     .sort((a, b) => {
@@ -164,24 +211,24 @@ export default function Dashboard() {
           />
         </div>
 
-        <div className="segmented-control" style={{ display: 'flex', gap: '0.25rem' }}>
-          <button 
-            className={`segmented-btn ${filterMode === 'ALL' ? 'active' : ''}`}
-            onClick={() => setFilterMode('ALL')}
-          >
+        <div className="segmented-control" style={{ display: 'flex', gap: '0.25rem', overflowX: 'auto', paddingBottom: '4px' }}>
+          <button className={`segmented-btn ${filterMode === 'ALL' ? 'active' : ''}`} onClick={() => setFilterMode('ALL')}>
             All Drives
           </button>
-          <button 
-            className={`segmented-btn ${filterMode === 'JOINED' ? 'active' : ''}`}
-            onClick={() => setFilterMode('JOINED')}
-          >
-            My Joined Drives
+          <button className={`segmented-btn ${filterMode === 'ACTIVE' ? 'active' : ''}`} onClick={() => setFilterMode('ACTIVE')}>
+            Active
           </button>
-          <button 
-            className={`segmented-btn ${filterMode === 'SPOC' ? 'active' : ''}`}
-            onClick={() => setFilterMode('SPOC')}
-          >
-            SPOC Duties
+          <button className={`segmented-btn ${filterMode === 'CLOSED' ? 'active' : ''}`} onClick={() => setFilterMode('CLOSED')}>
+            Closed
+          </button>
+          <button className={`segmented-btn ${filterMode === 'ELIGIBLE' ? 'active' : ''}`} onClick={() => setFilterMode('ELIGIBLE')}>
+            My Eligible
+          </button>
+          <button className={`segmented-btn ${filterMode === 'JOINED' ? 'active' : ''}`} onClick={() => setFilterMode('JOINED')}>
+            Joined
+          </button>
+          <button className={`segmented-btn ${filterMode === 'SPOC' ? 'active' : ''}`} onClick={() => setFilterMode('SPOC')}>
+            SPOC
           </button>
         </div>
       </div>
@@ -190,20 +237,28 @@ export default function Dashboard() {
         {displayDrives.map(drive => {
           const isJoined = joinedDrives.includes(String(drive.id)) || user?.role === 'HEAD';
           const isPinned = isDrivePinned(drive);
+          const isEligible = user?.role === 'HEAD' || !drive.eligibleBranches || (userProfile?.branch && drive.eligibleBranches.includes(userProfile.branch));
           
           return (
             <div 
               key={drive.id} 
               className="cyber-card" 
-              style={{ display: 'flex', flexDirection: 'column', position: 'relative', borderLeft: isJoined ? '4px solid var(--success-color)' : (isPinned ? '4px solid var(--warning-color)' : '1px solid rgba(255, 255, 255, 0.05)'), cursor: 'pointer' }}
-              onClick={() => handleCardClick(drive)}
+              style={{ display: 'flex', flexDirection: 'column', position: 'relative', borderLeft: isJoined ? '4px solid var(--success-color)' : (isPinned ? '4px solid var(--warning-color)' : '1px solid rgba(255, 255, 255, 0.05)'), cursor: isEligible ? 'pointer' : 'not-allowed', opacity: isEligible ? 1 : 0.6 }}
+              onClick={() => isEligible && handleCardClick(drive)}
             >
               {/* Header */}
               <div style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <Building2 className="text-primary" size={24} />
                   <div>
-                    <h3 style={{ margin: 0, fontSize: '1.1rem', letterSpacing: '0.5px' }}>{drive.company}</h3>
+                    <h3 style={{ margin: 0, fontSize: '1.1rem', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {drive.company}
+                      {drive.stage && (
+                        <span style={{ fontSize: '0.65rem', background: 'var(--primary-color)', color: '#fff', padding: '0.15rem 0.4rem', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          {drive.stage}
+                        </span>
+                      )}
+                    </h3>
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>{drive.role}</div>
                   </div>
                 </div>
@@ -232,13 +287,23 @@ export default function Dashboard() {
               
               <div style={{ padding: '1.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.05)', background: 'rgba(0,0,0,0.1)' }}>
                 {!isJoined ? (
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); setDriveToJoin(drive); }}
-                    className="cyber-btn w-full"
-                    style={{ padding: '0.85rem', fontSize: '0.95rem' }}
-                  >
-                    Join Drive
-                  </button>
+                  isEligible ? (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setDriveToJoin(drive); }}
+                      className="cyber-btn w-full"
+                      style={{ padding: '0.85rem', fontSize: '0.95rem' }}
+                    >
+                      Join Drive
+                    </button>
+                  ) : (
+                    <button 
+                      disabled
+                      className="cyber-btn w-full"
+                      style={{ padding: '0.85rem', fontSize: '0.95rem', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-secondary)', cursor: 'not-allowed', border: '1px solid rgba(255, 255, 255, 0.1)' }}
+                    >
+                      Not Eligible: Branch Restriction
+                    </button>
+                  )
                 ) : (
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--success-color)', fontWeight: '500' }}>
                     <CheckCircle2 size={16} className="joined-icon" /> Joined
@@ -272,6 +337,24 @@ export default function Dashboard() {
                 <input required className="input-field" value={newDrive.role} onChange={e => setNewDrive({...newDrive, role: e.target.value})} />
               </div>
               <div className="input-group">
+                <label className="input-label">Stage</label>
+                <select className="input-field" value={newDrive.stage} onChange={e => setNewDrive({...newDrive, stage: e.target.value})}>
+                  <option value="Registrations Open">Registrations Open</option>
+                  <option value="Online Test">Online Test</option>
+                  <option value="Interviews">Interviews</option>
+                  <option value="Results Out">Results Out</option>
+                  <option value="Closed">Closed</option>
+                </select>
+              </div>
+              <div className="input-group">
+                <label className="input-label">Eligible Branches (Ctrl/Cmd+Click to select multiple)</label>
+                <select multiple className="input-field" style={{ height: '100px' }} value={newDrive.eligibleBranches} onChange={e => setNewDrive({...newDrive, eligibleBranches: Array.from(e.target.selectedOptions, option => option.value)})}>
+                  {['CSE', 'IT', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'META', 'MINING'].map(b => (
+                    <option key={b} value={b}>{b}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="input-group">
                 <label className="input-label">Assign SPOC (Email)</label>
                 <input required type="email" className="input-field" value={newDrive.coordinator} onChange={e => setNewDrive({...newDrive, coordinator: e.target.value})} placeholder="student@nitk.edu.in" />
               </div>
@@ -303,6 +386,39 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {showProfileModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+          <div className="glass-card animate-fade-in" style={{ width: '100%', maxWidth: '400px', padding: '2.5rem 2rem', textAlign: 'center' }}>
+            <h2 style={{ margin: '0 0 1rem 0', fontSize: '1.5rem', color: '#fff' }}>Complete Your Profile</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontSize: '0.95rem' }}>
+              Please select your branch to view eligible placement drives.
+            </p>
+            <form onSubmit={handleSaveProfile}>
+              <select 
+                className="input-field" 
+                style={{ marginBottom: '1.5rem', width: '100%' }}
+                value={selectedBranch}
+                onChange={e => setSelectedBranch(e.target.value)}
+                required
+              >
+                <option value="" disabled>Select Branch</option>
+                <option value="CSE">Computer Science (CSE)</option>
+                <option value="IT">Information Technology (IT)</option>
+                <option value="ECE">Electronics (ECE)</option>
+                <option value="EEE">Electrical (EEE)</option>
+                <option value="MECH">Mechanical (MECH)</option>
+                <option value="CIVIL">Civil Engineering (CIVIL)</option>
+                <option value="CHEM">Chemical Engineering (CHEM)</option>
+                <option value="META">Metallurgy (META)</option>
+                <option value="MINING">Mining Engineering (MINING)</option>
+              </select>
+              <button type="submit" className="btn btn-primary w-full" style={{ padding: '0.8rem' }}>Save & Continue</button>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

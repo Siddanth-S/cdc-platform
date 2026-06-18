@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Send, ArrowLeft, Paperclip, X, User } from 'lucide-react';
 import { db } from '../firebase';
-import { doc, onSnapshot, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 
 export default function DirectMessage() {
   const { id } = useParams();
@@ -13,6 +13,9 @@ export default function DirectMessage() {
   const [dmData, setDmData] = useState(null);
   const [inputText, setInputText] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [hoveredMsgId, setHoveredMsgId] = useState(null);
+  const [replyToMsg, setReplyToMsg] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   
@@ -82,7 +85,8 @@ export default function DirectMessage() {
           text: inputText,
           fileData,
           fileName,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          replyTo: replyToMsg ? { id: replyToMsg.id, sender: replyToMsg.sender, text: replyToMsg.text } : null
         })
       });
     } catch (err) {
@@ -91,6 +95,38 @@ export default function DirectMessage() {
     
     setInputText('');
     setSelectedFile(null);
+    setReplyToMsg(null);
+  };
+
+  const handleReaction = async (msgId, emoji) => {
+    try {
+      if (!dmData || !dmData.messages) return;
+      const updatedMessages = [...dmData.messages];
+      const msgIndex = updatedMessages.findIndex(m => m.id === msgId);
+      if (msgIndex === -1) return;
+      
+      const msg = updatedMessages[msgIndex];
+      const safeEmail = user.email.replace(/\./g, '_');
+      if (!msg.reactions) msg.reactions = {};
+      msg.reactions[safeEmail] = emoji;
+      
+      await updateDoc(doc(db, 'dms', id), { messages: updatedMessages });
+    } catch (err) {
+      console.error("Reaction error", err);
+    }
+  };
+
+  const handleTyping = () => {
+    if (!isTyping) {
+      setIsTyping(true);
+      updateDoc(doc(db, 'dms', id), { typing: arrayUnion(user.email) });
+    }
+    
+    if (window.dmTypingTimeout) clearTimeout(window.dmTypingTimeout);
+    window.dmTypingTimeout = setTimeout(() => {
+      setIsTyping(false);
+      updateDoc(doc(db, 'dms', id), { typing: arrayRemove(user.email) });
+    }, 3000);
   };
 
   const handleFileChange = (e) => {
@@ -129,37 +165,74 @@ export default function DirectMessage() {
           {dmData.messages?.map(msg => {
             const isMe = msg.sender === user?.email;
             const msgTime = new Date(msg.timestamp).getTime();
-            // It is unread (and should glow) if it was sent AFTER the last time we read this room (prior to opening it just now)
             const isNew = !isMe && msg.timestamp && msgTime > lastRead;
             
             return (
-              <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', animation: 'fadeIn 0.3s ease-out' }}>
+              <div 
+                key={msg.id} 
+                onMouseEnter={() => setHoveredMsgId(msg.id)}
+                onMouseLeave={() => setHoveredMsgId(null)}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', animation: 'fadeIn 0.3s ease-out', position: 'relative' }}
+              >
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.35rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   {msg.sender.split('@')[0]}
                   {isNew && <span style={{ color: '#38bdf8', fontWeight: 'bold', fontSize: '0.65rem' }}>NEW</span>}
                 </div>
-                <div className={`drive-msg-bubble ${isNew ? 'new-msg-glow' : ''}`} style={{ 
-                  background: isMe ? 'linear-gradient(135deg, var(--primary-color), #2563eb)' : 'rgba(15, 23, 42, 0.7)', 
-                  color: isMe ? '#fff' : 'var(--text-primary)',
-                  border: isMe ? 'none' : '1px solid rgba(96, 165, 250, 0.15)',
-                  padding: '0.85rem 1.15rem', 
-                  borderRadius: '16px', 
-                  borderBottomRightRadius: isMe ? '4px' : '16px',
-                  borderBottomLeftRadius: !isMe ? '4px' : '16px',
-                  maxWidth: '85%',
-                  wordBreak: 'break-word',
-                  boxShadow: isMe ? '0 4px 15px rgba(59, 130, 246, 0.3)' : '0 4px 15px rgba(0,0,0,0.2)',
-                  backdropFilter: 'blur(8px)',
-                  marginTop: '0.25rem'
-                }}>
-                  {msg.text && <div style={{ marginBottom: msg.fileName ? '0.5rem' : 0 }}>{msg.text}</div>}
-                  {msg.fileName && (
-                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.5rem 0.75rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}>
-                      <Paperclip size={14} />
-                      <a href={msg.fileData} download={msg.fileName} style={{ color: 'inherit', textDecoration: 'underline' }}>{msg.fileName}</a>
+                
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem', flexDirection: isMe ? 'row-reverse' : 'row' }}>
+                  <div className={`drive-msg-bubble ${isNew ? 'new-msg-glow' : ''}`} style={{ 
+                    background: isMe ? 'linear-gradient(135deg, var(--primary-color), #2563eb)' : 'rgba(15, 23, 42, 0.7)', 
+                    color: isMe ? '#fff' : 'var(--text-primary)',
+                    border: isMe ? 'none' : '1px solid rgba(96, 165, 250, 0.15)',
+                    padding: '0.85rem 1.15rem', 
+                    borderRadius: '16px', 
+                    borderBottomRightRadius: isMe ? '4px' : '16px',
+                    borderBottomLeftRadius: !isMe ? '4px' : '16px',
+                    maxWidth: '85%',
+                    wordBreak: 'break-word',
+                    boxShadow: isMe ? '0 4px 15px rgba(59, 130, 246, 0.3)' : '0 4px 15px rgba(0,0,0,0.2)',
+                    backdropFilter: 'blur(8px)',
+                    marginTop: '0.25rem'
+                  }}>
+                    {msg.replyTo && (
+                      <div style={{ background: 'rgba(0,0,0,0.2)', borderLeft: '3px solid rgba(255,255,255,0.4)', padding: '0.4rem 0.6rem', borderRadius: '4px', marginBottom: '0.5rem', fontSize: '0.8rem', opacity: 0.8 }}>
+                        <div style={{ fontWeight: 'bold', marginBottom: '0.1rem' }}>{msg.replyTo.sender.split('@')[0]}</div>
+                        <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{msg.replyTo.text}</div>
+                      </div>
+                    )}
+                    {msg.text && <div style={{ marginBottom: msg.fileName ? '0.5rem' : 0 }}>{msg.text}</div>}
+                    {msg.fileName && (
+                      <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.5rem 0.75rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}>
+                        <Paperclip size={14} />
+                        <a href={msg.fileData} download={msg.fileName} style={{ color: 'inherit', textDecoration: 'underline' }}>{msg.fileName}</a>
+                      </div>
+                    )}
+                  </div>
+
+                  {hoveredMsgId === msg.id && (
+                    <div style={{ display: 'flex', background: 'rgba(30, 41, 59, 0.9)', padding: '0.3rem', borderRadius: '20px', gap: '0.3rem', border: '1px solid rgba(255,255,255,0.1)', animation: 'fadeIn 0.2s', zIndex: 10 }}>
+                      <button onClick={() => setReplyToMsg(msg)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: '#38bdf8', padding: '0 0.3rem' }}>Reply</button>
+                      {['👍', '❤️', '🎉'].map(emoji => (
+                        <button key={emoji} onClick={() => handleReaction(msg.id, emoji)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', padding: '0 0.2rem' }}>{emoji}</button>
+                      ))}
                     </div>
                   )}
                 </div>
+
+                {msg.reactions && Object.keys(msg.reactions).length > 0 && (
+                  <div style={{ display: 'flex', gap: '0.25rem', marginTop: '0.25rem', padding: '0 0.5rem', alignSelf: isMe ? 'flex-end' : 'flex-start' }}>
+                    {Object.entries(
+                      Object.values(msg.reactions).reduce((acc, emoji) => {
+                        acc[emoji] = (acc[emoji] || 0) + 1;
+                        return acc;
+                      }, {})
+                    ).map(([emoji, count]) => (
+                      <span key={emoji} style={{ background: 'rgba(30, 41, 59, 0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '0.1rem 0.4rem', fontSize: '0.75rem' }}>
+                        {emoji} {count}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
                   {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                 </div>
@@ -169,27 +242,33 @@ export default function DirectMessage() {
           <div ref={messagesEndRef} />
         </div>
 
-        <div style={{ background: 'rgba(0,0,0,0.15)', borderTop: '1px solid var(--border-color)', padding: '1.25rem' }}>
-          {selectedFile && (
-            <div style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--primary-color)', background: 'rgba(59, 130, 246, 0.1)', padding: '0.5rem', borderRadius: '8px', width: 'fit-content' }}>
-              <Paperclip size={14} /> {selectedFile.name}
-              <button onClick={() => setSelectedFile(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                <X size={14} />
-              </button>
+        <div className="glass-panel" style={{ padding: '1rem', borderTop: '1px solid rgba(255, 255, 255, 0.05)', background: 'rgba(15, 23, 42, 0.6)' }}>
+        {dmData?.typing?.filter(e => e !== user.email).length > 0 && (
+          <div style={{ fontSize: '0.75rem', color: '#38bdf8', padding: '0 0.5rem 0.5rem 0.5rem', fontStyle: 'italic', animation: 'fadeIn 0.3s' }}>
+            {dmData.typing.filter(e => e !== user.email).map(e => e.split('@')[0]).join(', ')} is typing...
+          </div>
+        )}
+        {replyToMsg && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.3)', padding: '0.5rem 1rem', borderRadius: '8px', marginBottom: '0.5rem', borderLeft: '3px solid #38bdf8' }}>
+            <div style={{ fontSize: '0.85rem' }}>
+              <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>Replying to {replyToMsg.sender.split('@')[0]}</span>
+              <div style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '300px' }}>{replyToMsg.text}</div>
             </div>
-          )}
-          <form onSubmit={handleSend} style={{ display: 'flex', gap: '0.75rem' }}>
+            <button onClick={() => setReplyToMsg(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.2rem' }}>&times;</button>
+          </div>
+        )}
+        <form onSubmit={handleSend} style={{ display: 'flex', gap: '0.75rem', position: 'relative' }}>
             <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileChange} />
             <button type="button" onClick={() => fileInputRef.current.click()} className="btn btn-secondary" style={{ padding: '0.85rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Attach File">
               <Paperclip size={18} />
             </button>
             <input 
               type="text" 
-              className="cyber-input" 
-              placeholder="Type a message..." 
               value={inputText}
-              onChange={e => setInputText(e.target.value)}
-              style={{ marginBottom: 0, borderRadius: '24px', padding: '0.85rem 1.25rem', flex: 1 }}
+              onChange={e => { setInputText(e.target.value); handleTyping(); }}
+              placeholder="Type a message..."
+              className="cyber-input"
+              style={{ flex: 1, padding: '0.85rem 1.25rem', borderRadius: '30px' }}
             />
             <button type="submit" className="cyber-btn" style={{ padding: '0.85rem 1.25rem', borderRadius: '24px' }}>
               <Send size={18} />
