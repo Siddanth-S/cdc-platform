@@ -419,8 +419,8 @@ export default function Dashboard() {
       </div>
 
       {showModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="glass-card cyber-modal-container animate-fade-in" style={{ width: '100%', maxWidth: '500px', padding: '2rem' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', overflowY: 'auto', padding: '1rem', zIndex: 1000 }}>
+          <div className="glass-card cyber-modal-container animate-fade-in" style={{ margin: 'auto', width: '100%', maxWidth: '500px', padding: '1.5rem' }}>
             <div className="flex justify-between items-center mb-4">
               <h2 style={{ margin: 0 }}>Create New Drive</h2>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '1.5rem' }}>&times;</button>
@@ -516,8 +516,8 @@ export default function Dashboard() {
       )}
 
       {driveToJoin && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="glass-card cyber-modal-container animate-fade-in" style={{ width: '100%', maxWidth: '400px', padding: '2.5rem 2rem', textAlign: 'center' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', overflowY: 'auto', padding: '1rem', zIndex: 1000 }}>
+          <div className="glass-card cyber-modal-container animate-fade-in" style={{ margin: 'auto', width: '100%', maxWidth: '400px', padding: '1.5rem', textAlign: 'center' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
               <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '1rem', borderRadius: '50%', display: 'inline-flex', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
                 <Building2 size={40} className="text-primary" />
@@ -536,8 +536,8 @@ export default function Dashboard() {
       )}
 
       {showProfileModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
-          <div className="glass-card cyber-modal-container animate-fade-in" style={{ width: '100%', maxWidth: '450px', padding: '2.5rem 2rem', textAlign: 'center', border: '1px solid var(--primary-color)', boxShadow: '0 0 30px rgba(59, 130, 246, 0.2)' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', overflowY: 'auto', padding: '1rem', zIndex: 1000 }}>
+          <div className="glass-card cyber-modal-container animate-fade-in" style={{ margin: 'auto', width: '100%', maxWidth: '450px', padding: '1.5rem', textAlign: 'center', border: '1px solid var(--primary-color)', boxShadow: '0 0 30px rgba(59, 130, 246, 0.2)' }}>
             <h2 style={{ margin: '0 0 1rem 0', fontSize: '1.6rem', color: '#fff', textShadow: '0 0 10px rgba(255,255,255,0.3)' }}>Complete Your Profile</h2>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontSize: '0.95rem' }}>
               Please verify your extracted details and provide your contact information.

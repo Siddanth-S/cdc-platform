@@ -574,8 +574,8 @@ export default function DriveRoom() {
       </div>
 
       {showSettingsModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="glass-card cyber-modal-container animate-fade-in" style={{ width: '100%', maxWidth: '420px', padding: '2.5rem' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', overflowY: 'auto', padding: '1rem', zIndex: 1000 }}>
+          <div className="glass-card cyber-modal-container animate-fade-in" style={{ margin: 'auto', width: '100%', maxWidth: '420px', padding: '1.5rem' }}>
             <div className="flex justify-between items-center mb-8" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
               <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.75rem', fontWeight: '700', letterSpacing: '0.5px' }}>
                 <Settings className="text-primary" size={28} /> Manage Drive
@@ -625,8 +625,8 @@ export default function DriveRoom() {
       )}
       
       {showSpocModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="glass-card cyber-modal-container animate-fade-in" style={{ width: '100%', maxWidth: '400px', padding: '2rem' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', overflowY: 'auto', padding: '1rem', zIndex: 1000 }}>
+          <div className="glass-card cyber-modal-container animate-fade-in" style={{ margin: 'auto', width: '100%', maxWidth: '400px', padding: '1.5rem' }}>
             <div className="flex justify-between items-center mb-4">
               <h2 style={{ margin: 0 }}>Change Primary SPOC</h2>
               <button onClick={() => setShowSpocModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '1.5rem' }}>&times;</button>
@@ -646,8 +646,8 @@ export default function DriveRoom() {
       )}
 
       {showSecSpocModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="glass-card cyber-modal-container animate-fade-in" style={{ width: '100%', maxWidth: '400px', padding: '2rem' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', overflowY: 'auto', padding: '1rem', zIndex: 1000 }}>
+          <div className="glass-card cyber-modal-container animate-fade-in" style={{ margin: 'auto', width: '100%', maxWidth: '400px', padding: '1.5rem' }}>
             <div className="flex justify-between items-center mb-4">
               <h2 style={{ margin: 0 }}>Change Secondary SPOC {editingSpocIndex + 1}</h2>
               <button onClick={() => setShowSecSpocModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '1.5rem' }}>&times;</button>
@@ -667,8 +667,8 @@ export default function DriveRoom() {
       )}
 
       {showEditBranchesModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="glass-card cyber-modal-container animate-fade-in" style={{ width: '100%', maxWidth: '500px', padding: '2rem' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', overflowY: 'auto', padding: '1rem', zIndex: 1000 }}>
+          <div className="glass-card cyber-modal-container animate-fade-in" style={{ margin: 'auto', width: '100%', maxWidth: '500px', padding: '1.5rem' }}>
             <div className="flex justify-between items-center mb-4">
               <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Edit3 size={20} className="text-primary" /> Edit Eligibility</h2>
               <button onClick={() => setShowEditBranchesModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '1.5rem' }}>&times;</button>
@@ -737,8 +737,8 @@ export default function DriveRoom() {
       )}
 
       {showLeaveModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="glass-card cyber-modal-container animate-fade-in" style={{ width: '100%', maxWidth: '400px', padding: '2.5rem 2rem', textAlign: 'center' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', overflowY: 'auto', padding: '1rem', zIndex: 1000 }}>
+          <div className="glass-card cyber-modal-container animate-fade-in" style={{ margin: 'auto', width: '100%', maxWidth: '400px', padding: '1.5rem', textAlign: 'center' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
               <div style={{ background: 'rgba(244, 63, 94, 0.1)', padding: '1rem', borderRadius: '50%', display: 'inline-flex', border: '1px solid rgba(244, 63, 94, 0.2)' }}>
                 <LogOut size={40} className="text-warning-color" />
