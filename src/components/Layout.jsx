@@ -48,8 +48,8 @@ export default function Layout() {
 
   return (
     <div className="app-container" style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-      <WelcomeToast user={user} />
       <Navbar />
+      <WelcomeToast user={user} />
       
       {/* Mobile Toggle Bar */}
       <div className="mobile-toggle" style={{ padding: '0.5rem 1rem', display: 'none', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.2)' }}>

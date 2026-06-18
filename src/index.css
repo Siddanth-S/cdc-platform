@@ -751,3 +751,9 @@ p {
   animation: cyber-new-msg 5s ease-out forwards !important;
 }
 
+
+/* Welcome toast glow */
+@keyframes welcome-glow {
+  0% { box-shadow: inset 0 0 20px rgba(56, 189, 248, 0.05); }
+  100% { box-shadow: inset 0 0 30px rgba(56, 189, 248, 0.12), 0 0 15px rgba(56, 189, 248, 0.08); }
+}

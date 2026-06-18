@@ -14,43 +14,39 @@ export default function WelcomeToast({ user }) {
   }, [user?.uid]);
 
   const name = user?.displayName || user?.email?.split('@')[0] || 'User';
+  const subtitle = user?.role === 'HEAD' ? 'Admin access active' : user?.role === 'COORDINATOR' ? 'SPOC duties loaded' : 'Your drives are ready';
 
   return (
     <AnimatePresence>
       {show && (
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
           style={{
-            position: 'fixed',
-            top: '0.5rem',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 9999,
-            padding: '0.6rem 1.25rem',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95))',
-            border: '1px solid rgba(56, 189, 248, 0.3)',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4), 0 0 20px rgba(56, 189, 248, 0.1)',
-            backdropFilter: 'blur(20px)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.6rem',
+            width: '100%',
+            overflow: 'hidden',
+            background: 'linear-gradient(90deg, rgba(56, 189, 248, 0.08), rgba(129, 140, 248, 0.08), rgba(56, 189, 248, 0.08))',
+            borderBottom: '1px solid rgba(56, 189, 248, 0.2)',
             cursor: 'pointer',
-            whiteSpace: 'nowrap',
-            maxWidth: 'calc(100vw - 2rem)'
+            animation: 'welcome-glow 2s ease-in-out infinite alternate'
           }}
           onClick={() => setShow(false)}
         >
-          <Sparkles size={16} style={{ color: '#38bdf8', flexShrink: 0 }} />
-          <div style={{ overflow: 'hidden' }}>
-            <span style={{ fontSize: '0.85rem', fontWeight: '600', color: '#fff' }}>
-              Welcome back, {name} ✨
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            padding: '0.5rem 1rem',
+          }}>
+            <Sparkles size={14} style={{ color: '#38bdf8', flexShrink: 0 }} />
+            <span style={{ fontSize: '0.82rem', fontWeight: '600', color: '#e2e8f0' }}>
+              Welcome back, {name}
             </span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>
-              {user?.role === 'HEAD' ? '· Admin access active' : user?.role === 'COORDINATOR' ? '· SPOC duties loaded' : '· Your drives are ready'}
+            <span style={{ fontSize: '0.75rem', color: 'rgba(148, 163, 184, 0.8)' }}>
+              · {subtitle}
             </span>
           </div>
         </motion.div>
