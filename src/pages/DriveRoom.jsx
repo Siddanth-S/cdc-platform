@@ -373,34 +373,33 @@ export default function DriveRoom() {
                   </span>
                 </div>
                 
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flexDirection: isMe ? 'row-reverse' : 'row' }}>
-                  <div className={`drive-msg-bubble ${isNew ? 'new-msg-glow' : ''}`} style={{ 
-                    background: isMe ? 'linear-gradient(135deg, var(--primary-color), #2563eb)' : 'rgba(15, 23, 42, 0.7)', 
-                    color: isMe ? '#fff' : 'var(--text-primary)',
-                    border: isMe ? 'none' : '1px solid rgba(96, 165, 250, 0.15)',
-                    padding: '0.85rem 1.15rem', 
-                    borderRadius: '16px', 
-                    borderBottomRightRadius: isMe ? '4px' : '16px',
-                    borderBottomLeftRadius: !isMe ? '4px' : '16px',
-                    maxWidth: '85%',
-                    wordBreak: 'break-word',
-                    boxShadow: isMe ? '0 4px 15px rgba(59, 130, 246, 0.3)' : '0 4px 15px rgba(0,0,0,0.2)',
-                    backdropFilter: 'blur(8px)'
-                  }}>
-                    {msg.replyTo && (
-                      <div style={{ background: 'rgba(0,0,0,0.2)', borderLeft: '3px solid rgba(255,255,255,0.4)', padding: '0.4rem 0.6rem', borderRadius: '4px', marginBottom: '0.5rem', fontSize: '0.8rem', opacity: 0.8 }}>
-                        <div style={{ fontWeight: 'bold', marginBottom: '0.1rem' }}>{msg.replyTo.sender.split('@')[0]}</div>
-                        <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{msg.replyTo.text}</div>
-                      </div>
-                    )}
-                    {msg.text && <div style={{ marginBottom: msg.fileName ? '0.5rem' : 0 }}>{msg.text}</div>}
-                    {msg.fileName && (
-                      <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.5rem 0.75rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}>
-                        <Paperclip size={14} />
-                        <a href={msg.fileData} download={msg.fileName} style={{ color: 'inherit', textDecoration: 'underline' }}>{msg.fileName}</a>
-                      </div>
-                    )}
-                  </div>
+                <div className={`drive-msg-bubble ${isNew ? 'new-msg-glow' : ''}`} style={{ 
+                  background: isMe ? 'linear-gradient(135deg, var(--primary-color), #2563eb)' : 'rgba(15, 23, 42, 0.7)', 
+                  color: isMe ? '#fff' : 'var(--text-primary)',
+                  border: isMe ? 'none' : '1px solid rgba(96, 165, 250, 0.15)',
+                  padding: '0.85rem 1.15rem', 
+                  borderRadius: '16px', 
+                  borderBottomRightRadius: isMe ? '4px' : '16px',
+                  borderBottomLeftRadius: !isMe ? '4px' : '16px',
+                  maxWidth: '85%',
+                  wordBreak: 'break-word',
+                  boxShadow: isMe ? '0 4px 15px rgba(59, 130, 246, 0.3)' : '0 4px 15px rgba(0,0,0,0.2)',
+                  backdropFilter: 'blur(8px)',
+                  position: 'relative'
+                }}>
+                  {msg.replyTo && (
+                    <div style={{ background: 'rgba(0,0,0,0.2)', borderLeft: '3px solid rgba(255,255,255,0.4)', padding: '0.4rem 0.6rem', borderRadius: '4px', marginBottom: '0.5rem', fontSize: '0.8rem', opacity: 0.8 }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '0.1rem' }}>{msg.replyTo.sender.split('@')[0]}</div>
+                      <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{msg.replyTo.text}</div>
+                    </div>
+                  )}
+                  {msg.text && <div style={{ marginBottom: msg.fileName ? '0.5rem' : 0 }}>{msg.text}</div>}
+                  {msg.fileName && (
+                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.5rem 0.75rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}>
+                      <Paperclip size={14} />
+                      <a href={msg.fileData} download={msg.fileName} style={{ color: 'inherit', textDecoration: 'underline' }}>{msg.fileName}</a>
+                    </div>
+                  )}
 
                   {hoveredMsgId === msg.id && (
                     <div style={{ 
