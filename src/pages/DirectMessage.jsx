@@ -179,7 +179,7 @@ export default function DirectMessage() {
                   {isNew && <span style={{ color: '#38bdf8', fontWeight: 'bold', fontSize: '0.65rem' }}>NEW</span>}
                 </div>
                 
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem', flexDirection: isMe ? 'row-reverse' : 'row' }}>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flexDirection: isMe ? 'row-reverse' : 'row' }}>
                   <div className={`drive-msg-bubble ${isNew ? 'new-msg-glow' : ''}`} style={{ 
                     background: isMe ? 'linear-gradient(135deg, var(--primary-color), #2563eb)' : 'rgba(15, 23, 42, 0.7)', 
                     color: isMe ? '#fff' : 'var(--text-primary)',
@@ -210,7 +210,11 @@ export default function DirectMessage() {
                   </div>
 
                   {hoveredMsgId === msg.id && (
-                    <div style={{ display: 'flex', background: 'rgba(30, 41, 59, 0.9)', padding: '0.3rem', borderRadius: '20px', gap: '0.3rem', border: '1px solid rgba(255,255,255,0.1)', animation: 'fadeIn 0.2s', zIndex: 10 }}>
+                    <div style={{ 
+                      display: 'flex', background: 'rgba(30, 41, 59, 0.9)', padding: '0.3rem', borderRadius: '20px', gap: '0.3rem', border: '1px solid rgba(255,255,255,0.1)', animation: 'fadeIn 0.2s', zIndex: 10,
+                      position: 'absolute', top: '50%', transform: 'translateY(-50%)',
+                      [isMe ? 'right' : 'left']: 'calc(100% + 0.5rem)'
+                    }}>
                       <button onClick={() => setReplyToMsg(msg)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: '#38bdf8', padding: '0 0.3rem' }}>Reply</button>
                       {['👍', '❤️', '🎉'].map(emoji => (
                         <button key={emoji} onClick={() => handleReaction(msg.id, emoji)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', padding: '0 0.2rem' }}>{emoji}</button>
