@@ -1,65 +1,103 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { auth, googleProvider, db } from '../firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 const AuthContext = createContext();
 
-// Mock CDC Heads
+// CDC Heads — these emails get full admin access
 const CDC_HEADS = [
   'head1@nitk.edu.in', 'head2@nitk.edu.in', 'head3@nitk.edu.in', 
   'head4@nitk.edu.in', 'head5@nitk.edu.in', 'head6@nitk.edu.in'
 ];
 
-const INITIAL_DMS = [
-  {
-    id: 'dm_demo_1',
-    participants: ['student1@nitk.edu.in', 'head1@nitk.edu.in'],
-    messages: [
-      { id: 1, sender: 'head1@nitk.edu.in', text: 'Have you sorted out the interview links for Google?', timestamp: new Date(Date.now() - 3600000).toISOString() },
-      { id: 2, sender: 'student1@nitk.edu.in', text: 'Yes, just sent them out to the shortlisted candidates!', timestamp: new Date().toISOString() }
-    ]
-  },
-  {
-    id: 'dm_demo_2',
-    participants: ['student9@nitk.edu.in', 'student3@nitk.edu.in'],
-    messages: [
-      { id: 1, sender: 'student9@nitk.edu.in', text: 'Hi, I had a doubt regarding the Amazon OA.', timestamp: new Date(Date.now() - 7200000).toISOString() },
-      { id: 2, sender: 'student3@nitk.edu.in', text: 'Sure, what is your doubt? Im the secondary SPOC.', timestamp: new Date().toISOString() }
-    ]
-  }
-];
-
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('cdc_user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = (email) => {
-    if (!email.endsWith('@nitk.edu.in')) {
-      throw new Error('Only @nitk.edu.in emails are allowed.');
-    }
-    
-    let role = 'STUDENT';
-    if (CDC_HEADS.includes(email)) {
-      role = 'HEAD';
-    }
-    
-    const newUser = { email, role };
-    setUser(newUser);
-    localStorage.setItem('cdc_user', JSON.stringify(newUser));
+  // Determine role by scanning Firestore drives
+  const determineRole = async (email) => {
+    if (CDC_HEADS.includes(email)) return 'HEAD';
 
-    const savedDms = localStorage.getItem('cdc_dms');
-    if (!savedDms) {
-      localStorage.setItem('cdc_dms', JSON.stringify(INITIAL_DMS));
+    try {
+      const snapshot = await getDocs(collection(db, 'drives'));
+      for (const doc of snapshot.docs) {
+        const data = doc.data();
+        if (data.coordinator === email || data.secondarySpocs?.includes(email)) {
+          return 'COORDINATOR';
+        }
+      }
+    } catch (err) {
+      console.error('Error checking SPOC status:', err);
+    }
+
+    return 'STUDENT';
+  };
+
+  // Listen for auth state changes (persists across refreshes)
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const email = firebaseUser.email;
+        if (!email.endsWith('@nitk.edu.in')) {
+          // Not a college email — sign them out immediately
+          await signOut(auth);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+        const role = await determineRole(email);
+        setUser({
+          email,
+          role,
+          displayName: firebaseUser.displayName,
+          photoURL: firebaseUser.photoURL,
+          uid: firebaseUser.uid
+        });
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const login = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const email = result.user.email;
+
+      if (!email.endsWith('@nitk.edu.in')) {
+        await signOut(auth);
+        throw new Error('Only @nitk.edu.in accounts can access this platform.');
+      }
+      // onAuthStateChanged will handle setting the user
+    } catch (err) {
+      // Re-throw so Login.jsx can display the error
+      if (err.code === 'auth/popup-closed-by-user') {
+        throw new Error('Sign-in was cancelled.');
+      }
+      throw err;
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await signOut(auth);
     setUser(null);
-    localStorage.removeItem('cdc_user');
+    // Clear any localStorage read receipts for this session
+  };
+
+  // Allow re-checking role (e.g., after being assigned as SPOC)
+  const refreshRole = async () => {
+    if (user?.email) {
+      const role = await determineRole(user.email);
+      setUser(prev => ({ ...prev, role }));
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, CDC_HEADS }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, refreshRole, CDC_HEADS }}>
       {children}
     </AuthContext.Provider>
   );

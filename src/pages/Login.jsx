@@ -1,31 +1,27 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, ArrowRight } from 'lucide-react';
+import { GraduationCap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleGoogleSignIn = async () => {
     setError('');
-    
+    setIsLoading(true);
     try {
-      login(email);
+      await login();
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  // Mock CDC Head login helper
-  const loginAsHead = () => {
-    setEmail('head1@nitk.edu.in');
-  }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', background: 'var(--bg-color)', position: 'relative', overflow: 'hidden' }}>
@@ -51,37 +47,51 @@ export default function Login() {
         <h1 style={{ marginBottom: '0.5rem', fontSize: '1.75rem', letterSpacing: '-0.5px' }}>NITK CDC Portal</h1>
         <p className="mb-4 text-secondary">Career Development Center</p>
         
-        <form onSubmit={handleSubmit} style={{ marginTop: '2.5rem' }}>
-          <div className="input-group" style={{ textAlign: 'left' }}>
-            <label className="input-label" style={{ marginBottom: '0.5rem' }}>Institutional Email</label>
-            <input 
-              type="email" 
-              className="input-field" 
-              placeholder="siddanths.231cv149@nitk.edu.in"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          
+        <div style={{ marginTop: '2.5rem' }}>
           {error && (
             <div style={{ color: 'var(--danger-color)', fontSize: '0.875rem', marginBottom: '1.5rem', background: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
               {error}
             </div>
           )}
           
-          <button type="submit" className="btn btn-primary w-full" style={{ padding: '1rem', marginTop: '0.5rem', fontSize: '1.05rem' }}>
-            Continue to Portal <ArrowRight size={18} />
+          <button 
+            onClick={handleGoogleSignIn} 
+            disabled={isLoading}
+            style={{ 
+              width: '100%', 
+              padding: '1rem 1.5rem', 
+              fontSize: '1.05rem', 
+              fontWeight: '600',
+              borderRadius: '12px',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              background: 'linear-gradient(135deg, rgba(66, 133, 244, 0.15), rgba(66, 133, 244, 0.05))',
+              color: '#fff',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.75rem',
+              transition: 'all 0.3s ease',
+              opacity: isLoading ? 0.7 : 1,
+              boxShadow: '0 4px 15px rgba(66, 133, 244, 0.15)'
+            }}
+            onMouseOver={e => { if (!isLoading) { e.currentTarget.style.background = 'linear-gradient(135deg, rgba(66, 133, 244, 0.25), rgba(66, 133, 244, 0.1))'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(66, 133, 244, 0.3)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}}
+            onMouseOut={e => { e.currentTarget.style.background = 'linear-gradient(135deg, rgba(66, 133, 244, 0.15), rgba(66, 133, 244, 0.05))'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(66, 133, 244, 0.15)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+          >
+            {/* Google "G" logo */}
+            <svg width="20" height="20" viewBox="0 0 48 48">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            </svg>
+            {isLoading ? 'Signing in...' : 'Sign in with Google'}
           </button>
-        </form>
+        </div>
         
         <div className="mt-4" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2rem' }}>
-          Only students and staff with @nitk.edu.in emails can access this platform.
+          Only students and staff with <strong>@nitk.edu.in</strong> Google accounts can access this platform.
         </div>
-
-        <button onClick={loginAsHead} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '0.7rem', textDecoration: 'underline', marginTop: '1.5rem', cursor: 'pointer' }}>
-          Quick Login as CDC Head (Demo)
-        </button>
         </div>
       </motion.div>
     </div>
