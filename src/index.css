@@ -717,6 +717,18 @@ p {
 }
 
 
+/* Base Chat Message Styles */
+.msg-wrapper {
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.msg-text {
+  font-size: 0.9rem;
+}
+.drive-msg-bubble {
+  padding: 0.5rem 0.75rem;
+}
+
 /* General Mobile Fixes */
 @media (max-width: 768px) {
   /* Scale down massive headers */
@@ -724,9 +736,17 @@ p {
     font-size: 1.75rem !important;
   }
   
-  /* Make message bubbles utilize more width */
+  /* Make message bubbles utilize more width and be smaller */
+  .msg-wrapper {
+    gap: 0.5rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+  .msg-text {
+    font-size: 0.85rem !important;
+  }
   .drive-msg-bubble {
-    max-width: 95% !important;
+    max-width: 92% !important;
+    padding: 0.4rem 0.6rem !important;
   }
   
   /* Fix navbar user text */

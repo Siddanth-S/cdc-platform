@@ -191,7 +191,7 @@ export default function DirectMessage() {
             return (
               <div 
                 key={msg.id} 
-                className={`drive-msg-container ${isNew ? 'new-msg-glow' : ''}`}
+                className={`drive-msg-container msg-wrapper ${isNew ? 'new-msg-glow' : ''}`}
                 onMouseEnter={() => { if (window.innerWidth > 768) setHoveredMsgId(msg.id); }}
                 onMouseLeave={() => { 
                   if (window.innerWidth > 768) {
@@ -204,7 +204,7 @@ export default function DirectMessage() {
                     setHoveredMsgId(hoveredMsgId === msg.id ? null : msg.id);
                   }
                 }}
-                style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', gap: '0.75rem', marginBottom: '1.5rem', position: 'relative', alignItems: 'flex-start' }}
+                style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', position: 'relative', alignItems: 'flex-start' }}
               >
                 
                 <div className="drive-msg-bubble" style={{ 
@@ -230,7 +230,7 @@ export default function DirectMessage() {
                   )}
                   
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.75rem', flexWrap: 'wrap' }}>
-                    <div style={{ fontSize: '0.9rem', lineHeight: '1.3' }}>
+                    <div className="msg-text" style={{ lineHeight: '1.3' }}>
                       {msg.text}
                       {msg.fileName && (
                         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.3rem 0.5rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', marginTop: msg.text ? '0.3rem' : '0' }}>

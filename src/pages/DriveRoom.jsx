@@ -415,7 +415,8 @@ export default function DriveRoom() {
                     setHoveredMsgId(hoveredMsgId === msg.id ? null : msg.id);
                   }
                 }}
-                style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', gap: '0.75rem', marginBottom: '1.5rem', position: 'relative', alignItems: 'flex-start' }}
+                className="msg-wrapper"
+                style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', position: 'relative', alignItems: 'flex-start' }}
               >
                 <div className="drive-msg-bubble" style={{ 
                   background: isMe ? 'linear-gradient(135deg, var(--primary-color), #2563eb)' : 'rgba(15, 23, 42, 0.7)', 
@@ -464,7 +465,7 @@ export default function DriveRoom() {
                   )}
                   
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.75rem', flexWrap: 'wrap' }}>
-                    <div style={{ fontSize: '0.9rem', lineHeight: '1.3' }}>
+                    <div className="msg-text" style={{ lineHeight: '1.3' }}>
                       {msg.text}
                       {msg.fileName && (
                         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.3rem 0.5rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', marginTop: msg.text ? '0.3rem' : '0' }}>
