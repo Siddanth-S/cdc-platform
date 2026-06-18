@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { GraduationCap, LogOut, UserCircle } from 'lucide-react';
+import { GraduationCap, LogOut, Settings } from 'lucide-react';
 import NotificationsDropdown from './NotificationsDropdown';
 import { parseEmailProfile } from '../utils/profileParser';
 import { db } from '../firebase';
@@ -118,7 +118,7 @@ export default function Navbar() {
               transition: 'all 0.3s ease'
             }}
           >
-            <UserCircle size={24} />
+            <Settings size={24} />
           </button>
           
           {showHoverCard && profileData && (
@@ -126,43 +126,71 @@ export default function Navbar() {
               position: 'absolute',
               top: '120%',
               right: 0,
-              background: 'rgba(15, 23, 42, 0.95)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(59, 130, 246, 0.3)',
-              borderRadius: '12px',
-              padding: '1rem',
-              width: '250px',
-              boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+              background: 'linear-gradient(to bottom right, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid var(--primary-color)',
+              borderRadius: '16px',
+              padding: '1.2rem',
+              width: '280px',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(59, 130, 246, 0.2)',
               zIndex: 1000,
-              pointerEvents: 'none'
+              pointerEvents: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.5rem'
             }}>
-              <div style={{ fontWeight: 'bold', color: '#fff', fontSize: '1rem', marginBottom: '0.2rem' }}>{profileData.name}</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.8rem' }}>{user?.email}</div>
+              <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+                <div style={{ fontWeight: 'bold', color: '#fff', fontSize: '1.1rem', letterSpacing: '0.5px' }}>{profileData.name}</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{user?.email}</div>
+              </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.5rem 1rem', fontSize: '0.8rem' }}>
-                <span style={{ color: 'var(--primary-color)' }}>Degree:</span>
+              <div style={{ height: '1px', background: 'rgba(59, 130, 246, 0.3)', margin: '0.5rem 0' }}></div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.6rem 1rem', fontSize: '0.85rem', padding: '0 0.5rem' }}>
+                <span style={{ color: 'var(--primary-color)', fontWeight: '600' }}>Degree:</span>
                 <span style={{ color: '#fff' }}>{profileData.degree}</span>
                 
-                <span style={{ color: 'var(--primary-color)' }}>Branch:</span>
+                <span style={{ color: 'var(--primary-color)', fontWeight: '600' }}>Branch:</span>
                 <span style={{ color: '#fff' }}>{profileData.branch}</span>
                 
-                <span style={{ color: 'var(--primary-color)' }}>Grad Year:</span>
+                <span style={{ color: 'var(--primary-color)', fontWeight: '600' }}>Grad Year:</span>
                 <span style={{ color: '#fff' }}>{profileData.gradYear}</span>
                 
                 {profileData.phoneNumber && (
                   <>
-                    <span style={{ color: 'var(--primary-color)' }}>Phone:</span>
+                    <span style={{ color: 'var(--primary-color)', fontWeight: '600' }}>Phone:</span>
                     <span style={{ color: '#fff' }}>{profileData.phoneNumber}</span>
                   </>
                 )}
               </div>
+              
+              <div style={{ height: '1px', background: 'rgba(59, 130, 246, 0.3)', margin: '0.5rem 0' }}></div>
+              
+              <button 
+                onClick={handleLogout} 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '0.5rem', 
+                  width: '100%', 
+                  padding: '0.6rem', 
+                  background: 'rgba(244, 63, 94, 0.1)', 
+                  color: '#f43f5e', 
+                  border: '1px solid rgba(244, 63, 94, 0.3)', 
+                  borderRadius: '8px', 
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(244, 63, 94, 0.2)'; e.currentTarget.style.boxShadow = '0 0 10px rgba(244, 63, 94, 0.3)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(244, 63, 94, 0.1)'; e.currentTarget.style.boxShadow = 'none'; }}
+              >
+                <LogOut size={16} /> Logout
+              </button>
             </div>
           )}
         </div>
-
-        <button onClick={handleLogout} className="cyber-logout-btn" title="Logout" style={{ padding: '0.4rem', borderRadius: '50%' }}>
-          <LogOut size={18} />
-        </button>
       </div>
 
       {showProfileModal && (
