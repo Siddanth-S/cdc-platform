@@ -773,8 +773,16 @@ p {
   
   /* Navbar and general app spacing fixes */
   .navbar-cyber {
-    margin: 0.5rem !important;
+    margin: 0 !important;
+    top: 0 !important;
+    border-radius: 0 !important;
+    border-left: none;
+    border-right: none;
+    border-top: none;
     padding: 0.75rem 1rem !important;
+  }
+  .navbar-cyber::after {
+    border-radius: 0 !important;
   }
 
   .main-content-scroll {
@@ -800,13 +808,6 @@ p {
 @media (max-width: 480px) {
   .dashboard-grid {
     grid-template-columns: 1fr !important;
-  }
-  .navbar-cyber {
-    margin: 0 !important;
-    border-radius: 0 !important;
-    border-left: none;
-    border-right: none;
-    border-top: none;
   }
 }
 
@@ -927,6 +928,7 @@ p {
 /* Modern Create Drive Button */
 .btn-create-glow {
   background: linear-gradient(135deg, var(--primary-color) 0%, #2563eb 100%);
+  color: #ffffff;
   border: 1px solid rgba(59, 130, 246, 0.5);
   box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
   position: relative;
