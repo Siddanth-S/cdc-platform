@@ -210,6 +210,7 @@ export default function Login() {
                 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.2 }}
                 onSubmit={handleEmailSignIn}
+                noValidate
               >
                 <div style={{ position: 'relative', marginBottom: '0.85rem' }}>
                   <Mail size={16} style={iconStyle} />
@@ -260,6 +261,7 @@ export default function Login() {
                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.2 }}
                 onSubmit={handleSignUp}
+                noValidate
               >
                 <div style={{ position: 'relative', marginBottom: '0.85rem' }}>
                   <Mail size={16} style={iconStyle} />
@@ -314,6 +316,7 @@ export default function Login() {
                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.2 }}
                 onSubmit={handleForgotPassword}
+                noValidate
               >
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem', textAlign: 'left' }}>
                   Enter your institutional email and we'll send you a link to reset your password.
