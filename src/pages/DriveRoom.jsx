@@ -302,16 +302,31 @@ export default function DriveRoom() {
             </p>
           </div>
         </div>
-        {user?.role === 'HEAD' && (
-          <button onClick={() => { setNewSpocEmail(currentDrive.coordinator); setShowSpocModal(true); }} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
-            Change Primary SPOC
-          </button>
-        )}
-        {canLeave && (
-          <button onClick={() => setShowLeaveModal(true)} className="btn" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', background: 'rgba(244, 63, 94, 0.1)', color: 'var(--warning-color)', border: '1px solid rgba(244, 63, 94, 0.2)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <LogOut size={16} /> Leave Drive
-          </button>
-        )}
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          {(isHead || isPriSpoc) && (
+            <button 
+              onClick={async () => {
+                try {
+                  await updateDoc(doc(db, 'drives', id), { status: currentDrive.status === 'Closed' ? 'Active' : 'Closed' });
+                } catch(err) { console.error(err); }
+              }}
+              className="btn" 
+              style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', background: currentDrive.status === 'Closed' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: currentDrive.status === 'Closed' ? '#4ade80' : '#ef4444', border: `1px solid ${currentDrive.status === 'Closed' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}` }}
+            >
+              {currentDrive.status === 'Closed' ? 'Reopen Drive' : 'Close Drive'}
+            </button>
+          )}
+          {user?.role === 'HEAD' && (
+            <button onClick={() => { setNewSpocEmail(currentDrive.coordinator); setShowSpocModal(true); }} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
+              Change Primary SPOC
+            </button>
+          )}
+          {canLeave && (
+            <button onClick={() => setShowLeaveModal(true)} className="btn" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', background: 'rgba(244, 63, 94, 0.1)', color: 'var(--warning-color)', border: '1px solid rgba(244, 63, 94, 0.2)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <LogOut size={16} /> Leave Drive
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Secondary SPOCs Bar */}

@@ -243,7 +243,7 @@ export default function Dashboard() {
             <div 
               key={drive.id} 
               className="cyber-card" 
-              style={{ display: 'flex', flexDirection: 'column', position: 'relative', borderLeft: isJoined ? '4px solid var(--success-color)' : (isPinned ? '4px solid var(--warning-color)' : '1px solid rgba(255, 255, 255, 0.05)'), cursor: isEligible ? 'pointer' : 'not-allowed', opacity: isEligible ? 1 : 0.6 }}
+              style={{ display: 'flex', flexDirection: 'column', position: 'relative', borderLeft: isJoined ? '4px solid var(--success-color)' : (isPinned ? '4px solid var(--warning-color)' : '1px solid rgba(255, 255, 255, 0.05)'), cursor: isEligible ? 'pointer' : 'not-allowed', opacity: isEligible ? (drive.status === 'Closed' ? 0.65 : 1) : 0.4, filter: drive.status === 'Closed' ? 'grayscale(50%)' : 'none', transition: 'all 0.3s ease' }}
               onClick={() => isEligible && handleCardClick(drive)}
             >
               {/* Header */}
@@ -251,13 +251,26 @@ export default function Dashboard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <Building2 className="text-primary" size={24} />
                   <div>
-                    <h3 style={{ margin: 0, fontSize: '1.1rem', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.1rem', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                       {drive.company}
                       {drive.stage && (
                         <span style={{ fontSize: '0.65rem', background: 'var(--primary-color)', color: '#fff', padding: '0.15rem 0.4rem', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                           {drive.stage}
                         </span>
                       )}
+                      <span style={{ 
+                        fontSize: '0.65rem', 
+                        background: drive.status === 'Closed' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)', 
+                        color: drive.status === 'Closed' ? '#f87171' : '#4ade80', 
+                        border: `1px solid ${drive.status === 'Closed' ? 'rgba(239, 68, 68, 0.5)' : 'rgba(34, 197, 94, 0.5)'}`,
+                        padding: '0.15rem 0.5rem', 
+                        borderRadius: '12px', 
+                        textTransform: 'uppercase', 
+                        letterSpacing: '0.5px',
+                        boxShadow: drive.status === 'Closed' ? '0 0 8px rgba(239, 68, 68, 0.3)' : '0 0 8px rgba(34, 197, 94, 0.3)'
+                      }}>
+                        {drive.status === 'Closed' ? 'Closed' : 'Active'}
+                      </span>
                     </h3>
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>{drive.role}</div>
                   </div>
