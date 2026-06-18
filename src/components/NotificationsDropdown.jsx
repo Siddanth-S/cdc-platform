@@ -66,6 +66,7 @@ export default function NotificationsDropdown() {
     <div className="relative" ref={dropdownRef}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
+        className="logo-glow"
         style={{
           position: 'relative',
           background: isOpen ? 'rgba(6, 182, 212, 0.15)' : 'rgba(6, 182, 212, 0.05)',
