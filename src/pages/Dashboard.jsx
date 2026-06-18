@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Building2, Plus, Users, Search, Pin, CheckCircle2 } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, onSnapshot, doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
+import { toast } from 'react-hot-toast';
 import { parseEmailProfile } from '../utils/profileParser';
 
 const btechBranches = ['CSE', 'IT', 'AI', 'DS', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'META', 'MINING'];
@@ -57,16 +58,15 @@ export default function Dashboard() {
   const [showModal, setShowModal] = useState(false);
   const [newDrive, setNewDrive] = useState({ company: '', role: '', coordinator: '', secondarySpoc1: '', secondarySpoc2: '', eligibleBranches: [...btechBranches, ...pgBranches] });
   
-  const [toastMsg, setToastMsg] = useState('');
-  const [isToastFading, setIsToastFading] = useState(false);
-
   const triggerToast = (msg) => {
-    setToastMsg(msg);
-    setIsToastFading(false);
-    setTimeout(() => {
-      setIsToastFading(true);
-      setTimeout(() => setToastMsg(''), 400);
-    }, 3000);
+    toast.success(msg, {
+      style: {
+        background: 'rgba(15, 23, 42, 0.95)',
+        color: '#fff',
+        border: '1px solid var(--success-color)',
+        backdropFilter: 'blur(10px)',
+      },
+    });
   };
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -205,13 +205,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div>
-      {toastMsg && (
-        <div className={`modern-toast ${isToastFading ? 'fade-out' : ''}`}>
-          <div style={{ background: 'var(--success-color)', width: '8px', height: '8px', borderRadius: '50%', boxShadow: '0 0 10px var(--success-color)' }} />
-          {toastMsg}
-        </div>
-      )}
+    <div style={{ padding: '2rem' }}>
 
       <div className="flex justify-between items-center mb-4">
         <div>

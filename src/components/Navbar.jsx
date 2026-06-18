@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { GraduationCap, LogOut, Settings, Edit3 } from 'lucide-react';
+import { GraduationCap, LogOut, User, Edit3 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import NotificationsDropdown from './NotificationsDropdown';
 import { parseEmailProfile } from '../utils/profileParser';
 import { db } from '../firebase';
@@ -77,8 +78,10 @@ export default function Navbar() {
         personalEmail: profileForm.personalEmail
       }, { merge: true });
       setIsEditingInline(false);
+      toast.success('Profile details updated successfully');
     } catch (err) {
       console.error(err);
+      toast.error('Failed to update profile');
     }
   };
 
@@ -125,7 +128,7 @@ export default function Navbar() {
               transition: 'all 0.3s ease'
             }}
           >
-            <Settings size={24} />
+            <User size={24} className="logo-glow" />
           </button>
           
           {showHoverCard && profileData && (

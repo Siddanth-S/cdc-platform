@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Send, ArrowLeft, ShieldAlert, Paperclip, X, MessageSquarePlus, LogOut, Plus, Edit3, Settings, Users, UserCog, Power } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, doc, getDocs, setDoc, updateDoc, increment, arrayUnion, arrayRemove, deleteField } from 'firebase/firestore';
+import { toast } from 'react-hot-toast';
 
 const btechBranches = ['CSE', 'IT', 'AI', 'DS', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'META', 'MINING'];
 const pgBranches = ['Construction Tech & Management', 'MBA', 'Environmental Eng', 'Geotechnical Eng', 'Transportation Eng', 'Structural Eng', 'Power Electronics', 'Mechanical Design', 'Thermal Eng', 'Manufacturing Eng', 'Mechatronics', 'Water Resources', 'Marine Structures', 'Geoinformatics', 'MCA', 'Chemistry', 'Physics', 'Signal Processing & ML', 'Communication Eng & Networks', 'VLSI Design', 'Information Security', 'Industrial Biotechnology', 'Environmental Science & Tech', 'Materials Eng', 'Nanotechnology'];
@@ -41,16 +42,15 @@ export default function DriveRoom() {
   const [editBranches, setEditBranches] = useState([]);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   
-  const [toastMsg, setToastMsg] = useState('');
-  const [isToastFading, setIsToastFading] = useState(false);
-
   const triggerToast = (msg) => {
-    setToastMsg(msg);
-    setIsToastFading(false);
-    setTimeout(() => {
-      setIsToastFading(true);
-      setTimeout(() => setToastMsg(''), 400);
-    }, 3000);
+    toast.success(msg, {
+      style: {
+        background: 'rgba(15, 23, 42, 0.95)',
+        color: '#fff',
+        border: '1px solid var(--success-color)',
+        backdropFilter: 'blur(10px)',
+      },
+    });
   };
 
 
@@ -331,12 +331,6 @@ export default function DriveRoom() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
-      {toastMsg && (
-        <div className={`modern-toast ${isToastFading ? 'fade-out' : ''}`}>
-          <div style={{ background: 'var(--success-color)', width: '8px', height: '8px', borderRadius: '50%', boxShadow: '0 0 10px var(--success-color)' }} />
-          {toastMsg}
-        </div>
-      )}
 
       <div className="glass-panel" style={{ padding: '1rem 1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -423,9 +417,11 @@ export default function DriveRoom() {
                 }}>
                   {/* Internal Sender Tag */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', opacity: 0.9 }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: isMe ? '#e0f2fe' : '#38bdf8' }}>
-                      {msg.sender.split('@')[0]}
-                    </span>
+                    {(msg.role !== 'HEAD' && msg.role !== 'SPOC') && (
+                      <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: isMe ? '#e0f2fe' : '#38bdf8' }}>
+                        {msg.sender.split('@')[0]}
+                      </span>
+                    )}
                     {isNew && <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '0.6rem', background: '#38bdf8', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>NEW</span>}
                     <span style={{ 
                       background: msg.role === 'HEAD' ? 'rgba(225, 29, 72, 0.9)' : 'rgba(59, 130, 246, 0.9)', 
