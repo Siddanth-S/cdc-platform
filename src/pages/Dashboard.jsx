@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Building2, Plus, Users, Search, Pin, CheckCircle2, Filter } from 'lucide-react';
@@ -72,6 +72,19 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState('ALL');
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const filterDropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target)) {
+        setShowFilterDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [filterDropdownRef]);
 
   const [pinnedDrives, setPinnedDrives] = useState(() => {
     const saved = localStorage.getItem(`pinned_${user?.email}`);
@@ -238,8 +251,8 @@ export default function Dashboard() {
               className="cyber-input"
             />
           </div>
-          <div style={{ position: 'relative' }}>
-            <button onClick={() => setShowFilterDropdown(!showFilterDropdown)} className="cyber-input" style={{ padding: '0 1rem', height: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', background: showFilterDropdown ? 'rgba(56, 189, 248, 0.15)' : 'transparent', color: showFilterDropdown ? '#fff' : 'var(--text-primary)', border: showFilterDropdown ? '1px solid var(--primary-color)' : '1px solid var(--border-color)', transition: 'all 0.3s ease' }}>
+          <div style={{ position: 'relative' }} ref={filterDropdownRef}>
+            <button onClick={() => setShowFilterDropdown(!showFilterDropdown)} className="cyber-input" style={{ padding: '0 1rem', height: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', background: showFilterDropdown ? 'rgba(56, 189, 248, 0.15)' : 'transparent', color: showFilterDropdown ? '#fff' : 'var(--text-primary)', border: showFilterDropdown ? '1px solid var(--primary-color)' : '1px solid var(--border-color)', boxShadow: showFilterDropdown ? '0 0 15px rgba(56, 189, 248, 0.4)' : 'none', transition: 'all 0.3s ease' }}>
               <Filter size={18} /> Filter
             </button>
             {showFilterDropdown && (

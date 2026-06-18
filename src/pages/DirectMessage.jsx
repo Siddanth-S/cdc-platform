@@ -152,6 +152,12 @@ export default function DirectMessage() {
 
   const otherPerson = dmData.participants.find(p => p !== user.email);
 
+  const formatName = (email) => {
+    if (!email) return '';
+    const namePart = email.split('@')[0].split('.')[0].replace(/[0-9]/g, '');
+    return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
       <div className="glass-panel" style={{ padding: '1rem 1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -169,7 +175,7 @@ export default function DirectMessage() {
             {otherPerson?.charAt(0).toUpperCase()}
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.25rem' }}>{otherPerson?.split('@')[0]}</h2>
+            <h2 style={{ margin: 0, fontSize: '1.25rem' }}>{formatName(otherPerson)}</h2>
             <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Direct Message</p>
           </div>
         </div>
@@ -207,7 +213,7 @@ export default function DirectMessage() {
                 }}>
                   {msg.replyTo && (
                     <div style={{ background: 'rgba(0,0,0,0.2)', borderLeft: '3px solid rgba(255,255,255,0.4)', padding: '0.3rem 0.5rem', borderRadius: '4px', marginBottom: '0.3rem', fontSize: '0.75rem', opacity: 0.8 }}>
-                      <div style={{ fontWeight: 'bold', marginBottom: '0.1rem' }}>{msg.replyTo.sender.split('@')[0]}</div>
+                      <div style={{ fontWeight: 'bold', marginBottom: '0.1rem' }}>{formatName(msg.replyTo.sender)}</div>
                       <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{msg.replyTo.text}</div>
                     </div>
                   )}

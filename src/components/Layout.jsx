@@ -104,6 +104,12 @@ export default function Layout() {
                 const lastRead = Number(localStorage.getItem(`read_dm_${dm.id}_${user?.email}`) || 0);
                 const isUnread = lastMessage && lastMessage.sender !== user?.email && new Date(lastMessage.timestamp).getTime() > lastRead && !isActive;
 
+                const formatName = (email) => {
+                  if (!email) return '';
+                  const namePart = email.split('@')[0].split('.')[0].replace(/[0-9]/g, '');
+                  return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+                };
+
                 return (
                   <div 
                     key={dm.id} 
@@ -122,7 +128,7 @@ export default function Layout() {
                     </div>
                     <div style={{ flex: 1, overflow: 'hidden' }}>
                       <div style={{ fontSize: '0.95rem', fontWeight: isUnread ? '800' : '600', color: isUnread ? '#fff' : (isActive ? 'var(--primary-color)' : 'var(--text-primary)'), marginBottom: '0.2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{otherPerson?.split('@')[0]}</span>
+                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatName(otherPerson)}</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
                           {lastMessage && <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 'normal' }}>
                             {new Date(lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

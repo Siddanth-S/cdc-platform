@@ -139,7 +139,7 @@ export default function DriveRoom() {
     try {
       await addDoc(collection(db, 'drives', id, 'messages'), {
         sender: user.email,
-        role: user.role === 'HEAD' ? 'HEAD' : 'SPOC',
+        role: user.role === 'HEAD' ? 'HEAD' : (currentDrive.coordinator === user.email ? 'SPOC' : 'SEC_SPOC'),
         text: inputText,
         fileData,
         fileName,
@@ -389,9 +389,15 @@ export default function DriveRoom() {
           )}
           {messages.map(msg => {
             const isMe = msg.sender === user?.email;
-            const displayRole = msg.role === 'HEAD' ? 'ADMIN' : (msg.role === 'COORDINATOR' ? 'SPOC' : msg.role);
+            const displayRole = msg.role === 'HEAD' ? 'ADMIN' : (msg.role === 'SPOC' || msg.role === 'COORDINATOR' ? 'SPOC' : 'SEC SPOC');
             const msgTime = msg.timestamp && msg.timestamp.toMillis ? msg.timestamp.toMillis() : Date.now();
             const isNew = !isMe && msg.timestamp && msgTime > lastRead;
+            
+            const formatName = (email) => {
+              if (!email) return '';
+              const namePart = email.split('@')[0].split('.')[0].replace(/[0-9]/g, '');
+              return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+            };
             
             return (
               <div 
@@ -416,14 +422,14 @@ export default function DriveRoom() {
                   marginTop: '0.2rem'
                 }}>
                   {/* Internal Sender Tag */}
-                  {(msg.role === 'HEAD' || msg.role === 'SPOC' || msg.role === 'COORDINATOR' || (!isMe && msg.role !== 'HEAD' && msg.role !== 'SPOC' && msg.role !== 'COORDINATOR')) && (
+                  {(msg.role === 'HEAD' || msg.role === 'SPOC' || msg.role === 'SEC_SPOC' || msg.role === 'COORDINATOR' || (!isMe && msg.role !== 'HEAD' && msg.role !== 'SPOC' && msg.role !== 'SEC_SPOC' && msg.role !== 'COORDINATOR')) && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem', opacity: 0.9 }}>
-                      {(!isMe && msg.role !== 'HEAD' && msg.role !== 'SPOC' && msg.role !== 'COORDINATOR') && (
+                      {(!isMe && msg.role !== 'HEAD' && msg.role !== 'SPOC' && msg.role !== 'SEC_SPOC' && msg.role !== 'COORDINATOR') && (
                         <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#38bdf8' }}>
-                          {msg.sender.split('@')[0]}
+                          {formatName(msg.sender)}
                         </span>
                       )}
-                      {(msg.role === 'HEAD' || msg.role === 'SPOC' || msg.role === 'COORDINATOR') && (
+                      {(msg.role === 'HEAD' || msg.role === 'SPOC' || msg.role === 'SEC_SPOC' || msg.role === 'COORDINATOR') && (
                         <span style={{ 
                           background: 'rgba(56, 189, 248, 0.15)', 
                           color: '#38bdf8', 
@@ -441,7 +447,7 @@ export default function DriveRoom() {
                   )}
                   {msg.replyTo && (
                     <div style={{ background: 'rgba(0,0,0,0.2)', borderLeft: '3px solid rgba(255,255,255,0.4)', padding: '0.3rem 0.5rem', borderRadius: '4px', marginBottom: '0.3rem', fontSize: '0.75rem', opacity: 0.8 }}>
-                      <div style={{ fontWeight: 'bold', marginBottom: '0.1rem' }}>{msg.replyTo.sender.split('@')[0]}</div>
+                      <div style={{ fontWeight: 'bold', marginBottom: '0.1rem' }}>{formatName(msg.replyTo.sender)}</div>
                       <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{msg.replyTo.text}</div>
                     </div>
                   )}
