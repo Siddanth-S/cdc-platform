@@ -14,7 +14,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [profileForm, setProfileForm] = useState({ name: '', degree: '', branch: '', gradYear: '' });
+  const [profileForm, setProfileForm] = useState({ name: '', degree: '', branch: '', gradYear: '', phoneNumber: '', personalEmail: '' });
 
   // Sync User Profile
   useEffect(() => {
@@ -28,7 +28,7 @@ export default function Dashboard() {
           setUserProfile({ branch: 'ADMIN' });
         } else {
           const parsed = parseEmailProfile(user.email);
-          if (parsed) setProfileForm({ name: parsed.name || '', degree: parsed.degree || '', branch: parsed.branch || '', gradYear: parsed.gradYear || '' });
+          if (parsed) setProfileForm({ name: parsed.name || '', degree: parsed.degree || '', branch: parsed.branch || '', gradYear: parsed.gradYear || '', phoneNumber: '', personalEmail: '' });
           setShowProfileModal(true);
         }
       }
@@ -82,7 +82,9 @@ export default function Dashboard() {
         name: profileForm.name,
         degree: profileForm.degree,
         branch: profileForm.branch,
-        gradYear: profileForm.gradYear
+        gradYear: profileForm.gradYear,
+        phoneNumber: profileForm.phoneNumber,
+        personalEmail: profileForm.personalEmail
       });
       setShowProfileModal(false);
     } catch (err) {
@@ -405,107 +407,93 @@ export default function Dashboard() {
       )}
 
       {showProfileModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
-          <div className="glass-card animate-fade-in" style={{ width: '100%', maxWidth: '400px', padding: '2.5rem 2rem', textAlign: 'center' }}>
-            <h2 style={{ margin: '0 0 1rem 0', fontSize: '1.5rem', color: '#fff' }}>Complete Your Profile</h2>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+          <div className="glass-card animate-fade-in" style={{ width: '100%', maxWidth: '450px', padding: '2.5rem 2rem', textAlign: 'center', border: '1px solid var(--primary-color)', boxShadow: '0 0 30px rgba(59, 130, 246, 0.2)' }}>
+            <h2 style={{ margin: '0 0 1rem 0', fontSize: '1.6rem', color: '#fff', textShadow: '0 0 10px rgba(255,255,255,0.3)' }}>Complete Your Profile</h2>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontSize: '0.95rem' }}>
-              Please verify your details extracted from your email to continue.
+              Please verify your extracted details and provide your contact information.
             </p>
             <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
-              <div>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Name</label>
-                <input 
-                  type="text" 
-                  className="cyber-input" 
-                  value={profileForm.name}
-                  onChange={e => setProfileForm({...profileForm, name: e.target.value})}
-                  required
-                />
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Name (Extracted)</label>
+                  <input 
+                    type="text" 
+                    className="cyber-input" 
+                    value={profileForm.name}
+                    disabled
+                    style={{ opacity: 0.7, cursor: 'not-allowed' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Expected Graduation</label>
+                  <input 
+                    type="text" 
+                    className="cyber-input" 
+                    value={profileForm.gradYear}
+                    disabled
+                    style={{ opacity: 0.7, cursor: 'not-allowed' }}
+                  />
+                </div>
               </div>
               
-              <div>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Degree</label>
-                <select 
-                  className="input-field" 
-                  style={{ width: '100%' }}
-                  value={profileForm.degree}
-                  onChange={e => setProfileForm({...profileForm, degree: e.target.value})}
-                  required
-                >
-                  <option value="" disabled>Select Degree</option>
-                  <option value="B.Tech">B.Tech</option>
-                  <option value="M.Tech">M.Tech</option>
-                  <option value="MCA">MCA</option>
-                  <option value="MBA">MBA</option>
-                  <option value="MSc">MSc</option>
-                </select>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Degree</label>
+                  <input 
+                    type="text" 
+                    className="cyber-input" 
+                    value={profileForm.degree}
+                    disabled
+                    style={{ opacity: 0.7, cursor: 'not-allowed' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Branch</label>
+                  <input 
+                    type="text" 
+                    className="cyber-input" 
+                    value={profileForm.branch}
+                    disabled
+                    style={{ opacity: 0.7, cursor: 'not-allowed' }}
+                  />
+                </div>
               </div>
+              <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '0.5rem 0' }}></div>
 
               <div>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Branch</label>
-                <select 
-                  className="input-field" 
-                  style={{ width: '100%' }}
-                  value={profileForm.branch}
-                  onChange={e => setProfileForm({...profileForm, branch: e.target.value})}
-                  required
-                >
-                  <option value="" disabled>Select Branch</option>
-                  <optgroup label="B.Tech Branches">
-                    <option value="CSE">Computer Science (CSE)</option>
-                    <option value="IT">Information Technology (IT)</option>
-                    <option value="AI">Artificial Intelligence (AI)</option>
-                    <option value="DS">Computational Data Science (DS)</option>
-                    <option value="ECE">Electronics (ECE)</option>
-                    <option value="EEE">Electrical (EEE)</option>
-                    <option value="MECH">Mechanical (MECH)</option>
-                    <option value="CIVIL">Civil Engineering (CIVIL)</option>
-                    <option value="CHEM">Chemical Engineering (CHEM)</option>
-                    <option value="META">Metallurgy (META)</option>
-                    <option value="MINING">Mining Engineering (MINING)</option>
-                  </optgroup>
-                  <optgroup label="PG Branches (M.Tech/MCA/MBA/MSc)">
-                    <option value="Construction Tech & Management">Construction Tech & Management</option>
-                    <option value="MBA">MBA</option>
-                    <option value="Environmental Eng">Environmental Eng</option>
-                    <option value="Geotechnical Eng">Geotechnical Eng</option>
-                    <option value="Transportation Eng">Transportation Eng</option>
-                    <option value="Structural Eng">Structural Eng</option>
-                    <option value="Power Electronics">Power Electronics</option>
-                    <option value="Mechanical Design">Mechanical Design</option>
-                    <option value="Thermal Eng">Thermal Eng</option>
-                    <option value="Manufacturing Eng">Manufacturing Eng</option>
-                    <option value="Mechatronics">Mechatronics</option>
-                    <option value="Water Resources">Water Resources</option>
-                    <option value="Marine Structures">Marine Structures</option>
-                    <option value="Geoinformatics">Geoinformatics</option>
-                    <option value="MCA">MCA</option>
-                    <option value="Chemistry">Chemistry</option>
-                    <option value="Physics">Physics</option>
-                    <option value="Signal Processing & ML">Signal Processing & ML</option>
-                    <option value="Communication Eng & Networks">Communication Eng & Networks</option>
-                    <option value="VLSI Design">VLSI Design</option>
-                    <option value="Information Security">Information Security</option>
-                    <option value="Industrial Biotechnology">Industrial Biotechnology</option>
-                    <option value="Environmental Science & Tech">Environmental Science & Tech</option>
-                    <option value="Materials Eng">Materials Eng</option>
-                    <option value="Nanotechnology">Nanotechnology</option>
-                  </optgroup>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Expected Graduation Year</label>
+                <label style={{ fontSize: '0.8rem', color: 'var(--primary-color)', marginBottom: '0.25rem', display: 'block' }}>Phone Number *</label>
                 <input 
-                  type="text" 
+                  type="tel" 
                   className="cyber-input" 
-                  value={profileForm.gradYear}
-                  onChange={e => setProfileForm({...profileForm, gradYear: e.target.value})}
+                  value={profileForm.phoneNumber}
+                  onChange={e => setProfileForm({...profileForm, phoneNumber: e.target.value})}
                   required
+                  placeholder="+91 9876543210"
+                  style={{ borderColor: 'var(--primary-color)' }}
                 />
               </div>
 
-              <button type="submit" className="btn btn-primary w-full" style={{ padding: '0.8rem', marginTop: '1rem' }}>Save & Continue</button>
+              <div>
+                <label style={{ fontSize: '0.8rem', color: 'var(--primary-color)', marginBottom: '0.25rem', display: 'block' }}>Personal Email ID *</label>
+                <input 
+                  type="email" 
+                  className="cyber-input" 
+                  value={profileForm.personalEmail}
+                  onChange={e => setProfileForm({...profileForm, personalEmail: e.target.value})}
+                  required
+                  placeholder="john.doe@gmail.com"
+                  style={{ borderColor: 'var(--primary-color)' }}
+                />
+              </div>
+
+              <button type="submit" className="btn btn-primary w-full" style={{ padding: '0.8rem', marginTop: '0.5rem', boxShadow: '0 0 15px rgba(59, 130, 246, 0.4)' }}>Save & Continue</button>
+              
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', marginTop: '1rem', lineHeight: '1.4' }}>
+                Extracted details are incorrect? Report an issue to administrator at <br/>
+                <a href="mailto:siddanths.231cv149@nitk.edu.in" style={{ color: 'var(--primary-color)', textDecoration: 'none' }}>siddanths.231cv149@nitk.edu.in</a>
+              </div>
             </form>
           </div>
         </div>
