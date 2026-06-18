@@ -96,22 +96,14 @@ export default function NotificationsDropdown() {
         {unreadCount > 0 && (
           <span style={{
             position: 'absolute',
-            top: '0px', right: '0px',
-            background: '#ef4444',
-            color: '#fff',
-            fontSize: '0.65rem',
-            fontWeight: 'bold',
-            minWidth: '16px',
-            height: '16px',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            top: '4px', right: '4px',
+            background: '#06b6d4',
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
             border: '2px solid var(--bg-color)',
-            animation: 'pulse-glow 2s infinite'
-          }}>
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
+            boxShadow: '0 0 8px rgba(6, 182, 212, 0.6)'
+          }} />
         )}
       </button>
 

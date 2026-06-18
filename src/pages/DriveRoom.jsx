@@ -147,7 +147,7 @@ export default function DriveRoom() {
       // Notify the new SPOC
       await addDoc(collection(db, 'notifications'), {
         recipient: newSpocEmail,
-        message: `You have been assigned as the PRIMARY SPOC for ${drive.company}.`,
+        message: `You have been assigned as the PRIMARY SPOC for ${currentDrive.company}.`,
         type: 'SPOC_ASSIGNED',
         read: false,
         timestamp: new Date().toISOString()
@@ -156,7 +156,7 @@ export default function DriveRoom() {
       // Notify the HEAD (activity log)
       await addDoc(collection(db, 'notifications'), {
         recipient: user.email,
-        message: `Activity: You assigned ${newSpocEmail} as PRIMARY SPOC for ${drive.company}.`,
+        message: `Activity: You assigned ${newSpocEmail} as PRIMARY SPOC for ${currentDrive.company}.`,
         type: 'ACTIVITY',
         read: false,
         timestamp: new Date().toISOString()
@@ -178,7 +178,7 @@ export default function DriveRoom() {
       // Notify the new secondary SPOC
       await addDoc(collection(db, 'notifications'), {
         recipient: newSecSpocEmail,
-        message: `You have been assigned as a SECONDARY SPOC for ${drive.company}.`,
+        message: `You have been assigned as a SECONDARY SPOC for ${currentDrive.company}.`,
         type: 'SPOC_ASSIGNED',
         read: false,
         timestamp: new Date().toISOString()
@@ -187,7 +187,7 @@ export default function DriveRoom() {
       // Notify the HEAD (activity log)
       await addDoc(collection(db, 'notifications'), {
         recipient: user.email,
-        message: `Activity: You assigned ${newSecSpocEmail} as SECONDARY SPOC for ${drive.company}.`,
+        message: `Activity: You assigned ${newSecSpocEmail} as SECONDARY SPOC for ${currentDrive.company}.`,
         type: 'ACTIVITY',
         read: false,
         timestamp: new Date().toISOString()
