@@ -133,7 +133,7 @@ export default function Navbar() {
           
           {showHoverCard && profileData && (
             <>
-              <div style={{ position: 'fixed', inset: 0, zIndex: 999 }} onClick={() => { if (!isEditingInline) setShowHoverCard(false); }}></div>
+              <div style={{ position: 'fixed', inset: 0, zIndex: 999 }} onClick={() => { setShowHoverCard(false); setIsEditingInline(false); }}></div>
               <div className="animate-fade-in" style={{
                 position: 'absolute',
                 top: 'calc(100% + 12px)',
@@ -228,7 +228,9 @@ export default function Navbar() {
                         value={profileForm.phoneNumber}
                         onChange={e => setProfileForm({...profileForm, phoneNumber: e.target.value})}
                         required
-                        placeholder="+91 9876543210"
+                        pattern="^\d{10}$"
+                        title="Phone number must be exactly 10 digits"
+                        placeholder="9876543210"
                         style={{ padding: '0.5rem', fontSize: '0.85rem' }}
                       />
                     </div>
@@ -240,6 +242,8 @@ export default function Navbar() {
                         value={profileForm.personalEmail}
                         onChange={e => setProfileForm({...profileForm, personalEmail: e.target.value})}
                         required
+                        pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
+                        title="Please enter a valid email address"
                         placeholder="john.doe@gmail.com"
                         style={{ padding: '0.5rem', fontSize: '0.85rem' }}
                       />

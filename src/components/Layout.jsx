@@ -109,17 +109,36 @@ export default function Layout() {
                     key={dm.id} 
                     className={`cyber-dm-item ${isActive ? 'active' : ''}`}
                     onClick={() => navigate(`/dm/${dm.id}`)}
+                    style={{ display: 'flex', gap: '1rem', alignItems: 'center', padding: '1rem' }}
                   >
-                    <div style={{ fontSize: '0.9rem', fontWeight: isUnread ? '800' : '600', color: isUnread ? '#fff' : (isActive ? 'var(--primary-color)' : 'var(--text-primary)'), marginBottom: '0.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span>{otherPerson?.split('@')[0]}</span>
-                      {isUnread && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#38bdf8', boxShadow: '0 0 8px #38bdf8' }} />}
+                    <div style={{
+                      width: '45px', height: '45px', borderRadius: '50%',
+                      background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(37, 99, 235, 0.2))',
+                      border: '1px solid rgba(56, 189, 248, 0.3)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: 'var(--primary-color)', fontWeight: 'bold', fontSize: '1.2rem', flexShrink: 0
+                    }}>
+                      {otherPerson?.charAt(0).toUpperCase()}
                     </div>
-                    {lastMessage && (
-                      <div style={{ fontSize: '0.75rem', color: isUnread ? '#e2e8f0' : 'var(--text-secondary)', fontWeight: isUnread ? '600' : '400', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {lastMessage.sender === user?.email ? 'You: ' : ''}
-                        {lastMessage.text || 'Attachment'}
+                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                      <div style={{ fontSize: '0.95rem', fontWeight: isUnread ? '800' : '600', color: isUnread ? '#fff' : (isActive ? 'var(--primary-color)' : 'var(--text-primary)'), marginBottom: '0.2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{otherPerson?.split('@')[0]}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+                          {lastMessage && <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 'normal' }}>
+                            {new Date(lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>}
+                          {isUnread && <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#38bdf8', boxShadow: '0 0 10px #38bdf8' }} />}
+                        </div>
                       </div>
-                    )}
+                      {lastMessage && (
+                        <div style={{ fontSize: '0.8rem', color: isUnread ? '#e2e8f0' : 'var(--text-secondary)', fontWeight: isUnread ? '600' : '400', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <span style={{ color: lastMessage.sender === user?.email ? 'var(--primary-color)' : 'inherit', fontWeight: '500' }}>
+                            {lastMessage.sender === user?.email ? 'You: ' : ''}
+                          </span>
+                          {lastMessage.text || '📎 Attachment'}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })

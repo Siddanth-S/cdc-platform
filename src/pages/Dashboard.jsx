@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Plus, Users, Search, Pin, CheckCircle2 } from 'lucide-react';
+import { Building2, Plus, Users, Search, Pin, CheckCircle2, Filter } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, onSnapshot, doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
@@ -71,6 +71,7 @@ export default function Dashboard() {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState('ALL');
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
   const [pinnedDrives, setPinnedDrives] = useState(() => {
     const saved = localStorage.getItem(`pinned_${user?.email}`);
@@ -190,6 +191,10 @@ export default function Dashboard() {
         const branch = userProfile?.branch;
         if (!branch || (d.eligibleBranches && !d.eligibleBranches.includes(branch))) return false;
       }
+      if (filterMode === 'NOT_ELIGIBLE') {
+        const branch = userProfile?.branch;
+        if (branch && d.eligibleBranches && d.eligibleBranches.includes(branch)) return false;
+      }
       return true;
     })
     .sort((a, b) => {
@@ -220,36 +225,46 @@ export default function Dashboard() {
       </div>
 
       <div className="dashboard-controls" style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-        <div style={{ position: 'relative', flex: 1, maxWidth: '600px' }}>
-          <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-          <input 
-            type="text" 
-            placeholder="Search for companies or roles..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="cyber-input"
-          />
+        <div style={{ flex: 1, maxWidth: '600px', display: 'flex', gap: '0.5rem' }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+            <input 
+              type="text" 
+              placeholder="Search for companies or roles..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="cyber-input"
+            />
+          </div>
+          <div style={{ position: 'relative' }}>
+            <button onClick={() => setShowFilterDropdown(!showFilterDropdown)} className="btn btn-secondary" style={{ padding: '0 1rem', height: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Filter size={18} /> Filter
+            </button>
+            {showFilterDropdown && (
+              <div className="cyber-dropdown animate-fade-in">
+                <button className={`cyber-dropdown-item ${filterMode === 'ELIGIBLE' ? 'active' : ''}`} onClick={() => {setFilterMode('ELIGIBLE'); setShowFilterDropdown(false);}}>Eligible</button>
+                <button className={`cyber-dropdown-item ${filterMode === 'NOT_ELIGIBLE' ? 'active' : ''}`} onClick={() => {setFilterMode('NOT_ELIGIBLE'); setShowFilterDropdown(false);}}>Not Eligible</button>
+                <button className={`cyber-dropdown-item ${filterMode === 'JOINED' ? 'active' : ''}`} onClick={() => {setFilterMode('JOINED'); setShowFilterDropdown(false);}}>Joined</button>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="segmented-control" style={{ display: 'flex', gap: '0.25rem', overflowX: 'auto', paddingBottom: '4px' }}>
-          <button className={`segmented-btn ${filterMode === 'ALL' ? 'active' : ''}`} onClick={() => setFilterMode('ALL')}>
+          <button className={`segmented-btn ${filterMode === 'ALL' ? 'active' : ''}`} onClick={() => {setFilterMode('ALL'); setShowFilterDropdown(false);}}>
             All Drives
           </button>
-          <button className={`segmented-btn ${filterMode === 'ACTIVE' ? 'active' : ''}`} onClick={() => setFilterMode('ACTIVE')}>
+          <button className={`segmented-btn ${filterMode === 'ACTIVE' ? 'active' : ''}`} onClick={() => {setFilterMode('ACTIVE'); setShowFilterDropdown(false);}}>
             Active
           </button>
-          <button className={`segmented-btn ${filterMode === 'CLOSED' ? 'active' : ''}`} onClick={() => setFilterMode('CLOSED')}>
+          <button className={`segmented-btn ${filterMode === 'CLOSED' ? 'active' : ''}`} onClick={() => {setFilterMode('CLOSED'); setShowFilterDropdown(false);}}>
             Closed
           </button>
-          <button className={`segmented-btn ${filterMode === 'ELIGIBLE' ? 'active' : ''}`} onClick={() => setFilterMode('ELIGIBLE')}>
-            My Eligible
-          </button>
-          <button className={`segmented-btn ${filterMode === 'JOINED' ? 'active' : ''}`} onClick={() => setFilterMode('JOINED')}>
-            Joined
-          </button>
-          <button className={`segmented-btn ${filterMode === 'SPOC' ? 'active' : ''}`} onClick={() => setFilterMode('SPOC')}>
-            SPOC
-          </button>
+          {user?.role !== 'STUDENT' && (
+            <button className={`segmented-btn ${filterMode === 'SPOC' ? 'active' : ''}`} onClick={() => {setFilterMode('SPOC'); setShowFilterDropdown(false);}}>
+              SPOC
+            </button>
+          )}
         </div>
       </div>
 
