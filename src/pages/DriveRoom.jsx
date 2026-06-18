@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Send, ArrowLeft, ShieldAlert, Paperclip, X, MessageSquarePlus, LogOut, Plus, Edit3 } from 'lucide-react';
+import { Send, ArrowLeft, ShieldAlert, Paperclip, X, MessageSquarePlus, LogOut, Plus, Edit3, Settings, Users, UserCog, Power } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, doc, getDocs, setDoc, updateDoc, increment, arrayUnion, arrayRemove, deleteField } from 'firebase/firestore';
 
@@ -39,6 +39,7 @@ export default function DriveRoom() {
 
   const [showEditBranchesModal, setShowEditBranchesModal] = useState(false);
   const [editBranches, setEditBranches] = useState([]);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   
   const [toastMsg, setToastMsg] = useState('');
   const [isToastFading, setIsToastFading] = useState(false);
@@ -350,29 +351,13 @@ export default function DriveRoom() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          {isPriSpoc && (
-            <button 
-              onClick={() => { setEditBranches(currentDrive.eligibleBranches || []); setShowEditBranchesModal(true); }}
-              className="btn-glass primary" 
-            >
-              <Edit3 size={16} /> Edit Eligibility
-            </button>
-          )}
           {(isHead || isPriSpoc) && (
             <button 
-              onClick={async () => {
-                try {
-                  await updateDoc(doc(db, 'drives', id), { status: currentDrive.status === 'Closed' ? 'Active' : 'Closed' });
-                } catch(err) { console.error(err); }
-              }}
-              className={`btn-glass ${currentDrive.status === 'Closed' ? 'primary' : 'danger'}`}
+              onClick={() => setShowSettingsModal(true)}
+              className="btn-glass primary" 
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1rem' }}
             >
-              {currentDrive.status === 'Closed' ? 'Reopen Drive' : 'Close Drive'}
-            </button>
-          )}
-          {user?.role === 'HEAD' && (
-            <button onClick={() => { setNewSpocEmail(currentDrive.coordinator); setShowSpocModal(true); }} className="btn-glass">
-              Change Primary SPOC
+              <Settings size={18} /> Manage Drive
             </button>
           )}
           {canLeave && (
@@ -394,12 +379,6 @@ export default function DriveRoom() {
               {spoc && spoc !== user?.email && (
                 <button onClick={() => handleInitiateDM(spoc)} style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Message Secondary SPOC">
                   <MessageSquarePlus size={14} />
-                </button>
-              )}
-
-              {user?.role === 'HEAD' && (
-                <button onClick={() => { setEditingSpocIndex(index); setNewSecSpocEmail(spoc || ''); setShowSecSpocModal(true); }} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', marginLeft: '0.25rem', fontSize: '0.7rem', textDecoration: 'underline' }}>
-                  Change
                 </button>
               )}
             </div>
@@ -574,6 +553,57 @@ export default function DriveRoom() {
           </div>
         )}
       </div>
+
+      {showSettingsModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="glass-card animate-fade-in" style={{ width: '100%', maxWidth: '400px', padding: '2rem' }}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.5rem' }}>
+                <Settings className="text-primary" size={24} /> Manage Drive
+              </h2>
+              <button onClick={() => setShowSettingsModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '1.5rem' }}>&times;</button>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {(isHead || isPriSpoc) && (
+                <button onClick={() => { setShowSettingsModal(false); setEditBranches(currentDrive.eligibleBranches || []); setShowEditBranchesModal(true); }} className="btn-glass primary" style={{ width: '100%', justifyContent: 'flex-start', padding: '1rem', fontSize: '1rem' }}>
+                  <Edit3 size={18} /> Edit Eligibility
+                </button>
+              )}
+              
+              {isHead && (
+                <>
+                  <button onClick={() => { setShowSettingsModal(false); setNewSpocEmail(currentDrive.coordinator); setShowSpocModal(true); }} className="btn-glass" style={{ width: '100%', justifyContent: 'flex-start', padding: '1rem', fontSize: '1rem' }}>
+                    <UserCog size={18} /> Change Primary SPOC
+                  </button>
+                  <button onClick={() => { setShowSettingsModal(false); setEditingSpocIndex(0); setNewSecSpocEmail(currentDrive.secondarySpocs?.[0] || ''); setShowSecSpocModal(true); }} className="btn-glass" style={{ width: '100%', justifyContent: 'flex-start', padding: '1rem', fontSize: '1rem' }}>
+                    <Users size={18} /> Change Secondary SPOC 1
+                  </button>
+                  <button onClick={() => { setShowSettingsModal(false); setEditingSpocIndex(1); setNewSecSpocEmail(currentDrive.secondarySpocs?.[1] || ''); setShowSecSpocModal(true); }} className="btn-glass" style={{ width: '100%', justifyContent: 'flex-start', padding: '1rem', fontSize: '1rem' }}>
+                    <Users size={18} /> Change Secondary SPOC 2
+                  </button>
+                </>
+              )}
+
+              {(isHead || isPriSpoc) && (
+                <button 
+                  onClick={async () => {
+                    try {
+                      await updateDoc(doc(db, 'drives', id), { status: currentDrive.status === 'Closed' ? 'Active' : 'Closed' });
+                      setShowSettingsModal(false);
+                      triggerToast(`Drive ${currentDrive.status === 'Closed' ? 'Reopened' : 'Closed'}!`);
+                    } catch(err) { console.error(err); }
+                  }}
+                  className={`btn-glass ${currentDrive.status === 'Closed' ? 'primary' : 'danger'}`}
+                  style={{ width: '100%', justifyContent: 'flex-start', padding: '1rem', fontSize: '1rem', marginTop: '1rem' }}
+                >
+                  <Power size={18} /> {currentDrive.status === 'Closed' ? 'Reopen Drive' : 'Close Drive'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       
       {showSpocModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
