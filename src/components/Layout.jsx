@@ -6,6 +6,7 @@ import { MessageSquare, Menu, X, ChevronLeft, MessageCircle } from 'lucide-react
 import { db } from '../firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { AnimatePresence, motion } from 'framer-motion';
+import WelcomeToast from './WelcomeToast';
 
 export default function Layout() {
   const { user } = useAuth();
@@ -47,6 +48,7 @@ export default function Layout() {
 
   return (
     <div className="app-container" style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+      <WelcomeToast user={user} />
       <Navbar />
       
       {/* Mobile Toggle Bar */}
