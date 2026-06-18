@@ -629,13 +629,13 @@ p {
 
 /* Cyber FAB */
 .cyber-fab {
-  position: absolute;
-  top: 1.25rem; left: 1.25rem;
+  position: relative;
   z-index: 50;
   background: linear-gradient(90deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
   border: 1px solid rgba(96, 165, 250, 0.4);
   color: #fff;
   padding: 0.75rem 1.25rem;
+  margin: 1rem 0 0 1rem;
   border-radius: 24px;
   display: flex;
   align-items: center;
@@ -646,6 +646,8 @@ p {
   font-size: 0.9rem;
   overflow: hidden;
   transition: all 0.3s ease;
+  align-self: flex-start;
+  flex-shrink: 0;
 }
 .cyber-fab:hover {
   box-shadow: 0 0 30px rgba(59, 130, 246, 0.6), inset 0 0 15px rgba(59, 130, 246, 0.4);

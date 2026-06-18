@@ -16,6 +16,7 @@ const AuthContext = createContext();
 // CDC Heads — these emails get full admin access
 const CDC_HEADS = [
   'headpc@nitk.edu.in', 'siddanths.231cv149@nitk.edu.in',
+  'testadmin@nitk.edu.in',
   'head1@nitk.edu.in', 'head2@nitk.edu.in', 'head3@nitk.edu.in', 
   'head4@nitk.edu.in', 'head5@nitk.edu.in', 'head6@nitk.edu.in'
 ];
