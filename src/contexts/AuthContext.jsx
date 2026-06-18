@@ -1,5 +1,13 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { 
+  onAuthStateChanged, 
+  signInWithPopup, 
+  signOut, 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  sendPasswordResetEmail,
+  sendEmailVerification
+} from 'firebase/auth';
 import { auth, googleProvider, db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 
@@ -40,7 +48,6 @@ export const AuthProvider = ({ children }) => {
       if (firebaseUser) {
         const email = firebaseUser.email;
         if (!email.endsWith('@nitk.edu.in')) {
-          // Not a college email — sign them out immediately
           await signOut(auth);
           setUser(null);
           setLoading(false);
@@ -50,9 +57,10 @@ export const AuthProvider = ({ children }) => {
         setUser({
           email,
           role,
-          displayName: firebaseUser.displayName,
+          displayName: firebaseUser.displayName || email.split('@')[0],
           photoURL: firebaseUser.photoURL,
-          uid: firebaseUser.uid
+          uid: firebaseUser.uid,
+          emailVerified: firebaseUser.emailVerified
         });
       } else {
         setUser(null);
@@ -63,7 +71,8 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  const login = async () => {
+  // Google Sign-In
+  const loginWithGoogle = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const email = result.user.email;
@@ -72,9 +81,7 @@ export const AuthProvider = ({ children }) => {
         await signOut(auth);
         throw new Error('Only @nitk.edu.in accounts can access this platform.');
       }
-      // onAuthStateChanged will handle setting the user
     } catch (err) {
-      // Re-throw so Login.jsx can display the error
       if (err.code === 'auth/popup-closed-by-user') {
         throw new Error('Sign-in was cancelled.');
       }
@@ -82,10 +89,66 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Email/Password Sign Up
+  const signUp = async (email, password) => {
+    if (!email.endsWith('@nitk.edu.in')) {
+      throw new Error('Only @nitk.edu.in emails are allowed.');
+    }
+    try {
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      // Send verification email
+      await sendEmailVerification(result.user);
+      return result;
+    } catch (err) {
+      if (err.code === 'auth/email-already-in-use') {
+        throw new Error('An account with this email already exists. Try signing in instead.');
+      }
+      if (err.code === 'auth/weak-password') {
+        throw new Error('Password must be at least 6 characters long.');
+      }
+      throw new Error(err.message);
+    }
+  };
+
+  // Email/Password Sign In
+  const loginWithEmail = async (email, password) => {
+    if (!email.endsWith('@nitk.edu.in')) {
+      throw new Error('Only @nitk.edu.in emails are allowed.');
+    }
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        throw new Error('Invalid email or password. Please try again.');
+      }
+      if (err.code === 'auth/wrong-password') {
+        throw new Error('Invalid email or password. Please try again.');
+      }
+      if (err.code === 'auth/too-many-requests') {
+        throw new Error('Too many failed attempts. Please try again later.');
+      }
+      throw new Error(err.message);
+    }
+  };
+
+  // Forgot Password
+  const resetPassword = async (email) => {
+    if (!email.endsWith('@nitk.edu.in')) {
+      throw new Error('Only @nitk.edu.in emails are allowed.');
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (err) {
+      if (err.code === 'auth/user-not-found') {
+        throw new Error('No account found with this email.');
+      }
+      throw new Error(err.message);
+    }
+  };
+
   const logout = async () => {
     await signOut(auth);
     setUser(null);
-    // Clear any localStorage read receipts for this session
   };
 
   // Allow re-checking role (e.g., after being assigned as SPOC)
@@ -97,7 +160,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, refreshRole, CDC_HEADS }}>
+    <AuthContext.Provider value={{ 
+      user, loginWithGoogle, loginWithEmail, signUp, resetPassword, 
+      logout, loading, refreshRole, CDC_HEADS 
+    }}>
       {children}
     </AuthContext.Provider>
   );
