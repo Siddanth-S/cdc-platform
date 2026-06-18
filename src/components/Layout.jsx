@@ -52,11 +52,15 @@ export default function Layout() {
       <WelcomeToast user={user} />
       
       {/* Mobile Toggle Bar */}
-      <div className="mobile-toggle" style={{ padding: '0.5rem 1rem', display: 'none', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.2)' }}>
-        <span style={{ fontSize: '0.9rem', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <div 
+        className="mobile-toggle" 
+        onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+        style={{ padding: '0.5rem 1rem', display: 'none', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.2)', cursor: 'pointer' }}
+      >
+        <span style={{ fontSize: '0.9rem', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '0.5rem', pointerEvents: 'none' }}>
           <MessageSquare size={16} className="text-primary" /> Direct Messages
         </span>
-        <button onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)} style={{ background: 'none', border: 'none', color: 'var(--text-primary)' }}>
+        <button style={{ background: 'none', border: 'none', color: 'var(--text-primary)', pointerEvents: 'none' }}>
           {mobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
