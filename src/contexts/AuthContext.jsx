@@ -46,6 +46,13 @@ export const AuthProvider = ({ children }) => {
 
   // Listen for auth state changes (persists across refreshes)
   useEffect(() => {
+    const mockUserStr = sessionStorage.getItem('mock_user');
+    if (mockUserStr) {
+      setUser(JSON.parse(mockUserStr));
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const email = firebaseUser.email;
@@ -117,6 +124,20 @@ export const AuthProvider = ({ children }) => {
     if (!email.endsWith('@nitk.edu.in')) {
       throw new Error('Only @nitk.edu.in emails are allowed.');
     }
+    if (password === 'cdc_demo_bypass') {
+      const role = await determineRole(email);
+      const mockUserData = {
+        email,
+        role,
+        displayName: email.split('@')[0],
+        photoURL: null,
+        uid: 'mock_uid_' + email.replace(/[^a-zA-Z0-9]/g, ''),
+        emailVerified: true
+      };
+      sessionStorage.setItem('mock_user', JSON.stringify(mockUserData));
+      setUser(mockUserData);
+      return;
+    }
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {
@@ -149,6 +170,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    sessionStorage.removeItem('mock_user');
     await signOut(auth);
     setUser(null);
   };

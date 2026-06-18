@@ -191,12 +191,23 @@ export default function DirectMessage() {
             return (
               <div 
                 key={msg.id} 
-                onMouseEnter={() => setHoveredMsgId(msg.id)}
-                onMouseLeave={() => { setHoveredMsgId(null); setShowReactionPickerId(null); }}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', animation: 'fadeIn 0.3s ease-out', position: 'relative' }}
+                className={`drive-msg-container ${isNew ? 'new-msg-glow' : ''}`}
+                onMouseEnter={() => { if (window.innerWidth > 768) setHoveredMsgId(msg.id); }}
+                onMouseLeave={() => { 
+                  if (window.innerWidth > 768) {
+                    setHoveredMsgId(null); 
+                    setShowReactionPickerId(null); 
+                  }
+                }}
+                onClick={(e) => {
+                  if (window.innerWidth <= 768 && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A') {
+                    setHoveredMsgId(hoveredMsgId === msg.id ? null : msg.id);
+                  }
+                }}
+                style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', gap: '0.75rem', marginBottom: '1.5rem', position: 'relative', alignItems: 'flex-start' }}
               >
                 
-                <div className={`drive-msg-bubble ${isNew ? 'new-msg-glow' : ''}`} style={{ 
+                <div className="drive-msg-bubble" style={{ 
                   background: isMe ? 'linear-gradient(135deg, var(--primary-color), #2563eb)' : 'rgba(15, 23, 42, 0.7)', 
                   color: isMe ? '#fff' : 'var(--text-primary)',
                   border: isMe ? 'none' : '1px solid rgba(96, 165, 250, 0.15)',
@@ -236,13 +247,7 @@ export default function DirectMessage() {
                   {isNew && <span style={{ position: 'absolute', top: '-5px', right: '-5px', color: '#fff', fontWeight: 'bold', fontSize: '0.55rem', background: '#38bdf8', padding: '0.1rem 0.3rem', borderRadius: '4px', boxShadow: '0 0 5px #38bdf8' }}>NEW</span>}
 
                   {hoveredMsgId === msg.id && (
-                    <div style={{ 
-                      display: 'flex', alignItems: 'center', background: 'rgba(30, 41, 59, 0.95)', padding: '0.3rem 0.5rem', borderRadius: '20px', gap: '0.4rem', border: '1px solid rgba(56, 189, 248, 0.3)', animation: 'fadeIn 0.2s', zIndex: 10,
-                      position: 'absolute', top: '50%', transform: 'translateY(-50%)',
-                      [isMe ? 'right' : 'left']: 'calc(100% + 0.5rem)',
-                      whiteSpace: 'nowrap', width: 'max-content',
-                      boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
-                    }}>
+                    <div className={`msg-action-toolbar ${isMe ? 'is-me' : 'not-me'}`}>
                       <button onClick={() => setReplyToMsg(msg)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: '#38bdf8', padding: '0 0.3rem', fontWeight: 'bold' }}>Reply</button>
                       <div style={{ width: '1px', height: '14px', background: 'rgba(255,255,255,0.2)', margin: '0 0.2rem' }} />
                       {['👍', '❤️', '😂'].map(emoji => (
@@ -251,7 +256,7 @@ export default function DirectMessage() {
                       <div style={{ position: 'relative' }}>
                         <button onClick={() => setShowReactionPickerId(showReactionPickerId === msg.id ? null : msg.id)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: '#fff', padding: '0.2rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: '0.2rem' }}><Plus size={14} /></button>
                         {showReactionPickerId === msg.id && (
-                          <div style={{ position: 'absolute', bottom: 'calc(100% + 10px)', left: '50%', transform: 'translateX(-50%)', background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(56, 189, 248, 0.4)', borderRadius: '24px', padding: '0.5rem', display: 'flex', gap: '0.4rem', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+                          <div className="reaction-picker">
                             {['🎉', '🔥', '👀', '💯', '🙏'].map(emoji => (
                               <button key={emoji} onClick={() => handleReaction(msg.id, emoji)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', padding: '0.2rem', transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.3)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>{emoji}</button>
                             ))}
@@ -295,7 +300,7 @@ export default function DirectMessage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.3)', padding: '0.5rem 1rem', borderRadius: '8px', marginBottom: '0.5rem', borderLeft: '3px solid #38bdf8' }}>
             <div style={{ fontSize: '0.85rem' }}>
               <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>Replying to {replyToMsg.sender.split('@')[0]}</span>
-              <div style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '300px' }}>{replyToMsg.text}</div>
+              <div style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{replyToMsg.text}</div>
             </div>
             <button onClick={() => setReplyToMsg(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.2rem' }}>&times;</button>
           </div>

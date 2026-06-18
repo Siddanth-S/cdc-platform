@@ -245,15 +245,15 @@ p {
 .main-content {
   flex: 1;
   padding: 2rem;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   width: 100%;
+  overflow-y: auto;
+  min-width: 0;
 }
 
-@media (max-width: 768px) {
-  .main-content {
-    padding: 1rem;
-  }
+.main-content-scroll {
+  padding: 1.5rem 1.5rem 2rem 1.5rem;
 }
 
 /* Responsive Layout Adjustments */
@@ -266,11 +266,10 @@ p {
   transition: transform 0.3s ease;
 }
 
-.main-content {
-  flex: 1;
-  padding: 0 1rem 1rem 0;
-  overflow-y: auto;
-  min-width: 0;
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 240px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -281,25 +280,25 @@ p {
     display: flex !important;
   }
   .sidebar, .cyber-sidebar {
-    position: absolute;
+    position: absolute !important;
     top: 0;
     left: 0;
     height: 100%;
-    z-index: 100;
-    margin: 0;
-    border-radius: 0;
+    z-index: 1000 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
     transform: translateX(-100%);
     background: rgba(10, 10, 15, 0.95);
     backdrop-filter: blur(16px);
   }
   .sidebar.mobile-open, .cyber-sidebar.mobile-open {
-    transform: translateX(0);
+    transform: translateX(0) !important;
+    width: 280px !important;
   }
   .main-content {
     padding: 0 1rem 1rem 1rem;
   }
 }
-
 
 /* Desktop Sidebar Toggle Styles */
 .sidebar.desktop-closed {
@@ -314,22 +313,9 @@ p {
 }
 
 @media (max-width: 768px) {
-  .desktop-sidebar-toggle {
+  .desktop-sidebar-toggle, .desktop-fab, .desktop-close-btn {
     display: none !important;
   }
-}
-
-
-@media (max-width: 768px) {
-  .desktop-fab, .desktop-close-btn {
-    display: none !important;
-  }
-}
-
-
-.main-content {
-  max-width: 1400px;
-  margin: 0 auto;
 }
 
 
@@ -408,6 +394,10 @@ p {
   border-radius: 20.5px;
   height: 100%;
   width: 100%;
+}
+
+.login-content-pad {
+  padding: 2.5rem 2.5rem;
 }
 
 @keyframes icon-glow {
@@ -780,6 +770,44 @@ p {
   .dashboard-grid {
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)) !important;
   }
+  
+  /* Navbar and general app spacing fixes */
+  .navbar-cyber {
+    margin: 0.5rem !important;
+    padding: 0.75rem 1rem !important;
+  }
+
+  .main-content-scroll {
+    padding: 1rem 0.75rem 1.5rem 0.75rem !important;
+  }
+
+  /* Form and grid stacking */
+  .mobile-stack-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Modals */
+  .cyber-modal-container {
+    margin: 1rem !important;
+  }
+
+  .login-content-pad {
+    padding: 1.5rem 1rem !important;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .navbar-cyber {
+    margin: 0 !important;
+    border-radius: 0 !important;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+  }
 }
 
 
@@ -789,6 +817,70 @@ p {
 }
 .new-msg-glow {
   animation: cyber-new-msg 5s ease-out forwards !important;
+}
+
+/* Chat Toolbar CSS */
+.msg-action-toolbar {
+  display: flex;
+  align-items: center;
+  background: rgba(30, 41, 59, 0.95);
+  padding: 0.3rem 0.5rem;
+  border-radius: 20px;
+  gap: 0.4rem;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  animation: fadeIn 0.2s;
+  z-index: 10;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  width: max-content;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.msg-action-toolbar.is-me {
+  right: calc(100% + 0.5rem);
+}
+
+.msg-action-toolbar.not-me {
+  left: calc(100% + 0.5rem);
+}
+
+.reaction-picker {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 24px;
+  padding: 0.5rem;
+  display: flex;
+  gap: 0.4rem;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+@media (max-width: 768px) {
+  .msg-action-toolbar {
+    position: relative;
+    top: auto;
+    transform: none;
+    margin-top: 0.25rem;
+    padding: 0.5rem 0.75rem;
+  }
+  .msg-action-toolbar.is-me, .msg-action-toolbar.not-me {
+    right: auto;
+    left: auto;
+  }
+  .reaction-picker {
+    left: auto;
+    right: 0;
+    transform: none;
+  }
+  .msg-action-toolbar.is-me .reaction-picker {
+    right: 0;
+    left: auto;
+  }
 }
 
 

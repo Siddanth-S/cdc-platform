@@ -133,6 +133,7 @@ export default function NotificationsDropdown() {
               top: 'calc(100% + 0.5rem)',
               right: 0,
               width: '320px',
+              maxWidth: 'calc(100vw - 2rem)',
               background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95))',
               backdropFilter: 'blur(16px)',
               border: '1px solid rgba(56, 189, 248, 0.2)',

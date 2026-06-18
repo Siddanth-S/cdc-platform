@@ -161,7 +161,8 @@ export default function Layout() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
-              style={{ height: '100%', width: '100%', overflowY: 'auto', padding: '1.5rem 1.5rem 2rem 1.5rem' }}
+              className="main-content-scroll"
+              style={{ height: '100%', width: '100%', overflowY: 'auto' }}
             >
               {element}
             </motion.div>

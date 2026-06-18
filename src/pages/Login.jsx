@@ -129,8 +129,8 @@ export default function Login() {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', background: 'var(--bg-color)', position: 'relative', overflow: 'hidden' }}>
       
       {/* Decorative background elements */}
-      <div className="floating-orb" style={{ position: 'absolute', top: '10%', left: '15%', width: '300px', height: '300px', background: 'var(--primary-color)', borderRadius: '50%', filter: 'blur(100px)', opacity: 0.25, zIndex: 0 }}></div>
-      <div className="floating-orb" style={{ position: 'absolute', bottom: '15%', right: '15%', width: '250px', height: '250px', background: 'var(--accent-color)', borderRadius: '50%', filter: 'blur(100px)', opacity: 0.2, animationDelay: '-4s', zIndex: 0 }}></div>
+      <div className="floating-orb" style={{ position: 'absolute', top: '10%', left: '15%', width: 'min(80vw, 300px)', height: 'min(80vw, 300px)', background: 'var(--primary-color)', borderRadius: '50%', filter: 'blur(100px)', opacity: 0.25, zIndex: 0 }}></div>
+      <div className="floating-orb" style={{ position: 'absolute', bottom: '15%', right: '15%', width: 'min(60vw, 250px)', height: 'min(60vw, 250px)', background: 'var(--accent-color)', borderRadius: '50%', filter: 'blur(100px)', opacity: 0.2, animationDelay: '-4s', zIndex: 0 }}></div>
 
       <motion.div 
         initial={{ opacity: 0, y: 30, scale: 0.95 }}
@@ -139,7 +139,7 @@ export default function Login() {
         className="magic-border-container" 
         style={{ width: '100%', maxWidth: '440px', zIndex: 10, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}
       >
-        <div className="magic-border-content" style={{ padding: '2.5rem 2.5rem', textAlign: 'center' }}>
+        <div className="magic-border-content login-content-pad" style={{ textAlign: 'center' }}>
           
           {/* Logo */}
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
