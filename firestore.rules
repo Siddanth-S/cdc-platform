@@ -1,0 +1,106 @@
+rules_version = '2';
+
+// Mirrors the access model already implemented in the client (AuthContext.jsx,
+// DriveRoom.jsx, Dashboard.jsx, NotificationsDropdown.jsx). The app currently
+// runs with these rules wide open in the Firebase console, so anyone with the
+// public web config can read/write every collection without signing in.
+//
+// HEAD list below must stay in sync with CDC_HEADS in src/contexts/AuthContext.jsx.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isHead() {
+      return isSignedIn() && request.auth.token.email in [
+        'headpc@nitk.edu.in', 'siddanths.231cv149@nitk.edu.in',
+        'testadmin@nitk.edu.in',
+        'head1@nitk.edu.in', 'head2@nitk.edu.in', 'head3@nitk.edu.in',
+        'head4@nitk.edu.in', 'head5@nitk.edu.in', 'head6@nitk.edu.in'
+      ];
+    }
+
+    function isPrimarySpoc(driveData) {
+      return isSignedIn() && driveData.coordinator == request.auth.token.email;
+    }
+
+    // Matches `canMessage` in DriveRoom.jsx: HEAD or primary SPOC only.
+    // Secondary SPOCs intentionally excluded - do not add them here.
+    function canPostInDrive(driveData) {
+      return isHead() || isPrimarySpoc(driveData);
+    }
+
+    match /drives/{driveId} {
+      allow read: if isSignedIn();
+
+      // Drive creation is restricted to HEAD (matches the "Add Drive" modal in Dashboard.jsx).
+      allow create, delete: if isHead();
+
+      // Field-scoped update:
+      // - HEAD: any field.
+      // - Primary SPOC: eligibleBranches/status (Edit Branches, close/reopen) + the
+      //   self-service fields below. Cannot reassign coordinator/secondarySpocs
+      //   (matches the isHead-only gate on those modals in DriveRoom.jsx).
+      // - Any signed-in user: only the self-service fields written by everyone
+      //   (join/leave count, typing indicator, presence heartbeat).
+      allow update: if isSignedIn() && (
+        isHead() ||
+        (isPrimarySpoc(resource.data) &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['eligibleBranches', 'status', 'joined', 'typing', 'activeUsers', 'lastRead'])) ||
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['joined', 'typing', 'activeUsers', 'lastRead'])
+      );
+
+      match /messages/{messageId} {
+        allow read: if isSignedIn();
+
+        // Matches handleSend: only HEAD/primary SPOC can post, and only as themselves.
+        allow create: if isSignedIn() &&
+          canPostInDrive(get(/databases/$(database)/documents/drives/$(driveId)).data) &&
+          request.resource.data.sender == request.auth.token.email;
+
+        // Pin/unpin (canMessage-gated) vs. reactions (open to anyone) are the only
+        // two update paths in the client - keep them field-scoped and separate.
+        allow update: if isSignedIn() && (
+          (canPostInDrive(get(/databases/$(database)/documents/drives/$(driveId)).data) &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pinned'])) ||
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
+        );
+
+        // Matches (isMe || isHead || isPriSpoc) unsend logic.
+        allow delete: if isSignedIn() && (
+          resource.data.sender == request.auth.token.email ||
+          canPostInDrive(get(/databases/$(database)/documents/drives/$(driveId)).data)
+        );
+      }
+    }
+
+    // DM doc holds participants + a messages array field (no subcollection).
+    // Only the two participants may ever read/write it.
+    match /dms/{dmId} {
+      allow read, update: if isSignedIn() && request.auth.token.email in resource.data.participants;
+      allow create: if isSignedIn() && request.auth.token.email in request.resource.data.participants;
+    }
+
+    // users/{email} is always read/written as the signed-in user's own profile doc.
+    match /users/{userEmail} {
+      allow read, write: if isSignedIn() && request.auth.token.email == userEmail;
+    }
+
+    // Created by one user on behalf of another (e.g. SPOC-assignment pings) -
+    // only the recipient may read/mark their own notifications.
+    match /notifications/{notifId} {
+      allow create: if isSignedIn();
+      allow read, update: if isSignedIn() && resource.data.recipient == request.auth.token.email;
+    }
+
+    // Seed sentinel - only HEAD should ever (re)seed the database.
+    match /_meta/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isHead();
+    }
+  }
+}
