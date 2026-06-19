@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Login() {
@@ -144,7 +144,7 @@ export default function Login() {
           {/* Logo */}
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
             <div className="logo-glow" style={{ background: 'rgba(59, 130, 246, 0.15)', padding: '1rem', borderRadius: '50%', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
-              <GraduationCap size={40} className="text-primary" />
+              <span className="cdc-logo-mark" style={{ width: 40, height: 44 }} aria-hidden="true" />
             </div>
           </div>
           <h1 style={{ marginBottom: '0.25rem', fontSize: '1.6rem', letterSpacing: '-0.5px' }}>NITK CDC Portal</h1>
