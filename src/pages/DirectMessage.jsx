@@ -5,6 +5,7 @@ import { Send, ArrowLeft, Paperclip, X, User, Maximize2, Minimize2, CornerUpLeft
 import { db } from '../firebase';
 import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove, deleteField, runTransaction } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
+import { formatName } from '../utils/profileParser';
 
 export default function DirectMessage() {
   const { id } = useParams();
@@ -247,12 +248,6 @@ export default function DirectMessage() {
   const otherSafeEmail = otherPerson ? otherPerson.replace(/\./g, '_') : '';
   const otherLastSeen = dmData?.activeUsers?.[otherSafeEmail];
   const isOnline = otherLastSeen && (new Date().getTime() - new Date(otherLastSeen).getTime() < 20000);
-
-  const formatName = (email) => {
-    if (!email) return '';
-    const namePart = email.split('@')[0].split('.')[0].replace(/[0-9]/g, '');
-    return namePart.charAt(0).toUpperCase() + namePart.slice(1);
-  };
 
   return (
     <div style={isFullScreen ? {

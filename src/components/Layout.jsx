@@ -7,6 +7,7 @@ import { db } from '../firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { AnimatePresence, motion } from 'framer-motion';
 import WelcomeToast from './WelcomeToast';
+import { formatName } from '../utils/profileParser';
 
 export default function Layout() {
   const { user } = useAuth();
@@ -115,12 +116,6 @@ export default function Layout() {
                 const lastMessage = dm.messages.length > 0 ? dm.messages[dm.messages.length - 1] : null;
                 const lastRead = Number(localStorage.getItem(`read_dm_${dm.id}_${user?.email}`) || 0);
                 const isUnread = lastMessage && lastMessage.sender !== user?.email && new Date(lastMessage.timestamp).getTime() > lastRead && !isActive;
-
-                const formatName = (email) => {
-                  if (!email) return '';
-                  const namePart = email.split('@')[0].split('.')[0].replace(/[0-9]/g, '');
-                  return namePart.charAt(0).toUpperCase() + namePart.slice(1);
-                };
 
                 return (
                   <div 

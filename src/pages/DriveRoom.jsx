@@ -6,6 +6,7 @@ import { db } from '../firebase';
 import { collection, addDoc, query, where, orderBy, onSnapshot, doc, getDocs, setDoc, updateDoc, increment, arrayUnion, arrayRemove, deleteField, deleteDoc } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import EmailAutocompleteInput from '../components/EmailAutocompleteInput';
+import { formatName } from '../utils/profileParser';
 
 const btechBranches = ['CSE', 'IT', 'AI', 'DS', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'META', 'MINING'];
 const pgBranches = ['Construction Tech & Management', 'MBA', 'Environmental Eng', 'Geotechnical Eng', 'Transportation Eng', 'Structural Eng', 'Power Electronics', 'Mechanical Design', 'Thermal Eng', 'Manufacturing Eng', 'Mechatronics', 'Water Resources', 'Marine Structures', 'Geoinformatics', 'MCA', 'Chemistry', 'Physics', 'Signal Processing & ML', 'Communication Eng & Networks', 'VLSI Design', 'Information Security', 'Industrial Biotechnology', 'Environmental Science & Tech', 'Materials Eng', 'Nanotechnology'];
@@ -187,11 +188,6 @@ export default function DriveRoom() {
   const pinnedMessages = messages.filter(m => m.pinned);
   const activePinnedIdx = pinnedMessages.length > 0 ? Math.min(pinnedIndex, pinnedMessages.length - 1) : 0;
   const activePinnedMsg = pinnedMessages[activePinnedIdx];
-  const formatPinnedSender = (email) => {
-    if (!email) return '';
-    const n = email.split('@')[0].split('.')[0].replace(/[0-9]/g, '');
-    return n.charAt(0).toUpperCase() + n.slice(1);
-  };
   const pinnedPreview = (m) => m.text ? m.text.replace(/\n/g, ' ') : (m.fileName ? `📎 ${m.fileName}` : 'Attachment');
 
   // Enforce Access Control
@@ -734,7 +730,7 @@ export default function DriveRoom() {
                       Pinned Message{pinnedMessages.length > 1 ? ` (${activePinnedIdx + 1}/${pinnedMessages.length})` : ''}
                     </div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: '1px' }}>
-                      <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{formatPinnedSender(activePinnedMsg.sender)}: </span>
+                      <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{formatName(activePinnedMsg.sender)}: </span>
                       {pinnedPreview(activePinnedMsg)}
                     </div>
                   </div>
@@ -781,7 +777,7 @@ export default function DriveRoom() {
                       style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem', background: i === activePinnedIdx ? 'rgba(96, 165, 250, 0.1)' : 'var(--input-bg)', border: '1px solid var(--border-color)', borderLeft: '3px solid var(--primary-color)', borderRadius: '8px', padding: '0.45rem 0.65rem', cursor: 'pointer' }}
                     >
                       <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{formatPinnedSender(msg.sender)} · {new Date(msg.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</div>
+                        <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{formatName(msg.sender)} · {new Date(msg.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</div>
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pinnedPreview(msg)}</div>
                       </div>
                       {canMessage && (
@@ -822,12 +818,6 @@ export default function DriveRoom() {
             
             const isImage = msg.fileName && msg.fileName.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i);
             const isImageOnly = isImage && !msg.text;
-            
-            const formatName = (email) => {
-              if (!email) return '';
-              const namePart = email.split('@')[0].split('.')[0].replace(/[0-9]/g, '');
-              return namePart.charAt(0).toUpperCase() + namePart.slice(1);
-            };
 
             const allCoordinators = [
               currentDrive?.coordinator,

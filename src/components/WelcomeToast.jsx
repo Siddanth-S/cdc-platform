@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
+import { formatName } from '../utils/profileParser';
 
 export default function WelcomeToast({ user }) {
   const [show, setShow] = useState(false);
@@ -15,12 +16,6 @@ export default function WelcomeToast({ user }) {
       return () => { clearTimeout(timer); clearTimeout(hide); };
     }
   }, [user]);
-
-  const formatName = (email) => {
-    if (!email) return '';
-    const namePart = email.split('@')[0].split('.')[0].replace(/[0-9]/g, '');
-    return namePart.charAt(0).toUpperCase() + namePart.slice(1);
-  };
 
   const name = formatName(user?.email) || 'User';
   const subtitle = user?.role === 'HEAD' ? 'Admin access active' : user?.role === 'COORDINATOR' ? 'SPOC duties loaded' : 'Your drives are ready';

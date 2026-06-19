@@ -1,13 +1,24 @@
+// Derives a readable display name from an email's local part. NITK emails
+// are "name.rollnumber@..." so splitting on the first dot already drops the
+// roll number - digits are NOT stripped beyond that. Stripping all digits
+// (as earlier copies of this logic across the app used to do) collapses
+// distinct accounts that don't follow that pattern - e.g. test logins like
+// demo1@ and demo2@ - into the same displayed name.
+export function formatName(email) {
+  if (!email) return '';
+  const namePart = email.split('@')[0].split('.')[0];
+  return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+}
+
 export function parseEmailProfile(email) {
   if (!email) return null;
-  
+
   const username = email.split('@')[0];
   const parts = username.split('.');
   if (parts.length < 2) {
-    return { name: username, degree: '', branch: '', gradYear: '' };
+    return { name: formatName(email), degree: '', branch: '', gradYear: '' };
   }
-  
-  const namePart = parts[0];
+
   const rollSection = parts[parts.length - 1];
   
   // Parse roll section, e.g., 231cv149
@@ -84,7 +95,7 @@ export function parseEmailProfile(email) {
   const branch = branchMap[branchCode] || branchCode.toUpperCase();
   
   return {
-    name: namePart.charAt(0).toUpperCase() + namePart.slice(1),
+    name: formatName(email),
     degree,
     branch,
     gradYear: gradYear.toString()

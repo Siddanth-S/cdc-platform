@@ -4,12 +4,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { ShieldCheck, Building2, Users, Crown, UserCog, ArrowLeft } from 'lucide-react';
+import { formatName as formatEmailName } from '../utils/profileParser';
 
-const formatName = (email) => {
-  if (!email) return '—';
-  const n = email.split('@')[0].split('.')[0].replace(/[0-9]/g, '');
-  return n.charAt(0).toUpperCase() + n.slice(1);
-};
+const formatName = (email) => formatEmailName(email) || '—';
 
 export default function AdminDashboard() {
   const { user } = useAuth();

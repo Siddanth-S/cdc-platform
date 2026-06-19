@@ -1,11 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { SPOC_EMAILS } from '../data/spocDirectory';
-
-const formatDisplayName = (email) => {
-  const namePart = email.split('@')[0].split('.')[0].replace(/[0-9]/g, '');
-  return namePart.charAt(0).toUpperCase() + namePart.slice(1);
-};
+import { formatName as formatDisplayName } from '../utils/profileParser';
 
 const ITEM_HEIGHT = 52;
 const VISIBLE_ITEMS = 7;
