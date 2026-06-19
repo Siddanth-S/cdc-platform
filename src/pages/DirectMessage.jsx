@@ -435,6 +435,92 @@ export default function DirectMessage() {
                   marginTop: '0.2rem',
                   position: 'relative'
                 }}>
+                  {/* Dropdown Chevron at the top right of the DM bubble */}
+                  <div style={{ position: 'absolute', top: '6px', right: '8px', zIndex: 10 }}>
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setActiveMenuMsgId(activeMenuMsgId === msg.id ? null : msg.id); }}
+                        style={{ 
+                          background: isImageOnly ? 'rgba(0,0,0,0.4)' : 'none', 
+                          border: 'none', 
+                          cursor: 'pointer', 
+                          color: isMe ? 'rgba(255, 255, 255, 0.7)' : 'var(--text-secondary)', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          padding: '1px',
+                          borderRadius: '4px',
+                          transition: 'background 0.2s, opacity 0.2s',
+                          opacity: (hoveredMsgId === msg.id || activeMenuMsgId === msg.id) ? 0.8 : 0,
+                          pointerEvents: (hoveredMsgId === msg.id || activeMenuMsgId === msg.id) ? 'auto' : 'none'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = isImageOnly ? 'rgba(0,0,0,0.6)' : (isMe ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)')}
+                        onMouseLeave={e => e.currentTarget.style.background = isImageOnly ? 'rgba(0,0,0,0.4)' : 'none'}
+                        title="Actions"
+                      >
+                        <ChevronDown size={14} />
+                      </button>
+                      {activeMenuMsgId === msg.id && (
+                        <>
+                          <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={(e) => { e.stopPropagation(); setActiveMenuMsgId(null); }} />
+                          <div 
+                            className="animate-fade-in cyber-dropdown"
+                            style={{
+                              position: 'absolute',
+                              top: 'calc(100% + 4px)',
+                              right: 0,
+                              background: 'var(--dropdown-bg)',
+                              backdropFilter: 'blur(12px)',
+                              border: '1px solid var(--border-color)',
+                              borderRadius: '12px',
+                              padding: '0.3rem',
+                              minWidth: '150px',
+                              boxShadow: '0 10px 25px var(--glass-shadow)',
+                              zIndex: 999,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '0.1rem'
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {msg.text && (
+                              <button 
+                                className="cyber-dropdown-item"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(msg.text);
+                                  toast.success("Text copied!");
+                                  setActiveMenuMsgId(null);
+                                }}
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', color: 'var(--text-primary)' }}
+                              >
+                                <Copy size={14} /> Copy Text
+                              </button>
+                            )}
+                            {isMe && (
+                              <button 
+                                className="cyber-dropdown-item"
+                                onClick={async () => {
+                                  try {
+                                    if (dmData && dmData.messages) {
+                                      const updatedMessages = dmData.messages.filter(m => m.id !== msg.id);
+                                      await updateDoc(doc(db, 'dms', id), { messages: updatedMessages });
+                                      toast.success("Message unsent");
+                                    }
+                                  } catch (err) {
+                                    console.error("Delete error", err);
+                                  }
+                                  setActiveMenuMsgId(null);
+                                }}
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', color: '#f87171' }}
+                              >
+                                <Trash2 size={14} /> Unsend Message
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
                   {msg.replyTo && (
                     <div style={{ background: 'rgba(0,0,0,0.1)', borderLeft: '3px solid var(--primary-color)', padding: '0.3rem 0.5rem', borderRadius: '4px', marginBottom: '0.3rem', fontSize: '0.75rem', opacity: 0.8 }}>
                       <div style={{ fontWeight: 'bold', marginBottom: '0.1rem' }}>{formatName(msg.replyTo.sender)}</div>
@@ -457,20 +543,46 @@ export default function DirectMessage() {
                         }}
                         onClick={() => setLightboxImg(msg.fileData)}
                       />
-                      <div style={{
-                        position: 'absolute',
-                        bottom: '8px',
-                        right: '8px',
-                        background: 'rgba(0, 0, 0, 0.55)',
-                        backdropFilter: 'blur(4px)',
-                        color: '#fff',
-                        padding: '2px 8px',
-                        borderRadius: '10px',
-                        fontSize: '0.65rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        pointerEvents: 'none'
-                      }}>
+                      <div 
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          position: 'absolute',
+                          bottom: '8px',
+                          right: '8px',
+                          background: 'rgba(0, 0, 0, 0.55)',
+                          backdropFilter: 'blur(4px)',
+                          color: '#fff',
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          fontSize: '0.65rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          pointerEvents: 'auto'
+                        }}
+                      >
+                        {hoveredMsgId === msg.id && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setReplyToMsg(msg); }}
+                            style={{ 
+                              background: 'none', 
+                              border: 'none', 
+                              cursor: 'pointer', 
+                              color: '#fff', 
+                              display: 'inline-flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              padding: '2px',
+                              borderRadius: '4px',
+                              marginRight: '4px',
+                              transition: 'background 0.2s'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                            title="Reply"
+                          >
+                            <CornerUpLeft size={11} />
+                          </button>
+                        )}
                         {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
@@ -639,6 +751,30 @@ export default function DirectMessage() {
                         whiteSpace: 'nowrap',
                         verticalAlign: 'bottom'
                       }}>
+                        {hoveredMsgId === msg.id && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setReplyToMsg(msg); }}
+                            style={{ 
+                              background: 'none', 
+                              border: 'none', 
+                              cursor: 'pointer', 
+                              color: isMe ? '#fff' : 'var(--primary-color)', 
+                              display: 'inline-flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              padding: '2px',
+                              borderRadius: '4px',
+                              marginRight: '2px',
+                              transition: 'background 0.2s',
+                              pointerEvents: 'auto'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = isMe ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.08)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                            title="Reply"
+                          >
+                            <CornerUpLeft size={12} />
+                          </button>
+                        )}
                         {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
@@ -660,120 +796,6 @@ export default function DirectMessage() {
                               <button key={emoji} onClick={() => handleReaction(msg.id, emoji)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', padding: '0.2rem', transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.3)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>{emoji}</button>
                             ))}
                           </div>
-                        )}
-                      </div>
-
-                      <div style={{ width: '1px', height: '14px', background: 'rgba(255,255,255,0.2)', margin: '0 0.2rem' }} />
-
-                      {/* Reply curved arrow icon */}
-                      <button 
-                        onClick={() => setReplyToMsg(msg)} 
-                        style={{ 
-                          background: 'none', 
-                          border: 'none', 
-                          cursor: 'pointer', 
-                          color: 'var(--primary-color)', 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'center',
-                          padding: '0.25rem',
-                          borderRadius: '50%',
-                          transition: 'background 0.2s'
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                        title="Reply"
-                      >
-                        <CornerUpLeft size={16} />
-                      </button>
-
-                      {/* Chevron Down Dropdown Toggle */}
-                      <div style={{ position: 'relative' }}>
-                        <button 
-                          onClick={() => setActiveMenuMsgId(activeMenuMsgId === msg.id ? null : msg.id)} 
-                          style={{ 
-                            background: 'none', 
-                            border: 'none', 
-                            cursor: 'pointer', 
-                            color: 'var(--text-secondary)', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center',
-                            padding: '0.25rem',
-                            borderRadius: '50%',
-                            transition: 'background 0.2s'
-                          }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                          title="Actions"
-                        >
-                          <ChevronDown size={16} />
-                        </button>
-
-                        {activeMenuMsgId === msg.id && (
-                          <>
-                            <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={(e) => { e.stopPropagation(); setActiveMenuMsgId(null); }} />
-                            <div 
-                              className="animate-fade-in cyber-dropdown"
-                              style={{
-                                position: 'absolute',
-                                top: 'calc(100% + 6px)',
-                                right: isMe ? 0 : 'auto',
-                                left: !isMe ? 0 : 'auto',
-                                background: 'var(--dropdown-bg)',
-                                backdropFilter: 'blur(12px)',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: '12px',
-                                padding: '0.3rem',
-                                minWidth: '150px',
-                                boxShadow: '0 10px 25px var(--glass-shadow)',
-                                zIndex: 999,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '0.1rem'
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {/* Copy Text Option */}
-                              {msg.text && (
-                                <button 
-                                  className="cyber-dropdown-item"
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(msg.text);
-                                    toast.success("Text copied!");
-                                    setActiveMenuMsgId(null);
-                                  }}
-                                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}
-                                >
-                                  <Copy size={14} /> Copy Text
-                                </button>
-                              )}
-
-                              {/* Unsend / Delete Option (Only for own messages in DMs) */}
-                              {isMe && (
-                                <button 
-                                  className="cyber-dropdown-item"
-                                  onClick={async () => {
-                                    if (window.confirm("Are you sure you want to unsend this message?")) {
-                                      try {
-                                        if (dmData && dmData.messages) {
-                                          const updatedMessages = dmData.messages.filter(m => m.id !== msg.id);
-                                          await updateDoc(doc(db, 'dms', id), { messages: updatedMessages });
-                                          toast.success("Message unsent");
-                                        }
-                                      } catch (err) {
-                                        console.error("Delete error", err);
-                                      }
-                                    }
-                                    setActiveMenuMsgId(null);
-                                  }}
-                                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', color: '#f87171' }}
-                                >
-                                  <Trash2 size={14} /> Unsend Message
-                                </button>
-                              )}
-                            </div>
-                          </>
                         )}
                       </div>
                     </div>
