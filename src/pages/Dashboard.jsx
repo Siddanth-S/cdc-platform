@@ -80,7 +80,11 @@ export default function Dashboard() {
   };
   
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterMode, setFilterMode] = useState('ALL');
+  const [filterMode, setFilterMode] = useState(() => {
+    const saved = localStorage.getItem(`filter_${user?.email}`);
+    const validModes = ['ALL', 'ACTIVE', 'CLOSED', 'ELIGIBLE', 'NOT_ELIGIBLE', 'JOINED', 'SPOC'];
+    return validModes.includes(saved) ? saved : 'ALL';
+  });
   const [showFilterModal, setShowFilterModal] = useState(false);
 
   const [pinnedDrives, setPinnedDrives] = useState(() => {
@@ -126,8 +130,9 @@ export default function Dashboard() {
     if (user?.email) {
       localStorage.setItem(`pinned_${user.email}`, JSON.stringify(pinnedDrives));
       localStorage.setItem(`joined_${user.email}`, JSON.stringify(joinedDrives));
+      localStorage.setItem(`filter_${user.email}`, filterMode);
     }
-  }, [pinnedDrives, joinedDrives, user]);
+  }, [pinnedDrives, joinedDrives, filterMode, user]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
