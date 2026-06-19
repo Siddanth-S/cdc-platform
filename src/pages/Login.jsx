@@ -106,7 +106,8 @@ export default function Login() {
   const inputStyle = {
     width: '100%',
     padding: '0.85rem 1rem 0.85rem 2.75rem',
-    fontSize: '0.95rem',
+    // 16px floor: under that, iOS Safari auto-zooms the page on focus.
+    fontSize: '1rem',
     borderRadius: '10px',
     border: '1px solid rgba(255, 255, 255, 0.1)',
     background: 'rgba(15, 23, 42, 0.6)',

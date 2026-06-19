@@ -324,7 +324,7 @@ export default function Navbar() {
                         pattern="^\d{10}$"
                         title="Phone number must be exactly 10 digits"
                         placeholder="9876543210"
-                        style={{ padding: '0.5rem', fontSize: '0.85rem' }}
+                        style={{ padding: '0.6rem', fontSize: '1rem' }}
                       />
                     </div>
                     <div>
@@ -338,7 +338,7 @@ export default function Navbar() {
                         pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
                         title="Please enter a valid email address"
                         placeholder="john.doe@gmail.com"
-                        style={{ padding: '0.5rem', fontSize: '0.85rem' }}
+                        style={{ padding: '0.6rem', fontSize: '1rem' }}
                       />
                     </div>
                     <div className="flex gap-2 justify-between mt-2">

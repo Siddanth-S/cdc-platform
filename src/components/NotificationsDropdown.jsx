@@ -72,7 +72,7 @@ export default function NotificationsDropdown() {
           background: isOpen ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.05)',
           border: '1px solid ' + (isOpen ? 'var(--primary-color)' : 'transparent'),
           color: 'var(--primary-color)',
-          padding: '0.4rem',
+          padding: '0.65rem',
           borderRadius: '50%',
           cursor: 'pointer',
           display: 'flex',

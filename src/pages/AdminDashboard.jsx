@@ -72,7 +72,7 @@ export default function AdminDashboard() {
   return (
     <div className="page-container" style={{ padding: '2rem' }}>
       <div className="flex items-center gap-2 mb-4" style={{ gap: '0.75rem' }}>
-        <button onClick={() => navigate('/dashboard')} className="btn-glass" title="Back to dashboard" style={{ padding: '0.5rem' }}>
+        <button onClick={() => navigate('/dashboard')} className="btn-glass" title="Back to dashboard" style={{ padding: '0.7rem' }}>
           <ArrowLeft size={18} />
         </button>
         <div>

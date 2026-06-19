@@ -227,7 +227,7 @@ export default function Dashboard() {
   return (
     <div className="page-container" style={{ padding: '2rem' }}>
 
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-4" style={{ flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 className="cyber-glitch-text" style={{ fontSize: '2.5rem', marginBottom: '0.25rem' }}>Company Drives</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Join drives to receive real-time updates.</p>
@@ -353,8 +353,8 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <button 
-                  onClick={(e) => togglePin(e, drive)} 
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center', transition: 'all 0.3s ease', zIndex: 2 }}
+                  onClick={(e) => togglePin(e, drive)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.6rem', margin: '-0.35rem', display: 'flex', alignItems: 'center', transition: 'all 0.3s ease', zIndex: 2 }}
                   title={isPinned ? "Unpin drive" : "Pin drive"}
                 >
                   <Pin size={18} fill={isPinned ? 'var(--warning-color)' : 'none'} color={isPinned ? 'var(--warning-color)' : 'var(--text-secondary)'} style={{ filter: isPinned ? 'drop-shadow(0 0 8px rgba(245, 158, 11, 0.6))' : 'none' }} />

@@ -983,11 +983,13 @@ p {
     max-width: 82% !important;
     padding: 0.3rem 0.5rem !important;
   }
-  /* Action cluster stays compact and never blocks the screen edge on phones */
-  .msg-actions-cluster {
-    transform: translateY(-50%) scale(0.92) !important;
+  /* Buttons inside stay full size (not scaled down) and get a bigger hit
+     area - these are tap targets on a touch screen, not hover targets for
+     a mouse, so shrinking them here was working against actual usability. */
+  .msg-actions-cluster button {
+    padding: 9px !important;
   }
-  
+
   /* Hide text in live dot badge */
   .live-badge-text {
     display: none !important;
@@ -1078,7 +1080,9 @@ p {
   }
   .glass-panel .cyber-input {
     padding: 0.7rem 1rem !important;
-    font-size: 0.9rem !important;
+    /* Keep >=16px: anything smaller makes iOS Safari auto-zoom the page
+       on focus, which feels broken on the chat composer used constantly. */
+    font-size: 1rem !important;
   }
   .glass-panel .cyber-btn {
     padding: 0.7rem 1rem !important;
