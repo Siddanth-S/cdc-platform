@@ -3,9 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Send, ArrowLeft, Paperclip, X, User, Plus, Maximize2, Minimize2, CornerUpLeft, ChevronDown, Copy, Trash2 } from 'lucide-react';
 import { db } from '../firebase';
-import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove, deleteField } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove, deleteField, runTransaction } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
-const playSFX = () => {};
+import { playSFX } from '../utils/sfx';
 
 export default function DirectMessage() {
   const { id } = useParams();
@@ -21,6 +21,7 @@ export default function DirectMessage() {
   const [showReactionPickerId, setShowReactionPickerId] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
   const [lightboxImg, setLightboxImg] = useState(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [activeMenuMsgId, setActiveMenuMsgId] = useState(null);
@@ -172,29 +173,37 @@ export default function DirectMessage() {
     setInputText('');
     setSelectedFile(null);
     setReplyToMsg(null);
+    stopTyping();
   };
 
   const handleReaction = async (msgId, emoji) => {
     try {
-      if (!dmData || !dmData.messages) return;
-      const updatedMessages = [...dmData.messages];
-      const msgIndex = updatedMessages.findIndex(m => m.id === msgId);
-      if (msgIndex === -1) return;
-      
-      const msg = updatedMessages[msgIndex];
       const safeEmail = user.email.replace(/\./g, '_');
-      if (!msg.reactions) msg.reactions = {};
-      
-      const hasReactedWithThisEmoji = msg.reactions[safeEmail] === emoji;
-      if (hasReactedWithThisEmoji) {
-        delete msg.reactions[safeEmail];
-      } else {
-        msg.reactions[safeEmail] = emoji;
-      }
-      
+      const dmRef = doc(db, 'dms', id);
+
+      await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(dmRef);
+        if (!snap.exists()) return;
+        const messages = snap.data().messages || [];
+        const msgIndex = messages.findIndex(m => m.id === msgId);
+        if (msgIndex === -1) return;
+
+        const updatedMessages = [...messages];
+        const msg = { ...updatedMessages[msgIndex] };
+        const reactions = { ...(msg.reactions || {}) };
+
+        if (reactions[safeEmail] === emoji) {
+          delete reactions[safeEmail];
+        } else {
+          reactions[safeEmail] = emoji;
+        }
+        msg.reactions = reactions;
+        updatedMessages[msgIndex] = msg;
+
+        transaction.update(dmRef, { messages: updatedMessages });
+      });
+
       setShowReactionPickerId(null);
-      
-      await updateDoc(doc(db, 'dms', id), { messages: updatedMessages });
     } catch (err) {
       console.error("Reaction error", err);
     }
@@ -205,13 +214,31 @@ export default function DirectMessage() {
       setIsTyping(true);
       updateDoc(doc(db, 'dms', id), { typing: arrayUnion(user.email) });
     }
-    
-    if (window.dmTypingTimeout) clearTimeout(window.dmTypingTimeout);
-    window.dmTypingTimeout = setTimeout(() => {
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
       setIsTyping(false);
       updateDoc(doc(db, 'dms', id), { typing: arrayRemove(user.email) });
     }, 3000);
   };
+
+  const stopTyping = () => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+    setIsTyping(false);
+    updateDoc(doc(db, 'dms', id), { typing: arrayRemove(user.email) }).catch(() => {});
+  };
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (user?.email && id) {
+        updateDoc(doc(db, 'dms', id), { typing: arrayRemove(user.email) }).catch(() => {});
+      }
+    };
+  }, [id, user?.email]);
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -562,11 +589,15 @@ export default function DirectMessage() {
                                 className="cyber-dropdown-item"
                                 onClick={async () => {
                                   try {
-                                    if (dmData && dmData.messages) {
-                                      const updatedMessages = dmData.messages.filter(m => m.id !== msg.id);
-                                      await updateDoc(doc(db, 'dms', id), { messages: updatedMessages });
-                                      toast.success("Message unsent");
-                                    }
+                                    const dmRef = doc(db, 'dms', id);
+                                    await runTransaction(db, async (transaction) => {
+                                      const snap = await transaction.get(dmRef);
+                                      if (!snap.exists()) return;
+                                      const messages = snap.data().messages || [];
+                                      const updatedMessages = messages.filter(m => m.id !== msg.id);
+                                      transaction.update(dmRef, { messages: updatedMessages });
+                                    });
+                                    toast.success("Message unsent");
                                   } catch (err) {
                                     console.error("Delete error", err);
                                   }

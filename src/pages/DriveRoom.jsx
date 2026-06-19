@@ -5,7 +5,7 @@ import { Send, ArrowLeft, ShieldAlert, Paperclip, X, MessageSquarePlus, LogOut, 
 import { db } from '../firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, doc, getDocs, setDoc, updateDoc, increment, arrayUnion, arrayRemove, deleteField, deleteDoc } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
-const playSFX = () => {};
+import { playSFX } from '../utils/sfx';
 
 const btechBranches = ['CSE', 'IT', 'AI', 'DS', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'META', 'MINING'];
 const pgBranches = ['Construction Tech & Management', 'MBA', 'Environmental Eng', 'Geotechnical Eng', 'Transportation Eng', 'Structural Eng', 'Power Electronics', 'Mechanical Design', 'Thermal Eng', 'Manufacturing Eng', 'Mechatronics', 'Water Resources', 'Marine Structures', 'Geoinformatics', 'MCA', 'Chemistry', 'Physics', 'Signal Processing & ML', 'Communication Eng & Networks', 'VLSI Design', 'Information Security', 'Industrial Biotechnology', 'Environmental Science & Tech', 'Materials Eng', 'Nanotechnology'];
@@ -22,6 +22,7 @@ export default function DriveRoom() {
   
   // Capture the last read time when component mounts, so we know which messages are "new" to glow
   const [lastRead] = useState(() => Number(localStorage.getItem(`read_drive_${id}_${user?.email}`) || 0));
+  const typingTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (!user?.email) return;
@@ -231,6 +232,7 @@ export default function DriveRoom() {
     setInputText('');
     setSelectedFile(null);
     setReplyToMsg(null);
+    stopTyping();
   };
 
   const handleReaction = async (msgId, emoji, currentReactions) => {
@@ -252,13 +254,31 @@ export default function DriveRoom() {
       setIsTyping(true);
       updateDoc(doc(db, 'drives', id), { typing: arrayUnion(user.email) });
     }
-    
-    if (window.typingTimeout) clearTimeout(window.typingTimeout);
-    window.typingTimeout = setTimeout(() => {
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
       setIsTyping(false);
       updateDoc(doc(db, 'drives', id), { typing: arrayRemove(user.email) });
     }, 3000);
   };
+
+  const stopTyping = () => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+    setIsTyping(false);
+    updateDoc(doc(db, 'drives', id), { typing: arrayRemove(user.email) }).catch(() => {});
+  };
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (user?.email && id) {
+        updateDoc(doc(db, 'drives', id), { typing: arrayRemove(user.email) }).catch(() => {});
+      }
+    };
+  }, [id, user?.email]);
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -780,7 +800,7 @@ export default function DriveRoom() {
           {messages.map(msg => {
             const isMe = msg.sender === user?.email;
             const displayRole = msg.role === 'HEAD' ? 'ADMIN' : (msg.role === 'SPOC' || msg.role === 'COORDINATOR' ? 'SPOC' : 'SEC SPOC');
-            const msgTime = msg.timestamp && msg.timestamp.toMillis ? msg.timestamp.toMillis() : Date.now();
+            const msgTime = msg.timestamp ? (msg.timestamp.toMillis ? msg.timestamp.toMillis() : new Date(msg.timestamp).getTime()) : 0;
             const isNew = !isMe && msg.timestamp && msgTime > lastRead;
             
             const isImage = msg.fileName && msg.fileName.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i);

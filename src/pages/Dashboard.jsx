@@ -75,11 +75,12 @@ export default function Dashboard() {
 
   const [pinnedDrives, setPinnedDrives] = useState(() => {
     const saved = localStorage.getItem(`pinned_${user?.email}`);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed.length > 0) return parsed.map(String);
+    if (saved === null) return ['1', '3', '6'];
+    try {
+      return JSON.parse(saved).map(String);
+    } catch {
+      return ['1', '3', '6'];
     }
-    return ['1', '3', '6']; 
   });
 
   const [joinedDrives, setJoinedDrives] = useState(() => {
@@ -92,7 +93,10 @@ export default function Dashboard() {
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
-    if (!profileForm.branch) return;
+    if (!profileForm.name || !profileForm.branch || !profileForm.degree || !profileForm.gradYear) {
+      toast.error('Please fill in all fields before continuing.');
+      return;
+    }
     try {
       await setDoc(doc(db, 'users', user.email), { 
         name: profileForm.name,
@@ -188,13 +192,11 @@ export default function Dashboard() {
       if (filterMode === 'SPOC' && !isSpoc) return false;
       if (filterMode === 'ACTIVE' && d.status === 'Closed') return false;
       if (filterMode === 'CLOSED' && d.status !== 'Closed') return false;
-      if (filterMode === 'ELIGIBLE') {
+      if (filterMode === 'ELIGIBLE' || filterMode === 'NOT_ELIGIBLE') {
         const branch = userProfile?.branch;
-        if (!branch || (d.eligibleBranches && !d.eligibleBranches.includes(branch))) return false;
-      }
-      if (filterMode === 'NOT_ELIGIBLE') {
-        const branch = userProfile?.branch;
-        if (branch && d.eligibleBranches && d.eligibleBranches.includes(branch)) return false;
+        const eligible = user?.role === 'HEAD' || !d.eligibleBranches || (branch && d.eligibleBranches.includes(branch)) || isSpoc;
+        if (filterMode === 'ELIGIBLE' && !eligible) return false;
+        if (filterMode === 'NOT_ELIGIBLE' && eligible) return false;
       }
       return true;
     })
@@ -205,7 +207,7 @@ export default function Dashboard() {
       const bPinned = isDrivePinned(b) || bIsSpoc;
       if (aPinned && !bPinned) return -1;
       if (!aPinned && bPinned) return 1;
-      return 0;
+      return Number(a.id) - Number(b.id);
     });
 
   if (loading) {
@@ -519,53 +521,63 @@ export default function Dashboard() {
           <div className="glass-card cyber-modal-container animate-fade-in" style={{ margin: 'auto', width: '100%', maxWidth: '450px', padding: '1.5rem', textAlign: 'center', border: '1px solid var(--primary-color)', boxShadow: '0 0 30px rgba(59, 130, 246, 0.2)' }}>
             <h2 style={{ margin: '0 0 1rem 0', fontSize: '1.6rem', color: '#fff', textShadow: '0 0 10px rgba(255,255,255,0.3)' }}>Complete Your Profile</h2>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontSize: '0.95rem' }}>
-              Please verify your extracted details and provide your contact information.
+              Please verify your details below (auto-filled where possible) and provide your contact information.
             </p>
             <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
-              
+
               <div className="mobile-stack-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Name (Extracted)</label>
-                  <input 
-                    type="text" 
-                    className="cyber-input" 
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Name *</label>
+                  <input
+                    type="text"
+                    className="cyber-input"
                     value={profileForm.name}
-                    disabled
-                    style={{ opacity: 0.7, cursor: 'not-allowed' }}
+                    onChange={e => setProfileForm({...profileForm, name: e.target.value})}
+                    required
+                    placeholder="John Doe"
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Expected Graduation</label>
-                  <input 
-                    type="text" 
-                    className="cyber-input" 
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Expected Graduation *</label>
+                  <input
+                    type="text"
+                    className="cyber-input"
                     value={profileForm.gradYear}
-                    disabled
-                    style={{ opacity: 0.7, cursor: 'not-allowed' }}
+                    onChange={e => setProfileForm({...profileForm, gradYear: e.target.value})}
+                    required
+                    placeholder="2027"
                   />
                 </div>
               </div>
-              
+
               <div className="mobile-stack-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
                 <div>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Degree</label>
-                  <input 
-                    type="text" 
-                    className="cyber-input" 
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Degree *</label>
+                  <input
+                    type="text"
+                    className="cyber-input"
                     value={profileForm.degree}
-                    disabled
-                    style={{ opacity: 0.7, cursor: 'not-allowed' }}
+                    onChange={e => setProfileForm({...profileForm, degree: e.target.value})}
+                    required
+                    placeholder="B.Tech"
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Branch</label>
-                  <input 
-                    type="text" 
-                    className="cyber-input" 
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Branch *</label>
+                  <select
+                    className="cyber-input"
                     value={profileForm.branch}
-                    disabled
-                    style={{ opacity: 0.7, cursor: 'not-allowed' }}
-                  />
+                    onChange={e => setProfileForm({...profileForm, branch: e.target.value})}
+                    required
+                  >
+                    <option value="" disabled>Select branch</option>
+                    <optgroup label="B.Tech">
+                      {btechBranches.map(b => <option key={b} value={b}>{b}</option>)}
+                    </optgroup>
+                    <optgroup label="PG">
+                      {pgBranches.map(b => <option key={b} value={b}>{b}</option>)}
+                    </optgroup>
+                  </select>
                 </div>
               </div>
               <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '0.5rem 0' }}></div>
@@ -599,8 +611,7 @@ export default function Dashboard() {
               <button type="submit" className="btn btn-primary w-full" style={{ padding: '0.8rem', marginTop: '0.5rem', boxShadow: '0 0 15px rgba(59, 130, 246, 0.4)' }}>Save & Continue</button>
               
               <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', marginTop: '1rem', lineHeight: '1.4' }}>
-                Extracted details are incorrect? Report an issue to administrator at <br/>
-                <a href="mailto:siddanths.231cv149@nitk.edu.in" style={{ color: 'var(--primary-color)', textDecoration: 'none' }}>siddanths.231cv149@nitk.edu.in</a>
+                Couldn't auto-detect some of your details? Just fill them in above.
               </div>
             </form>
           </div>

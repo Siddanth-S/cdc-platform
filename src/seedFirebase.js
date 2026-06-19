@@ -143,7 +143,7 @@ export const seedDatabase = async () => {
         await addDoc(msgsRef, {
           sender: 'head1@nitk.edu.in',
           role: 'HEAD',
-          text: `Welcome to the ${company.name} drive! Only admins and the assigned SPOCs can post messages here.`,
+          text: `Welcome to the ${company.name} drive! Only admins and the assigned Primary SPOC can post messages here.`,
           timestamp: new Date().toISOString()
         });
 

@@ -7,7 +7,7 @@ import NotificationsDropdown from './NotificationsDropdown';
 import { parseEmailProfile } from '../utils/profileParser';
 import { db } from '../firebase';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
-const playSFX = () => {};
+import { playSFX } from '../utils/sfx';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -33,8 +33,12 @@ export default function Navbar() {
 
   useEffect(() => {
     if (!user?.email) return;
+    if (user.role === 'HEAD') {
+      setProfileData({ name: user.email.split('@')[0], degree: 'Administrator', branch: 'ADMIN', gradYear: '' });
+      return;
+    }
     const unsubscribe = onSnapshot(doc(db, 'users', user.email), (docSnap) => {
-      if (docSnap.exists() && docSnap.data().branch !== 'ADMIN') {
+      if (docSnap.exists()) {
         setProfileData(docSnap.data());
       } else {
         const parsed = parseEmailProfile(user.email);
@@ -50,27 +54,39 @@ export default function Navbar() {
   };
 
   const handleOpenProfile = async () => {
+    if (user.role === 'HEAD') {
+      setProfileForm({
+        name: profileData?.name || '',
+        degree: 'Administrator',
+        branch: 'ADMIN',
+        gradYear: '',
+        phoneNumber: profileData?.phoneNumber || '',
+        personalEmail: profileData?.personalEmail || ''
+      });
+      setIsEditingInline(true);
+      return;
+    }
     try {
       const docSnap = await getDoc(doc(db, 'users', user.email));
-      if (docSnap.exists() && docSnap.data().branch !== 'ADMIN') {
+      if (docSnap.exists()) {
         const data = docSnap.data();
-        setProfileForm({ 
-          name: data.name || '', 
-          degree: data.degree || '', 
-          branch: data.branch || '', 
-          gradYear: data.gradYear || '', 
-          phoneNumber: data.phoneNumber || '', 
-          personalEmail: data.personalEmail || '' 
+        setProfileForm({
+          name: data.name || '',
+          degree: data.degree || '',
+          branch: data.branch || '',
+          gradYear: data.gradYear || '',
+          phoneNumber: data.phoneNumber || '',
+          personalEmail: data.personalEmail || ''
         });
       } else {
         const parsed = parseEmailProfile(user.email);
-        if (parsed) setProfileForm({ 
-          name: parsed.name || '', 
-          degree: parsed.degree || '', 
-          branch: parsed.branch || '', 
-          gradYear: parsed.gradYear || '', 
-          phoneNumber: '', 
-          personalEmail: '' 
+        if (parsed) setProfileForm({
+          name: parsed.name || '',
+          degree: parsed.degree || '',
+          branch: parsed.branch || '',
+          gradYear: parsed.gradYear || '',
+          phoneNumber: '',
+          personalEmail: ''
         });
       }
     } catch(err) {
