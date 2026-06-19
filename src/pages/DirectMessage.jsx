@@ -259,7 +259,7 @@ export default function DirectMessage() {
         </div>
       )}
 
-      <div className="glass-panel cyber-glow-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+      <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
         {/* Fullscreen top header bar */}
         {isFullScreen && (
           <div style={{

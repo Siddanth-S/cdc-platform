@@ -69,9 +69,9 @@ export default function NotificationsDropdown() {
         className={`logo-glow ${unreadCount > 0 ? 'logo-glow-pulse' : ''}`}
         style={{
           position: 'relative',
-          background: isOpen ? 'rgba(6, 182, 212, 0.15)' : 'rgba(6, 182, 212, 0.05)',
-          border: '1px solid ' + (isOpen ? 'var(--secondary-color)' : 'transparent'),
-          color: isOpen ? '#fff' : 'var(--secondary-color)',
+          background: isOpen ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.05)',
+          border: '1px solid ' + (isOpen ? 'var(--primary-color)' : 'transparent'),
+          color: 'var(--primary-color)',
           padding: '0.4rem',
           borderRadius: '50%',
           cursor: 'pointer',
@@ -79,21 +79,19 @@ export default function NotificationsDropdown() {
           alignItems: 'center',
           justifyContent: 'center',
           transition: 'all 0.3s ease',
-          boxShadow: isOpen ? '0 0 20px rgba(6, 182, 212, 0.5)' : '0 0 10px rgba(6, 182, 212, 0.2)'
+          boxShadow: isOpen ? '0 0 15px rgba(59, 130, 246, 0.4)' : '0 0 8px rgba(59, 130, 246, 0.15)'
         }}
         onMouseOver={e => {
           if (!isOpen) {
-            e.currentTarget.style.color = '#fff';
-            e.currentTarget.style.background = 'rgba(6, 182, 212, 0.2)';
-            e.currentTarget.style.boxShadow = '0 0 15px rgba(6, 182, 212, 0.4)';
-            e.currentTarget.style.border = '1px solid var(--secondary-color)';
+            e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
+            e.currentTarget.style.boxShadow = '0 0 15px rgba(59, 130, 246, 0.4)';
+            e.currentTarget.style.border = '1px solid var(--primary-color)';
           }
         }}
         onMouseOut={e => {
           if (!isOpen) {
-            e.currentTarget.style.color = 'var(--secondary-color)';
-            e.currentTarget.style.background = 'rgba(6, 182, 212, 0.05)';
-            e.currentTarget.style.boxShadow = '0 0 10px rgba(6, 182, 212, 0.2)';
+            e.currentTarget.style.background = 'rgba(59, 130, 246, 0.05)';
+            e.currentTarget.style.boxShadow = '0 0 8px rgba(59, 130, 246, 0.15)';
             e.currentTarget.style.border = '1px solid transparent';
           }
         }}
@@ -134,26 +132,26 @@ export default function NotificationsDropdown() {
               right: 0,
               width: '320px',
               maxWidth: 'calc(100vw - 2rem)',
-              background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95))',
+              background: 'var(--dropdown-bg)',
               backdropFilter: 'blur(16px)',
-              border: '1px solid rgba(56, 189, 248, 0.2)',
+              border: '1px solid var(--border-color)',
               borderRadius: '16px',
-              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 248, 0.1)',
+              boxShadow: '0 10px 30px var(--glass-shadow), 0 0 20px rgba(59, 130, 246, 0.15)',
               overflow: 'hidden',
               zIndex: 100
             }}
           >
             <div style={{
               padding: '1rem',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+              borderBottom: '1px solid var(--border-color)',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center'
             }}>
-              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '600', color: '#fff' }}>Notifications</h3>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '600', color: 'var(--text-primary)' }}>Notifications</h3>
               {unreadCount > 0 && (
                 <button onClick={markAllAsRead} style={{
-                  background: 'none', border: 'none', color: '#38bdf8', fontSize: '0.75rem', cursor: 'pointer', fontWeight: '500'
+                  background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: '500'
                 }}>
                   Mark all as read
                 </button>
@@ -172,21 +170,21 @@ export default function NotificationsDropdown() {
                     onClick={() => !notif.read && markAsRead(notif.id)}
                     style={{
                       padding: '1rem',
-                      borderBottom: '1px solid rgba(255, 255, 255, 0.02)',
+                      borderBottom: '1px solid var(--border-color)',
                       display: 'flex',
                       gap: '0.75rem',
                       cursor: notif.read ? 'default' : 'pointer',
-                      background: notif.read ? 'transparent' : 'rgba(56, 189, 248, 0.05)',
+                      background: notif.read ? 'transparent' : 'rgba(59, 130, 246, 0.05)',
                       transition: 'background 0.2s'
                     }}
-                    onMouseOver={e => !notif.read && (e.currentTarget.style.background = 'rgba(56, 189, 248, 0.1)')}
-                    onMouseOut={e => !notif.read && (e.currentTarget.style.background = 'rgba(56, 189, 248, 0.05)')}
+                    onMouseOver={e => !notif.read && (e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)')}
+                    onMouseOut={e => !notif.read && (e.currentTarget.style.background = 'rgba(59, 130, 246, 0.05)')}
                   >
-                    <div style={{ marginTop: '0.1rem', color: notif.read ? 'var(--text-secondary)' : '#38bdf8' }}>
-                      {notif.read ? <CheckCircle2 size={16} /> : <Circle size={16} fill="#38bdf8" />}
+                    <div style={{ marginTop: '0.1rem', color: notif.read ? 'var(--text-secondary)' : 'var(--primary-color)' }}>
+                      {notif.read ? <CheckCircle2 size={16} /> : <Circle size={16} fill="var(--primary-color)" />}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.85rem', color: notif.read ? 'var(--text-secondary)' : '#fff', lineHeight: '1.4' }}>
+                      <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.85rem', color: notif.read ? 'var(--text-secondary)' : 'var(--text-primary)', lineHeight: '1.4' }}>
                         {notif.message}
                       </p>
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>

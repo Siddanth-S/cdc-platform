@@ -442,7 +442,7 @@ export default function DriveRoom() {
         </div>
       )}
 
-      <div className="glass-panel cyber-glow-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+      <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
         
         {/* Fullscreen top header bar */}
         {isFullScreen && (
@@ -775,7 +775,7 @@ export default function DriveRoom() {
             return (
               <div 
                 key={msg.id} 
-                className={`drive-msg-container msg-wrapper ${msg.id === id ? 'new-msg-glow' : ''}`}
+                className={`drive-msg-container msg-wrapper ${isNew ? 'new-msg-glow' : ''}`}
                 onMouseEnter={() => { if (window.innerWidth > 768) setHoveredMsgId(msg.id); }}
                 onMouseLeave={() => { 
                   if (window.innerWidth > 768) {
