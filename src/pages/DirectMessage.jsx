@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Send, ArrowLeft, Paperclip, X, User, Plus, Maximize2, Minimize2 } from 'lucide-react';
+import { Send, ArrowLeft, Paperclip, X, User, Plus, Maximize2, Minimize2, CornerUpLeft, ChevronDown, Copy, Trash2 } from 'lucide-react';
 import { db } from '../firebase';
 import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove, deleteField } from 'firebase/firestore';
+import { toast } from 'react-hot-toast';
 const playSFX = () => {};
 
 export default function DirectMessage() {
@@ -22,6 +23,7 @@ export default function DirectMessage() {
   const fileInputRef = useRef(null);
   const [lightboxImg, setLightboxImg] = useState(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [activeMenuMsgId, setActiveMenuMsgId] = useState(null);
   
   // Capture the last read time when component mounts, so we know which messages are "new" to glow
   const [lastRead] = useState(() => Number(localStorage.getItem(`read_dm_${id}_${user?.email}`) || 0));
@@ -645,20 +647,133 @@ export default function DirectMessage() {
                   {isNew && <span style={{ position: 'absolute', top: '-5px', right: '-5px', color: '#fff', fontWeight: 'bold', fontSize: '0.55rem', background: '#38bdf8', padding: '0.1rem 0.3rem', borderRadius: '4px', boxShadow: '0 0 5px #38bdf8' }}>NEW</span>}
 
                   {hoveredMsgId === msg.id && (
-                    <div className={`msg-action-toolbar ${isMe ? 'is-me' : 'not-me'}`}>
-                      <button onClick={() => setReplyToMsg(msg)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: '#38bdf8', padding: '0 0.3rem', fontWeight: 'bold' }}>Reply</button>
-                      <div style={{ width: '1px', height: '14px', background: 'rgba(255,255,255,0.2)', margin: '0 0.2rem' }} />
+                    <div className={`msg-action-toolbar ${isMe ? 'is-me' : 'not-me'}`} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      {/* Emojis */}
                       {['👍', '❤️', '😂'].map(emoji => (
-                        <button key={emoji} onClick={() => handleReaction(msg.id, emoji)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', padding: '0 0.2rem', transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>{emoji}</button>
+                        <button key={emoji} onClick={() => handleReaction(msg.id, emoji)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', padding: '0 0.1rem', transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>{emoji}</button>
                       ))}
                       <div style={{ position: 'relative' }}>
-                        <button onClick={() => setShowReactionPickerId(showReactionPickerId === msg.id ? null : msg.id)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: '#fff', padding: '0.2rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: '0.2rem' }}><Plus size={14} /></button>
+                        <button onClick={() => setShowReactionPickerId(showReactionPickerId === msg.id ? null : msg.id)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: '#fff', padding: '0.25rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={13} /></button>
                         {showReactionPickerId === msg.id && (
                           <div className="reaction-picker">
                             {['🎉', '🔥', '👀', '💯', '🙏'].map(emoji => (
                               <button key={emoji} onClick={() => handleReaction(msg.id, emoji)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', padding: '0.2rem', transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.3)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>{emoji}</button>
                             ))}
                           </div>
+                        )}
+                      </div>
+
+                      <div style={{ width: '1px', height: '14px', background: 'rgba(255,255,255,0.2)', margin: '0 0.2rem' }} />
+
+                      {/* Reply curved arrow icon */}
+                      <button 
+                        onClick={() => setReplyToMsg(msg)} 
+                        style={{ 
+                          background: 'none', 
+                          border: 'none', 
+                          cursor: 'pointer', 
+                          color: 'var(--primary-color)', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          padding: '0.25rem',
+                          borderRadius: '50%',
+                          transition: 'background 0.2s'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                        title="Reply"
+                      >
+                        <CornerUpLeft size={16} />
+                      </button>
+
+                      {/* Chevron Down Dropdown Toggle */}
+                      <div style={{ position: 'relative' }}>
+                        <button 
+                          onClick={() => setActiveMenuMsgId(activeMenuMsgId === msg.id ? null : msg.id)} 
+                          style={{ 
+                            background: 'none', 
+                            border: 'none', 
+                            cursor: 'pointer', 
+                            color: 'var(--text-secondary)', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            padding: '0.25rem',
+                            borderRadius: '50%',
+                            transition: 'background 0.2s'
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                          title="Actions"
+                        >
+                          <ChevronDown size={16} />
+                        </button>
+
+                        {activeMenuMsgId === msg.id && (
+                          <>
+                            <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={(e) => { e.stopPropagation(); setActiveMenuMsgId(null); }} />
+                            <div 
+                              className="animate-fade-in cyber-dropdown"
+                              style={{
+                                position: 'absolute',
+                                top: 'calc(100% + 6px)',
+                                right: isMe ? 0 : 'auto',
+                                left: !isMe ? 0 : 'auto',
+                                background: 'var(--dropdown-bg)',
+                                backdropFilter: 'blur(12px)',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: '12px',
+                                padding: '0.3rem',
+                                minWidth: '150px',
+                                boxShadow: '0 10px 25px var(--glass-shadow)',
+                                zIndex: 999,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.1rem'
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {/* Copy Text Option */}
+                              {msg.text && (
+                                <button 
+                                  className="cyber-dropdown-item"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(msg.text);
+                                    toast.success("Text copied!");
+                                    setActiveMenuMsgId(null);
+                                  }}
+                                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}
+                                >
+                                  <Copy size={14} /> Copy Text
+                                </button>
+                              )}
+
+                              {/* Unsend / Delete Option (Only for own messages in DMs) */}
+                              {isMe && (
+                                <button 
+                                  className="cyber-dropdown-item"
+                                  onClick={async () => {
+                                    if (window.confirm("Are you sure you want to unsend this message?")) {
+                                      try {
+                                        if (dmData && dmData.messages) {
+                                          const updatedMessages = dmData.messages.filter(m => m.id !== msg.id);
+                                          await updateDoc(doc(db, 'dms', id), { messages: updatedMessages });
+                                          toast.success("Message unsent");
+                                        }
+                                      } catch (err) {
+                                        console.error("Delete error", err);
+                                      }
+                                    }
+                                    setActiveMenuMsgId(null);
+                                  }}
+                                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', color: '#f87171' }}
+                                >
+                                  <Trash2 size={14} /> Unsend Message
+                                </button>
+                              )}
+                            </div>
+                          </>
                         )}
                       </div>
                     </div>

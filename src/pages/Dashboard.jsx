@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Plus, Users, Search, Pin, CheckCircle2, Filter } from 'lucide-react';
+import { Building2, Plus, Users, Search, Pin, CheckCircle2, Filter, X } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, onSnapshot, doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
@@ -71,20 +71,7 @@ export default function Dashboard() {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState('ALL');
-  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
-  const filterDropdownRef = useRef(null);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target)) {
-        setShowFilterDropdown(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [filterDropdownRef]);
+  const [showFilterModal, setShowFilterModal] = useState(false);
 
   const [pinnedDrives, setPinnedDrives] = useState(() => {
     const saved = localStorage.getItem(`pinned_${user?.email}`);
@@ -252,33 +239,27 @@ export default function Dashboard() {
               className="cyber-input"
             />
           </div>
-          <div style={{ position: 'relative' }} ref={filterDropdownRef}>
-            <button onClick={() => setShowFilterDropdown(!showFilterDropdown)} className="cyber-input" style={{ padding: '0 1rem', height: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', background: showFilterDropdown ? 'rgba(56, 189, 248, 0.15)' : 'transparent', color: showFilterDropdown ? '#fff' : 'var(--text-primary)', border: showFilterDropdown ? '1px solid var(--primary-color)' : '1px solid var(--border-color)', boxShadow: showFilterDropdown ? '0 0 15px rgba(56, 189, 248, 0.4)' : 'none', transition: 'all 0.3s ease' }}>
-              <Filter size={18} /> Filter
+          <div>
+            <button 
+              onClick={() => setShowFilterModal(true)} 
+              className="cyber-input" 
+              style={{ 
+                padding: '0 1rem', 
+                height: '100%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.5rem', 
+                cursor: 'pointer', 
+                background: filterMode !== 'ALL' ? 'rgba(59, 130, 246, 0.15)' : 'transparent', 
+                color: filterMode !== 'ALL' ? 'var(--primary-color)' : 'var(--text-primary)', 
+                border: filterMode !== 'ALL' ? '1px solid var(--primary-color)' : '1px solid var(--border-color)', 
+                boxShadow: filterMode !== 'ALL' ? '0 0 15px rgba(59, 130, 246, 0.3)' : 'none', 
+                transition: 'all 0.3s ease' 
+              }}
+            >
+              <Filter size={18} /> Filter{filterMode !== 'ALL' ? `: ${filterMode.charAt(0) + filterMode.slice(1).toLowerCase().replace('_', ' ')}` : ''}
             </button>
-            {showFilterDropdown && (
-              <div className="cyber-dropdown animate-fade-in">
-                <button className={`cyber-dropdown-item ${filterMode === 'ELIGIBLE' ? 'active' : ''}`} onClick={() => {setFilterMode('ELIGIBLE'); setShowFilterDropdown(false);}}>Eligible</button>
-                <button className={`cyber-dropdown-item ${filterMode === 'NOT_ELIGIBLE' ? 'active' : ''}`} onClick={() => {setFilterMode('NOT_ELIGIBLE'); setShowFilterDropdown(false);}}>Not Eligible</button>
-                <button className={`cyber-dropdown-item ${filterMode === 'JOINED' ? 'active' : ''}`} onClick={() => {setFilterMode('JOINED'); setShowFilterDropdown(false);}}>Joined</button>
-              </div>
-            )}
           </div>
-        </div>
-
-        <div className="segmented-control" style={{ display: 'flex', gap: '0.25rem', overflowX: 'auto', paddingBottom: '4px' }}>
-          <button className={`segmented-btn ${filterMode === 'ALL' ? 'active' : ''}`} onClick={() => {setFilterMode('ALL'); setShowFilterDropdown(false);}}>
-            All Drives
-          </button>
-          <button className={`segmented-btn ${filterMode === 'ACTIVE' ? 'active' : ''}`} onClick={() => {setFilterMode('ACTIVE'); setShowFilterDropdown(false);}}>
-            Active
-          </button>
-          <button className={`segmented-btn ${filterMode === 'CLOSED' ? 'active' : ''}`} onClick={() => {setFilterMode('CLOSED'); setShowFilterDropdown(false);}}>
-            Closed
-          </button>
-          <button className={`segmented-btn ${filterMode === 'SPOC' ? 'active' : ''}`} onClick={() => {setFilterMode('SPOC'); setShowFilterDropdown(false);}}>
-            SPOC
-          </button>
         </div>
       </div>
 
@@ -622,6 +603,79 @@ export default function Dashboard() {
                 <a href="mailto:siddanths.231cv149@nitk.edu.in" style={{ color: 'var(--primary-color)', textDecoration: 'none' }}>siddanths.231cv149@nitk.edu.in</a>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Filter Modal Popup */}
+      {showFilterModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 1000 }}>
+          <div style={{ position: 'fixed', inset: 0 }} onClick={() => setShowFilterModal(false)}></div>
+          <div className="cyber-modal-container animate-fade-in" style={{ width: '400px', maxWidth: '100%', padding: '1.5rem', position: 'relative', zIndex: 1001 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Filter size={20} className="text-primary" /> Filter Drives
+              </h3>
+              <button 
+                onClick={() => setShowFilterModal(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {[
+                { label: 'All Drives', mode: 'ALL', description: 'Show all available drives' },
+                { label: 'Active', mode: 'ACTIVE', description: 'Only show currently active drives' },
+                { label: 'Closed', mode: 'CLOSED', description: 'Only show closed/ended drives' },
+                { label: 'Eligible', mode: 'ELIGIBLE', description: 'Show drives you are eligible for' },
+                { label: 'Not Eligible', mode: 'NOT_ELIGIBLE', description: 'Show drives you are not eligible for' },
+                { label: 'Joined', mode: 'JOINED', description: 'Show drives you have joined' },
+                { label: 'SPOC / Coordinator', mode: 'SPOC', description: 'Show drives where you are a SPOC' }
+              ].map(opt => {
+                const isActive = filterMode === opt.mode;
+                return (
+                  <button
+                    key={opt.mode}
+                    onClick={() => {
+                      setFilterMode(opt.mode);
+                      setShowFilterModal(false);
+                    }}
+                    style={{
+                      background: isActive ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                      border: isActive ? '1px solid var(--primary-color)' : '1px solid var(--border-color)',
+                      borderRadius: '10px',
+                      padding: '0.75rem 1rem',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      width: '100%',
+                      color: 'inherit'
+                    }}
+                    onMouseEnter={e => {
+                      if (!isActive) {
+                        e.currentTarget.style.background = 'var(--input-bg)';
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!isActive) {
+                        e.currentTarget.style.background = 'transparent';
+                      }
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: '600', color: isActive ? 'var(--primary-color)' : 'var(--text-primary)', fontSize: '0.9rem' }}>{opt.label}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{opt.description}</div>
+                    </div>
+                    {isActive && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary-color)' }} />}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
