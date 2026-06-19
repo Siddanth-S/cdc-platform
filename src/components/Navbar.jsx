@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { GraduationCap, LogOut, User, Edit3, Sun, Moon } from 'lucide-react';
+import { GraduationCap, LogOut, User, Edit3, Sun, Moon, ShieldCheck } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import NotificationsDropdown from './NotificationsDropdown';
 import { parseEmailProfile } from '../utils/profileParser';
@@ -151,6 +151,16 @@ export default function Navbar() {
       </Link>
       
       <div className="flex items-center gap-4">
+        {user?.role === 'HEAD' && (
+          <Link
+            to="/admin"
+            className="navbar-admin-link"
+            title="Admin Overview"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.8rem', borderRadius: '10px', textDecoration: 'none', color: 'var(--primary-color)', background: 'rgba(96, 165, 250, 0.1)', border: '1px solid var(--primary-color)', fontWeight: 600, fontSize: '0.8rem', transition: 'all 0.2s ease' }}
+          >
+            <ShieldCheck size={16} /> <span className="navbar-admin-label">Admin</span>
+          </Link>
+        )}
         <div className="navbar-user-info" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <div style={{ fontWeight: '500', fontSize: '0.9rem' }}>{profileData?.name || user?.email.split('@')[0]}</div>
           <div style={{ fontSize: '0.75rem', color: 'var(--primary-color)', fontWeight: '600', letterSpacing: '0.5px' }}>{user?.role}</div>

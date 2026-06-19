@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import DriveRoom from './pages/DriveRoom';
 import DirectMessage from './pages/DirectMessage';
 import { useEffect } from 'react';
@@ -46,6 +47,7 @@ function AppRoutes() {
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="admin" element={<AdminDashboard />} />
             <Route path="drive/:id" element={<DriveRoom />} />
             <Route path="dm/:id" element={<DirectMessage />} />
           </Route>

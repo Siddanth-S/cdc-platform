@@ -785,13 +785,13 @@ p {
 /* Base Chat Message Styles */
 .msg-wrapper {
   gap: 0.5rem;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.1rem;
 }
 .msg-text {
-  font-size: 0.9rem;
+  font-size: 0.84rem;
 }
 .drive-msg-bubble {
-  padding: 0.4rem 0.6rem;
+  padding: 0.35rem 0.6rem;
 }
 
 /* General Mobile Fixes */
@@ -804,14 +804,18 @@ p {
   /* Make message bubbles utilize more width and be smaller */
   .msg-wrapper {
     gap: 0.4rem !important;
-    margin-bottom: 0.3rem !important;
+    margin-bottom: 0.1rem !important;
   }
   .msg-text {
-    font-size: 0.85rem !important;
+    font-size: 0.82rem !important;
   }
   .drive-msg-bubble {
-    max-width: 92% !important;
+    max-width: 82% !important;
     padding: 0.3rem 0.5rem !important;
+  }
+  /* Action cluster stays compact and never blocks the screen edge on phones */
+  .msg-actions-cluster {
+    transform: translateY(-50%) scale(0.92) !important;
   }
   
   /* Fix navbar user text */
@@ -822,6 +826,14 @@ p {
   /* Hide text in live dot badge */
   .live-badge-text {
     display: none !important;
+  }
+
+  /* Compact admin link to an icon-only button on phones */
+  .navbar-admin-label {
+    display: none !important;
+  }
+  .navbar-admin-link {
+    padding: 0.45rem !important;
   }
   
   /* Adjust cyber sidebar mobile dimensions and drawer logic */

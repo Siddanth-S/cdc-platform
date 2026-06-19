@@ -53,11 +53,11 @@ export default function WelcomeToast({ user }) {
             gap: '0.5rem',
             padding: '0.5rem 1rem',
           }}>
-            <Sparkles size={14} style={{ color: '#38bdf8', flexShrink: 0 }} />
-            <span style={{ fontSize: '0.82rem', fontWeight: '600', color: '#e2e8f0' }}>
+            <Sparkles size={14} style={{ color: 'var(--primary-color)', flexShrink: 0 }} />
+            <span style={{ fontSize: '0.82rem', fontWeight: '600', color: 'var(--text-primary)' }}>
               Welcome back, {name}
             </span>
-            <span style={{ fontSize: '0.75rem', color: 'rgba(148, 163, 184, 0.8)' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
               · {subtitle}
             </span>
           </div>

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Send, ArrowLeft, Paperclip, X, User, Plus, Maximize2, Minimize2, CornerUpLeft, ChevronDown, Copy, Trash2 } from 'lucide-react';
+import { Send, ArrowLeft, Paperclip, X, User, Maximize2, Minimize2, CornerUpLeft, ChevronDown, Copy, Trash2 } from 'lucide-react';
 import { db } from '../firebase';
 import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove, deleteField, runTransaction } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
@@ -17,8 +17,8 @@ export default function DirectMessage() {
   const [isTyping, setIsTyping] = useState(false);
   const [hoveredMsgId, setHoveredMsgId] = useState(null);
   const [replyToMsg, setReplyToMsg] = useState(null);
-  const [showReactionPickerId, setShowReactionPickerId] = useState(null);
   const messagesEndRef = useRef(null);
+  const chatBodyRef = useRef(null);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const [lightboxImg, setLightboxImg] = useState(null);
@@ -119,8 +119,11 @@ export default function DirectMessage() {
     };
   }, [id, user?.email]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  // Scroll only the inner chat body (never the outer page container) so the
+  // conversation header stays pinned in view when a chat is opened.
+  const scrollToBottom = (smooth = true) => {
+    const el = chatBodyRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
   };
 
   useEffect(() => {
@@ -192,8 +195,6 @@ export default function DirectMessage() {
 
         transaction.update(dmRef, { messages: updatedMessages });
       });
-
-      setShowReactionPickerId(null);
     } catch (err) {
       console.error("Reaction error", err);
     }
@@ -270,11 +271,11 @@ export default function DirectMessage() {
     } : {
       display: 'flex',
       flexDirection: 'column',
-      height: 'calc(100vh - 120px)',
+      height: '100%',
       transition: 'all 0.3s ease'
     }}>
       {!isFullScreen && (
-        <div className="glass-panel drive-room-header" style={{ padding: '1rem 1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+        <div className="glass-panel drive-room-header" style={{ padding: '1rem 1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <button onClick={() => navigate('/dashboard')} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>
               <ArrowLeft size={24} />
@@ -442,7 +443,7 @@ export default function DirectMessage() {
             </button>
           </div>
         )}
-        <div className="drive-chat-body" style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', zIndex: 10 }}>
+        <div ref={chatBodyRef} className="drive-chat-body" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', position: 'relative', zIndex: 10 }}>
           {dmData.messages?.map(msg => {
             const isMe = msg.sender === user?.email;
             const msgTime = new Date(msg.timestamp).getTime();
@@ -456,10 +457,9 @@ export default function DirectMessage() {
                 key={msg.id} 
                 className={`drive-msg-container msg-wrapper ${isNew ? 'new-msg-glow' : ''}`}
                 onMouseEnter={() => { if (window.innerWidth > 768) setHoveredMsgId(msg.id); }}
-                onMouseLeave={() => { 
-                  if (window.innerWidth > 768) {
-                    setHoveredMsgId(null); 
-                    setShowReactionPickerId(null); 
+                onMouseLeave={() => {
+                  if (window.innerWidth > 768 && activeMenuMsgId !== msg.id) {
+                    setHoveredMsgId(null);
                   }
                 }}
                 onClick={(e) => {
@@ -477,11 +477,11 @@ export default function DirectMessage() {
                   background: isImageOnly ? 'transparent' : (isMe ? 'linear-gradient(135deg, var(--primary-color), var(--primary-hover))' : 'var(--chat-bubble-incoming-bg)'), 
                   color: isMe ? '#fff' : 'var(--text-primary)',
                   border: isImageOnly ? 'none' : (isMe ? 'none' : '1px solid var(--chat-bubble-incoming-border)'),
-                  padding: isImageOnly ? '0' : '0.5rem 2.5rem 0.5rem 0.75rem', 
-                  borderRadius: '16px', 
-                  borderBottomRightRadius: isMe ? '4px' : '16px',
-                  borderBottomLeftRadius: !isMe ? '4px' : '16px',
-                  maxWidth: isImageOnly ? '320px' : '65%',
+                  padding: isImageOnly ? '0' : '0.35rem 0.6rem',
+                  borderRadius: '14px',
+                  borderBottomRightRadius: isMe ? '4px' : '14px',
+                  borderBottomLeftRadius: !isMe ? '4px' : '14px',
+                  maxWidth: isImageOnly ? '300px' : '72%',
                   width: isImageOnly ? '100%' : 'fit-content',
                   wordBreak: 'break-word',
                   boxShadow: isImageOnly ? 'none' : (isMe ? '0 4px 15px rgba(59, 130, 246, 0.3)' : 'var(--glass-shadow)'),
@@ -489,70 +489,68 @@ export default function DirectMessage() {
                   marginTop: '0.2rem',
                   position: 'relative'
                 }}>
-                  {/* Dropdown & Reply actions container at top right of the DM bubble */}
-                  <div style={{ position: 'absolute', top: '4px', right: '6px', zIndex: 10, display: 'flex', alignItems: 'center', gap: '2px' }}>
+                  {/* Reply + actions cluster, floated just outside the bubble on hover/tap */}
+                  {(hoveredMsgId === msg.id || activeMenuMsgId === msg.id) && (
+                  <div className="msg-actions-cluster" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', [isMe ? 'right' : 'left']: 'calc(100% + 6px)', zIndex: 12, display: 'flex', alignItems: 'center', gap: '1px', background: 'var(--dropdown-bg)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '2px', boxShadow: '0 2px 10px var(--glass-shadow)' }}>
                     {/* Reply curved arrow icon */}
-                    <button 
+                    <button
                       onClick={(e) => { e.stopPropagation(); setReplyToMsg(msg); }}
-                      style={{ 
-                        background: isImageOnly ? 'rgba(0,0,0,0.4)' : 'none', 
-                        border: 'none', 
-                        cursor: 'pointer', 
-                        color: isMe ? 'rgba(255, 255, 255, 0.6)' : 'var(--text-secondary)', 
-                        display: 'inline-flex', 
-                        alignItems: 'center', 
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--text-secondary)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
                         justifyContent: 'center',
-                        padding: '2px',
-                        borderRadius: '4px',
-                        transition: 'background 0.2s, color 0.2s',
-                        opacity: 0.5
+                        padding: '4px',
+                        borderRadius: '50%',
+                        transition: 'background 0.2s, color 0.2s'
                       }}
-                      onMouseEnter={e => { e.currentTarget.style.background = isImageOnly ? 'rgba(0,0,0,0.6)' : (isMe ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)'); e.currentTarget.style.opacity = '1'; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = isImageOnly ? 'rgba(0,0,0,0.4)' : 'none'; e.currentTarget.style.opacity = '0.5'; }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(96, 165, 250, 0.15)'; e.currentTarget.style.color = 'var(--primary-color)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
                       title="Reply"
                     >
                       <CornerUpLeft size={14} />
                     </button>
-                    
+
                     {/* Dropdown Chevron */}
                     <div style={{ position: 'relative', display: 'inline-block' }}>
-                      <button 
+                      <button
                         onClick={(e) => { e.stopPropagation(); setActiveMenuMsgId(activeMenuMsgId === msg.id ? null : msg.id); }}
-                        style={{ 
-                          background: isImageOnly ? 'rgba(0,0,0,0.4)' : 'none', 
-                          border: 'none', 
-                          cursor: 'pointer', 
-                          color: isMe ? 'rgba(255, 255, 255, 0.7)' : 'var(--text-secondary)', 
-                          display: 'flex', 
-                          alignItems: 'center', 
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: 'var(--text-secondary)',
+                          display: 'flex',
+                          alignItems: 'center',
                           justifyContent: 'center',
-                          padding: '1px',
-                          borderRadius: '4px',
-                          transition: 'background 0.2s, opacity 0.2s',
-                          opacity: (hoveredMsgId === msg.id || activeMenuMsgId === msg.id) ? 0.9 : 0.45,
-                          pointerEvents: 'auto'
+                          padding: '4px',
+                          borderRadius: '50%',
+                          transition: 'background 0.2s, color 0.2s'
                         }}
-                        onMouseEnter={e => e.currentTarget.style.background = isImageOnly ? 'rgba(0,0,0,0.6)' : (isMe ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)')}
-                        onMouseLeave={e => e.currentTarget.style.background = isImageOnly ? 'rgba(0,0,0,0.4)' : 'none'}
-                        title="Actions"
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(96, 165, 250, 0.15)'; e.currentTarget.style.color = 'var(--primary-color)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                        title="More actions"
                       >
-                        <ChevronDown size={16} />
+                        <ChevronDown size={15} />
                       </button>
                       {activeMenuMsgId === msg.id && (
                         <>
                           <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={(e) => { e.stopPropagation(); setActiveMenuMsgId(null); }} />
-                          <div 
+                          <div
                             className="animate-fade-in cyber-dropdown"
                             style={{
                               position: 'absolute',
                               top: 'calc(100% + 4px)',
-                              right: 0,
+                              [isMe ? 'right' : 'left']: 0,
                               background: 'var(--dropdown-bg)',
                               backdropFilter: 'blur(12px)',
                               border: '1px solid var(--border-color)',
                               borderRadius: '12px',
                               padding: '0.3rem',
-                              minWidth: '150px',
+                              minWidth: '160px',
                               boxShadow: '0 10px 25px var(--glass-shadow)',
                               zIndex: 999,
                               display: 'flex',
@@ -561,8 +559,14 @@ export default function DirectMessage() {
                             }}
                             onClick={(e) => e.stopPropagation()}
                           >
+                            {/* Quick reactions row */}
+                            <div style={{ display: 'flex', justifyContent: 'space-around', gap: '0.1rem', padding: '0.15rem 0.2rem 0.3rem', borderBottom: '1px solid var(--border-color)', marginBottom: '0.2rem' }}>
+                              {['👍', '❤️', '😂', '🎉', '🔥'].map(emoji => (
+                                <button key={emoji} onClick={() => { handleReaction(msg.id, emoji); setActiveMenuMsgId(null); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', padding: '0.1rem 0.2rem', borderRadius: '8px', transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.25)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>{emoji}</button>
+                              ))}
+                            </div>
                             {msg.text && (
-                              <button 
+                              <button
                                 className="cyber-dropdown-item"
                                 onClick={() => {
                                   navigator.clipboard.writeText(msg.text);
@@ -574,8 +578,15 @@ export default function DirectMessage() {
                                 <Copy size={14} /> Copy Text
                               </button>
                             )}
+                            <button
+                              className="cyber-dropdown-item"
+                              onClick={() => { setReplyToMsg(msg); setActiveMenuMsgId(null); }}
+                              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', color: 'var(--text-primary)' }}
+                            >
+                              <CornerUpLeft size={14} /> Reply
+                            </button>
                             {isMe && (
-                              <button 
+                              <button
                                 className="cyber-dropdown-item"
                                 onClick={async () => {
                                   try {
@@ -603,6 +614,7 @@ export default function DirectMessage() {
                       )}
                     </div>
                   </div>
+                  )}
                   {msg.replyTo && (
                     <div style={{ background: 'rgba(0,0,0,0.1)', borderLeft: '3px solid var(--primary-color)', padding: '0.3rem 0.5rem', borderRadius: '4px', marginBottom: '0.3rem', fontSize: '0.75rem', opacity: 0.8 }}>
                       <div style={{ fontWeight: 'bold', marginBottom: '0.1rem' }}>{formatName(msg.replyTo.sender)}</div>
@@ -813,25 +825,6 @@ export default function DirectMessage() {
                   )}
                   
                   {isNew && <span style={{ position: 'absolute', top: '-5px', right: '-5px', color: '#fff', fontWeight: 'bold', fontSize: '0.55rem', background: '#38bdf8', padding: '0.1rem 0.3rem', borderRadius: '4px', boxShadow: '0 0 5px #38bdf8' }}>NEW</span>}
-
-                  {hoveredMsgId === msg.id && (
-                    <div className={`msg-action-toolbar ${isMe ? 'is-me' : 'not-me'}`} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      {/* Emojis */}
-                      {['👍', '❤️', '😂'].map(emoji => (
-                        <button key={emoji} onClick={() => handleReaction(msg.id, emoji)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', padding: '0 0.1rem', transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>{emoji}</button>
-                      ))}
-                      <div style={{ position: 'relative' }}>
-                        <button onClick={() => setShowReactionPickerId(showReactionPickerId === msg.id ? null : msg.id)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: '#fff', padding: '0.25rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={13} /></button>
-                        {showReactionPickerId === msg.id && (
-                          <div className="reaction-picker">
-                            {['🎉', '🔥', '👀', '💯', '🙏'].map(emoji => (
-                              <button key={emoji} onClick={() => handleReaction(msg.id, emoji)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', padding: '0.2rem', transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.3)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>{emoji}</button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {msg.reactions && Object.keys(msg.reactions).length > 0 && (
