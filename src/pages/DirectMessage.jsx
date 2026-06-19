@@ -5,7 +5,6 @@ import { Send, ArrowLeft, Paperclip, X, User, Plus, Maximize2, Minimize2, Corner
 import { db } from '../firebase';
 import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove, deleteField, runTransaction } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
-import { playSFX } from '../utils/sfx';
 
 export default function DirectMessage() {
   const { id } = useParams();
@@ -81,15 +80,7 @@ export default function DirectMessage() {
       if (docSnap.exists()) {
         const data = { id: docSnap.id, ...docSnap.data() };
         if (data.participants.includes(user.email)) {
-          setDmData(prev => {
-            if (prev && prev.messages && data.messages && data.messages.length > prev.messages.length) {
-              const lastMsg = data.messages[data.messages.length - 1];
-              if (lastMsg.sender !== user.email) {
-                playSFX('received');
-              }
-            }
-            return data;
-          });
+          setDmData(data);
         } else {
           navigate('/dashboard');
         }
@@ -154,7 +145,6 @@ export default function DirectMessage() {
     }
     
     try {
-      playSFX('sent');
       await updateDoc(doc(db, 'dms', id), {
         messages: arrayUnion({
           id: Date.now(),
@@ -284,13 +274,13 @@ export default function DirectMessage() {
       transition: 'all 0.3s ease'
     }}>
       {!isFullScreen && (
-        <div className="glass-panel" style={{ padding: '1rem 1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+        <div className="glass-panel drive-room-header" style={{ padding: '1rem 1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <button onClick={() => navigate('/dashboard')} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>
               <ArrowLeft size={24} />
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{
+              <div className="dm-avatar-circle" style={{
                 width: '45px', height: '45px', borderRadius: '50%',
                 background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(37, 99, 235, 0.2))',
                 border: '1px solid rgba(56, 189, 248, 0.3)',
@@ -452,7 +442,7 @@ export default function DirectMessage() {
             </button>
           </div>
         )}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', zIndex: 10 }}>
+        <div className="drive-chat-body" style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', zIndex: 10 }}>
           {dmData.messages?.map(msg => {
             const isMe = msg.sender === user?.email;
             const msgTime = new Date(msg.timestamp).getTime();

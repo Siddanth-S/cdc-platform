@@ -215,7 +215,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div style={{ padding: '2rem' }}>
+    <div className="page-container" style={{ padding: '2rem' }}>
 
       <div className="flex justify-between items-center mb-4">
         <div>
@@ -280,7 +280,7 @@ export default function Dashboard() {
               onClick={() => isEligible && handleCardClick(drive)}
             >
               {/* Header */}
-              <div style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div className="cyber-card-header" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <Building2 className="text-primary" size={24} />
                   <div>
@@ -351,7 +351,7 @@ export default function Dashboard() {
               </div>
 
               {/* Data Rows */}
-              <div style={{ padding: '0 1.5rem', flex: 1 }}>
+              <div className="cyber-card-body" style={{ padding: '0 1.5rem', flex: 1 }}>
                 <div style={{ background: 'var(--input-bg)', padding: '1.25rem', borderRadius: '12px', marginBottom: '1.5rem', border: '1px solid var(--border-color)', boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.05)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.85rem', alignItems: 'center' }}>
                     <span style={{ color: 'var(--text-secondary)' }}>SPOC:</span>
@@ -364,7 +364,7 @@ export default function Dashboard() {
                 </div>
               </div>
               
-              <div style={{ padding: '1.5rem', borderTop: '1px solid var(--border-color)', background: 'var(--input-bg)' }}>
+              <div className="cyber-card-footer" style={{ padding: '1.5rem', borderTop: '1px solid var(--border-color)', background: 'var(--input-bg)' }}>
                 {!isJoined ? (
                   isEligible ? (
                     <button 

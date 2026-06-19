@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { GraduationCap, LogOut, User, Edit3, Sun, Moon } from 'lucide-react';
@@ -7,12 +7,25 @@ import NotificationsDropdown from './NotificationsDropdown';
 import { parseEmailProfile } from '../utils/profileParser';
 import { db } from '../firebase';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
-import { playSFX } from '../utils/sfx';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  
+  const profileBtnRef = useRef(null);
+  const [dropdownPos, setDropdownPos] = useState({ left: 0, top: 0, width: 320, arrowLeft: 160 });
+
+  const computeDropdownPos = () => {
+    const btn = profileBtnRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const margin = 16;
+    const width = Math.min(320, window.innerWidth - margin * 2);
+    const idealLeft = rect.left + rect.width / 2 - width / 2;
+    const left = Math.min(Math.max(idealLeft, margin), window.innerWidth - width - margin);
+    const arrowLeft = Math.min(Math.max(rect.left + rect.width / 2 - left, 24), width - 24);
+    setDropdownPos({ left, top: rect.bottom + 12, width, arrowLeft });
+  };
+
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
 
   useEffect(() => {
@@ -95,6 +108,13 @@ export default function Navbar() {
     setIsEditingInline(true);
   };
 
+  useEffect(() => {
+    if (!showHoverCard) return;
+    const handleResize = () => computeDropdownPos();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [showHoverCard]);
+
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     if (!profileForm.branch) return;
@@ -137,17 +157,18 @@ export default function Navbar() {
         </div>
 
         <div style={{ position: 'relative' }}>
-          <button 
+          <button
+            ref={profileBtnRef}
             onClick={() => {
-              playSFX('click');
               if (showHoverCard) {
                 setShowHoverCard(false);
                 setIsEditingInline(false);
               } else {
+                computeDropdownPos();
                 setShowHoverCard(true);
               }
             }}
-            className="cyber-logout-btn" 
+            className="cyber-logout-btn"
             title="Edit Profile" 
             style={{ 
               padding: '0.4rem', 
@@ -165,17 +186,16 @@ export default function Navbar() {
           {showHoverCard && profileData && (
             <>
               <div style={{ position: 'fixed', inset: 0, zIndex: 999 }} onClick={() => { setShowHoverCard(false); setIsEditingInline(false); }}></div>
-              <div className="animate-fade-in" style={{
-                position: 'absolute',
-                top: 'calc(100% + 12px)',
-                right: '0',
+              <div className="animate-fade-in navbar-profile-dropdown" style={{
+                position: 'fixed',
+                top: `${dropdownPos.top}px`,
+                left: `${dropdownPos.left}px`,
+                width: `${dropdownPos.width}px`,
                 background: 'var(--dropdown-bg)',
                 backdropFilter: 'blur(12px)',
                 border: '1px solid var(--primary-color)',
                 borderRadius: '16px',
                 padding: '1.2rem',
-                width: '320px',
-                maxWidth: 'calc(100vw - 2rem)',
                 boxShadow: '0 10px 30px var(--glass-shadow), 0 0 20px rgba(59, 130, 246, 0.2)',
                 zIndex: 1000,
                 pointerEvents: 'auto',
@@ -186,7 +206,8 @@ export default function Navbar() {
                 <div style={{
                   position: 'absolute',
                   top: '-9px',
-                  right: '18px',
+                  left: `${dropdownPos.arrowLeft}px`,
+                  transform: 'translateX(-50%)',
                   width: '0',
                   height: '0',
                   borderLeft: '10px solid transparent',
@@ -265,7 +286,7 @@ export default function Navbar() {
                     <div style={{ height: '1px', background: 'rgba(59, 130, 246, 0.3)', margin: '0.5rem 0' }}></div>
 
                     <button 
-                      onClick={() => { playSFX('click'); handleOpenProfile(); }} 
+                      onClick={handleOpenProfile}
                       style={{ 
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.6rem', background: 'transparent', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.4)', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s ease', marginBottom: '0.5rem'
                       }}
@@ -276,7 +297,7 @@ export default function Navbar() {
                     </button>
                     
                     <button 
-                      onClick={() => { playSFX('click'); handleLogout(); }} 
+                      onClick={handleLogout}
                       style={{ 
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.6rem', background: 'rgba(244, 63, 94, 0.1)', color: '#f43f5e', border: '1px solid rgba(244, 63, 94, 0.3)', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s ease'
                       }}

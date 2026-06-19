@@ -5,7 +5,6 @@ import { Send, ArrowLeft, ShieldAlert, Paperclip, X, MessageSquarePlus, LogOut, 
 import { db } from '../firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, doc, getDocs, setDoc, updateDoc, increment, arrayUnion, arrayRemove, deleteField, deleteDoc } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
-import { playSFX } from '../utils/sfx';
 
 const btechBranches = ['CSE', 'IT', 'AI', 'DS', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'META', 'MINING'];
 const pgBranches = ['Construction Tech & Management', 'MBA', 'Environmental Eng', 'Geotechnical Eng', 'Transportation Eng', 'Structural Eng', 'Power Electronics', 'Mechanical Design', 'Thermal Eng', 'Manufacturing Eng', 'Mechatronics', 'Water Resources', 'Marine Structures', 'Geoinformatics', 'MCA', 'Chemistry', 'Physics', 'Signal Processing & ML', 'Communication Eng & Networks', 'VLSI Design', 'Information Security', 'Industrial Biotechnology', 'Environmental Science & Tech', 'Materials Eng', 'Nanotechnology'];
@@ -127,15 +126,7 @@ export default function DriveRoom() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const msgs = [];
       snapshot.forEach(doc => msgs.push({ id: doc.id, ...doc.data() }));
-      setMessages(prev => {
-        if (prev.length > 0 && msgs.length > prev.length) {
-          const lastMsg = msgs[msgs.length - 1];
-          if (lastMsg.sender !== user?.email) {
-            playSFX('received');
-          }
-        }
-        return msgs;
-      });
+      setMessages(msgs);
     });
     return () => unsubscribe();
   }, [id, user?.email]);
@@ -215,7 +206,6 @@ export default function DriveRoom() {
     }
     
     try {
-      playSFX('sent');
       await addDoc(collection(db, 'drives', id, 'messages'), {
         sender: user.email,
         role: user.role === 'HEAD' ? 'HEAD' : (currentDrive.coordinator === user.email ? 'SPOC' : 'SEC_SPOC'),
@@ -449,7 +439,7 @@ export default function DriveRoom() {
     }}>
 
       {!isFullScreen && (
-        <div className="glass-panel" style={{ padding: '1rem 1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+        <div className="glass-panel drive-room-header" style={{ padding: '1rem 1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <button onClick={() => navigate('/dashboard')} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>
               <ArrowLeft size={24} />
@@ -482,7 +472,7 @@ export default function DriveRoom() {
 
       {/* Secondary SPOCs Bar */}
       {!isFullScreen && (currentDrive.secondarySpocs?.length > 0 || user?.role === 'HEAD') && (
-        <div style={{ padding: '0.75rem 1.5rem', marginBottom: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+        <div className="secondary-spoc-bar" style={{ padding: '0.75rem 1.5rem', marginBottom: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Secondary SPOCs:</div>
           {currentDrive.secondarySpocs?.map((spoc, index) => (
             <div key={`${spoc}-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', padding: '0.4rem 0.75rem', borderRadius: '20px', fontSize: '0.8rem', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
@@ -688,7 +678,7 @@ export default function DriveRoom() {
             zIndex: 11
           }}>
             <div 
-              onClick={() => { playSFX('click'); setShowNoticeBoard(!showNoticeBoard); }}
+              onClick={() => setShowNoticeBoard(!showNoticeBoard)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -759,7 +749,6 @@ export default function DriveRoom() {
                         <button 
                           onClick={async (e) => {
                             e.stopPropagation();
-                            playSFX('click');
                             try {
                               await updateDoc(doc(db, 'drives', id, 'messages', msg.id), {
                                 pinned: false
@@ -791,7 +780,7 @@ export default function DriveRoom() {
           </div>
         )}
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', zIndex: 10 }}>
+        <div className="drive-chat-body" style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', zIndex: 10 }}>
           {messages.length === 0 && (
              <div style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '2rem' }}>
                No messages in this drive yet.
