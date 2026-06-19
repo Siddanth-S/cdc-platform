@@ -138,7 +138,7 @@ export default function Navbar() {
   return (
     <nav className="navbar-cyber" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0, overflow: 'hidden', flexShrink: 1 }}>
-        <span className="cdc-logo-mark cdc-logo-mark-pulse" style={{ width: 32, height: 35 }} aria-hidden="true" />
+        <span className="cdc-logo-mark cdc-logo-mark-pulse" style={{ width: 34, height: 33 }} aria-hidden="true" />
         <div style={{ minWidth: 0, overflow: 'hidden' }}>
           <h2 className="cyber-glitch-text" style={{ margin: 0, fontSize: '1.25rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>NITK CDC</h2>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden' }}>

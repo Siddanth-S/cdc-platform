@@ -491,8 +491,8 @@ p {
   animation: icon-glow 3s infinite ease-in-out;
 }
 
-/* CDC crest graduation-cap glyph, background removed, recolored via mask
-   so it tracks --primary-color across themes instead of baking in a color. */
+/* Full CDC crest, background removed, recolored via mask so it tracks
+   --primary-color across themes instead of baking in a fixed color. */
 .cdc-logo-mark {
   display: inline-block;
   flex-shrink: 0;
