@@ -435,8 +435,34 @@ export default function DirectMessage() {
                   marginTop: '0.2rem',
                   position: 'relative'
                 }}>
-                  {/* Dropdown Chevron at the top right of the DM bubble */}
-                  <div style={{ position: 'absolute', top: '6px', right: '8px', zIndex: 10 }}>
+                  {/* Dropdown & Reply actions container at top right of the DM bubble */}
+                  <div style={{ position: 'absolute', top: '6px', right: '8px', zIndex: 10, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    {/* Reply curved arrow icon */}
+                    {hoveredMsgId === msg.id && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setReplyToMsg(msg); }}
+                        style={{ 
+                          background: isImageOnly ? 'rgba(0,0,0,0.4)' : 'none', 
+                          border: 'none', 
+                          cursor: 'pointer', 
+                          color: isMe ? '#fff' : 'var(--primary-color)', 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          padding: '2px',
+                          borderRadius: '4px',
+                          transition: 'background 0.2s',
+                          pointerEvents: 'auto'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = isImageOnly ? 'rgba(0,0,0,0.6)' : (isMe ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)')}
+                        onMouseLeave={e => e.currentTarget.style.background = isImageOnly ? 'rgba(0,0,0,0.4)' : 'none'}
+                        title="Reply"
+                      >
+                        <CornerUpLeft size={12} />
+                      </button>
+                    )}
+                    
+                    {/* Dropdown Chevron */}
                     <div style={{ position: 'relative', display: 'inline-block' }}>
                       <button 
                         onClick={(e) => { e.stopPropagation(); setActiveMenuMsgId(activeMenuMsgId === msg.id ? null : msg.id); }}
@@ -543,46 +569,20 @@ export default function DirectMessage() {
                         }}
                         onClick={() => setLightboxImg(msg.fileData)}
                       />
-                      <div 
-                        onClick={(e) => e.stopPropagation()}
-                        style={{
-                          position: 'absolute',
-                          bottom: '8px',
-                          right: '8px',
-                          background: 'rgba(0, 0, 0, 0.55)',
-                          backdropFilter: 'blur(4px)',
-                          color: '#fff',
-                          padding: '2px 8px',
-                          borderRadius: '10px',
-                          fontSize: '0.65rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          pointerEvents: 'auto'
-                        }}
-                      >
-                        {hoveredMsgId === msg.id && (
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); setReplyToMsg(msg); }}
-                            style={{ 
-                              background: 'none', 
-                              border: 'none', 
-                              cursor: 'pointer', 
-                              color: '#fff', 
-                              display: 'inline-flex', 
-                              alignItems: 'center', 
-                              justifyContent: 'center',
-                              padding: '2px',
-                              borderRadius: '4px',
-                              marginRight: '4px',
-                              transition: 'background 0.2s'
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                            title="Reply"
-                          >
-                            <CornerUpLeft size={11} />
-                          </button>
-                        )}
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '8px',
+                        right: '8px',
+                        background: 'rgba(0, 0, 0, 0.55)',
+                        backdropFilter: 'blur(4px)',
+                        color: '#fff',
+                        padding: '2px 8px',
+                        borderRadius: '10px',
+                        fontSize: '0.65rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        pointerEvents: 'none'
+                      }}>
                         {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
@@ -751,30 +751,6 @@ export default function DirectMessage() {
                         whiteSpace: 'nowrap',
                         verticalAlign: 'bottom'
                       }}>
-                        {hoveredMsgId === msg.id && (
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); setReplyToMsg(msg); }}
-                            style={{ 
-                              background: 'none', 
-                              border: 'none', 
-                              cursor: 'pointer', 
-                              color: isMe ? '#fff' : 'var(--primary-color)', 
-                              display: 'inline-flex', 
-                              alignItems: 'center', 
-                              justifyContent: 'center',
-                              padding: '2px',
-                              borderRadius: '4px',
-                              marginRight: '2px',
-                              transition: 'background 0.2s',
-                              pointerEvents: 'auto'
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = isMe ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.08)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                            title="Reply"
-                          >
-                            <CornerUpLeft size={12} />
-                          </button>
-                        )}
                         {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>

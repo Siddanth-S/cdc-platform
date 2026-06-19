@@ -809,117 +809,170 @@ export default function DriveRoom() {
                 }}>
                   {/* Internal Sender Tag - Telegram Style */}
                   {!isMe && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '2px', fontSize: '0.75rem', fontWeight: 'bold' }}>
-                      <span style={{ color: msg.role === 'HEAD' ? '#fb7185' : (msg.role === 'SPOC' || msg.role === 'COORDINATOR' ? '#38bdf8' : '#c084fc') }}>
-                        {formatName(msg.sender)}
-                      </span>
-                      <span style={{ fontSize: '0.6rem', opacity: 0.6, fontWeight: 'normal', color: 'var(--text-secondary)' }}>
-                        ({displayRole})
-                      </span>
-                      {/* Dropdown Chevron */}
-                      <div style={{ position: 'relative', display: 'inline-block', marginLeft: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px', fontSize: '0.75rem', fontWeight: 'bold', width: '100%', gap: '1.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <span style={{ color: msg.role === 'HEAD' ? '#fb7185' : (msg.role === 'SPOC' || msg.role === 'COORDINATOR' ? '#38bdf8' : '#c084fc') }}>
+                          {formatName(msg.sender)}
+                        </span>
+                        <span style={{ fontSize: '0.6rem', opacity: 0.6, fontWeight: 'normal', color: 'var(--text-secondary)' }}>
+                          ({displayRole})
+                        </span>
+                        {/* Dropdown Chevron */}
+                        <div style={{ position: 'relative', display: 'inline-block', marginLeft: '4px' }}>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setActiveMenuMsgId(activeMenuMsgId === msg.id ? null : msg.id); }}
+                            style={{ 
+                              background: isImageOnly ? 'rgba(0,0,0,0.4)' : 'none', 
+                              border: 'none', 
+                              cursor: 'pointer', 
+                              color: 'var(--text-secondary)', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              padding: '1px',
+                              borderRadius: '4px',
+                              transition: 'background 0.2s, opacity 0.2s',
+                              opacity: (hoveredMsgId === msg.id || activeMenuMsgId === msg.id) ? 0.8 : 0,
+                              pointerEvents: (hoveredMsgId === msg.id || activeMenuMsgId === msg.id) ? 'auto' : 'none'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = isImageOnly ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.15)'}
+                            onMouseLeave={e => e.currentTarget.style.background = isImageOnly ? 'rgba(0,0,0,0.4)' : 'none'}
+                            title="Actions"
+                          >
+                            <ChevronDown size={14} />
+                          </button>
+                          {activeMenuMsgId === msg.id && (
+                            <>
+                              <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={(e) => { e.stopPropagation(); setActiveMenuMsgId(null); }} />
+                              <div 
+                                className="animate-fade-in cyber-dropdown"
+                                style={{
+                                  position: 'absolute',
+                                  top: 'calc(100% + 4px)',
+                                  left: 0,
+                                  background: 'var(--dropdown-bg)',
+                                  backdropFilter: 'blur(12px)',
+                                  border: '1px solid var(--border-color)',
+                                  borderRadius: '12px',
+                                  padding: '0.3rem',
+                                  minWidth: '150px',
+                                  boxShadow: '0 10px 25px var(--glass-shadow)',
+                                  zIndex: 999,
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '0.1rem'
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {msg.text && (
+                                  <button 
+                                    className="cyber-dropdown-item"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(msg.text);
+                                      toast.success("Text copied!");
+                                      setActiveMenuMsgId(null);
+                                    }}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', color: 'var(--text-primary)' }}
+                                  >
+                                    <Copy size={14} /> Copy Text
+                                  </button>
+                                )}
+                                {canMessage && (
+                                  <button 
+                                    className="cyber-dropdown-item"
+                                    onClick={async () => {
+                                      try {
+                                        await updateDoc(doc(db, 'drives', id, 'messages', msg.id), {
+                                          pinned: !msg.pinned
+                                        });
+                                        toast.success(msg.pinned ? "Notice unpinned!" : "Notice pinned!");
+                                      } catch (err) {
+                                        console.error("Pin error", err);
+                                      }
+                                      setActiveMenuMsgId(null);
+                                    }}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', color: '#fbbf24' }}
+                                  >
+                                    {msg.pinned ? <PinOff size={14} /> : <Pin size={14} />} {msg.pinned ? 'Unpin Message' : 'Pin Message'}
+                                  </button>
+                                )}
+                                {(isMe || isHead || isPriSpoc) && (
+                                  <button 
+                                    className="cyber-dropdown-item"
+                                    onClick={async () => {
+                                      try {
+                                        await deleteDoc(doc(db, 'drives', id, 'messages', msg.id));
+                                        toast.success("Message unsent");
+                                      } catch (err) {
+                                        console.error("Delete error", err);
+                                      }
+                                      setActiveMenuMsgId(null);
+                                    }}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', color: '#f87171' }}
+                                  >
+                                    <Trash2 size={14} /> Unsend Message
+                                  </button>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Reply curved arrow icon on the right end of the head line */}
+                      {hoveredMsgId === msg.id && (
                         <button 
-                          onClick={(e) => { e.stopPropagation(); setActiveMenuMsgId(activeMenuMsgId === msg.id ? null : msg.id); }}
+                          onClick={(e) => { e.stopPropagation(); setReplyToMsg(msg); }}
                           style={{ 
-                            background: isImageOnly ? 'rgba(0,0,0,0.4)' : 'none', 
+                            background: 'none', 
                             border: 'none', 
                             cursor: 'pointer', 
-                            color: 'var(--text-secondary)', 
-                            display: 'flex', 
+                            color: 'var(--primary-color)', 
+                            display: 'inline-flex', 
                             alignItems: 'center', 
                             justifyContent: 'center',
-                            padding: '1px',
+                            padding: '2px',
                             borderRadius: '4px',
-                            transition: 'background 0.2s, opacity 0.2s',
-                            opacity: (hoveredMsgId === msg.id || activeMenuMsgId === msg.id) ? 0.8 : 0,
-                            pointerEvents: (hoveredMsgId === msg.id || activeMenuMsgId === msg.id) ? 'auto' : 'none'
+                            transition: 'background 0.2s',
+                            pointerEvents: 'auto'
                           }}
-                          onMouseEnter={e => e.currentTarget.style.background = isImageOnly ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.15)'}
-                          onMouseLeave={e => e.currentTarget.style.background = isImageOnly ? 'rgba(0,0,0,0.4)' : 'none'}
-                          title="Actions"
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                          title="Reply"
                         >
-                          <ChevronDown size={14} />
+                          <CornerUpLeft size={12} />
                         </button>
-                        {activeMenuMsgId === msg.id && (
-                          <>
-                            <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={(e) => { e.stopPropagation(); setActiveMenuMsgId(null); }} />
-                            <div 
-                              className="animate-fade-in cyber-dropdown"
-                              style={{
-                                position: 'absolute',
-                                top: 'calc(100% + 4px)',
-                                left: 0,
-                                background: 'var(--dropdown-bg)',
-                                backdropFilter: 'blur(12px)',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: '12px',
-                                padding: '0.3rem',
-                                minWidth: '150px',
-                                boxShadow: '0 10px 25px var(--glass-shadow)',
-                                zIndex: 999,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '0.1rem'
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {msg.text && (
-                                <button 
-                                  className="cyber-dropdown-item"
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(msg.text);
-                                    toast.success("Text copied!");
-                                    setActiveMenuMsgId(null);
-                                  }}
-                                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', color: 'var(--text-primary)' }}
-                                >
-                                  <Copy size={14} /> Copy Text
-                                </button>
-                              )}
-                              {canMessage && (
-                                <button 
-                                  className="cyber-dropdown-item"
-                                  onClick={async () => {
-                                    try {
-                                      await updateDoc(doc(db, 'drives', id, 'messages', msg.id), {
-                                        pinned: !msg.pinned
-                                      });
-                                      toast.success(msg.pinned ? "Notice unpinned!" : "Notice pinned!");
-                                    } catch (err) {
-                                      console.error("Pin error", err);
-                                    }
-                                    setActiveMenuMsgId(null);
-                                  }}
-                                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', color: '#fbbf24' }}
-                                >
-                                  {msg.pinned ? <PinOff size={14} /> : <Pin size={14} />} {msg.pinned ? 'Unpin Message' : 'Pin Message'}
-                                </button>
-                              )}
-                              {(isMe || isHead || isPriSpoc) && (
-                                <button 
-                                  className="cyber-dropdown-item"
-                                  onClick={async () => {
-                                    try {
-                                      await deleteDoc(doc(db, 'drives', id, 'messages', msg.id));
-                                      toast.success("Message unsent");
-                                    } catch (err) {
-                                      console.error("Delete error", err);
-                                    }
-                                    setActiveMenuMsgId(null);
-                                  }}
-                                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', color: '#f87171' }}
-                                >
-                                  <Trash2 size={14} /> Unsend Message
-                                </button>
-                              )}
-                            </div>
-                          </>
-                        )}
-                      </div>
+                      )}
                     </div>
                   )}
                   {isMe && (
-                    <div style={{ position: 'absolute', top: '6px', right: '8px', zIndex: 10 }}>
+                    <div style={{ position: 'absolute', top: '6px', right: '8px', zIndex: 10, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {/* Reply curved arrow icon */}
+                      {hoveredMsgId === msg.id && (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setReplyToMsg(msg); }}
+                          style={{ 
+                            background: 'none', 
+                            border: 'none', 
+                            cursor: 'pointer', 
+                            color: '#fff', 
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            padding: '2px',
+                            borderRadius: '4px',
+                            transition: 'background 0.2s',
+                            pointerEvents: 'auto'
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                          title="Reply"
+                        >
+                          <CornerUpLeft size={12} />
+                        </button>
+                      )}
+                      
+                      {/* Dropdown Chevron */}
                       <div style={{ position: 'relative', display: 'inline-block' }}>
                         <button 
                           onClick={(e) => { e.stopPropagation(); setActiveMenuMsgId(activeMenuMsgId === msg.id ? null : msg.id); }}
@@ -1044,46 +1097,20 @@ export default function DriveRoom() {
                         }}
                         onClick={() => setLightboxImg(msg.fileData)}
                       />
-                      <div 
-                        onClick={(e) => e.stopPropagation()}
-                        style={{
-                          position: 'absolute',
-                          bottom: '8px',
-                          right: '8px',
-                          background: 'rgba(0, 0, 0, 0.55)',
-                          backdropFilter: 'blur(4px)',
-                          color: '#fff',
-                          padding: '2px 8px',
-                          borderRadius: '10px',
-                          fontSize: '0.65rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          pointerEvents: 'auto'
-                        }}
-                      >
-                        {hoveredMsgId === msg.id && (
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); setReplyToMsg(msg); }}
-                            style={{ 
-                              background: 'none', 
-                              border: 'none', 
-                              cursor: 'pointer', 
-                              color: '#fff', 
-                              display: 'inline-flex', 
-                              alignItems: 'center', 
-                              justifyContent: 'center',
-                              padding: '2px',
-                              borderRadius: '4px',
-                              marginRight: '4px',
-                              transition: 'background 0.2s'
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                            title="Reply"
-                          >
-                            <CornerUpLeft size={11} />
-                          </button>
-                        )}
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '8px',
+                        right: '8px',
+                        background: 'rgba(0, 0, 0, 0.55)',
+                        backdropFilter: 'blur(4px)',
+                        color: '#fff',
+                        padding: '2px 8px',
+                        borderRadius: '10px',
+                        fontSize: '0.65rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        pointerEvents: 'none'
+                      }}>
                         {msg.timestamp ? new Date(msg.timestamp.toMillis ? msg.timestamp.toMillis() : msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                       </div>
                     </div>
@@ -1253,30 +1280,6 @@ export default function DriveRoom() {
                         whiteSpace: 'nowrap',
                         verticalAlign: 'bottom'
                       }}>
-                        {hoveredMsgId === msg.id && (
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); setReplyToMsg(msg); }}
-                            style={{ 
-                              background: 'none', 
-                              border: 'none', 
-                              cursor: 'pointer', 
-                              color: isMe ? '#fff' : 'var(--primary-color)', 
-                              display: 'inline-flex', 
-                              alignItems: 'center', 
-                              justifyContent: 'center',
-                              padding: '2px',
-                              borderRadius: '4px',
-                              marginRight: '2px',
-                              transition: 'background 0.2s',
-                              pointerEvents: 'auto'
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = isMe ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.08)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                            title="Reply"
-                          >
-                            <CornerUpLeft size={12} />
-                          </button>
-                        )}
                         {msg.timestamp ? new Date(msg.timestamp.toMillis ? msg.timestamp.toMillis() : msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                         
                         {/* Compact Read Receipts inline */}
