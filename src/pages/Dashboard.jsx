@@ -181,7 +181,8 @@ export default function Dashboard() {
 
   const handleCardClick = (drive) => {
     const strId = String(drive.id);
-    const hasJoined = joinedDrives.includes(strId) || user?.role === 'HEAD';
+    const isSpoc = drive.coordinator === user?.email || drive.secondarySpocs?.includes(user?.email);
+    const hasJoined = joinedDrives.includes(strId) || user?.role === 'HEAD' || isSpoc;
     if (hasJoined) {
       navigate(`/drive/${strId}`);
     } else {

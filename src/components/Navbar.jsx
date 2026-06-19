@@ -153,7 +153,7 @@ export default function Navbar() {
                 position: 'absolute',
                 top: 'calc(100% + 12px)',
                 right: '0',
-                background: 'linear-gradient(to bottom right, var(--card-bg-start), var(--card-bg-end))',
+                background: 'var(--dropdown-bg)',
                 backdropFilter: 'blur(12px)',
                 border: '1px solid var(--primary-color)',
                 borderRadius: '16px',
@@ -222,8 +222,8 @@ export default function Navbar() {
                       onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        {theme === 'dark' ? <Sun size={16} className="text-primary" /> : <Moon size={16} className="text-primary" />}
-                        <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+                        <Moon size={16} className="text-primary" />
+                        <span>Dark Mode</span>
                       </div>
                       <div style={{ 
                         width: '34px', 
