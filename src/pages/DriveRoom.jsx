@@ -380,7 +380,7 @@ export default function DriveRoom() {
       height: '100vh',
       zIndex: 9999,
       background: 'radial-gradient(circle at 10% 20%, var(--bg-color) 0%, var(--bg-gradient-end) 100%)',
-      padding: '1rem 1.5rem',
+      padding: '0.4rem',
       display: 'flex',
       flexDirection: 'column',
       boxSizing: 'border-box',
@@ -392,47 +392,40 @@ export default function DriveRoom() {
       transition: 'all 0.3s ease'
     }}>
 
-      <div className="glass-panel" style={{ padding: '1rem 1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button onClick={() => navigate('/dashboard')} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>
-            <ArrowLeft size={24} />
-          </button>
-          <div>
-            <h2 style={{ margin: 0 }}>{currentDrive.company}</h2>
-            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              Primary SPOC: <span style={{ color: 'var(--primary-color)' }}>{currentDrive.coordinator.split('@')[0]}</span>
-            </p>
+      {!isFullScreen && (
+        <div className="glass-panel" style={{ padding: '1rem 1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button onClick={() => navigate('/dashboard')} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>
+              <ArrowLeft size={24} />
+            </button>
+            <div>
+              <h2 style={{ margin: 0 }}>{currentDrive.company}</h2>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                Primary SPOC: <span style={{ color: 'var(--primary-color)' }}>{currentDrive.coordinator.split('@')[0]}</span>
+              </p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            {(isHead || isPriSpoc) && (
+              <button 
+                onClick={() => setShowSettingsModal(true)}
+                className="btn-glass primary" 
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1rem' }}
+              >
+                <Settings size={18} /> Manage Drive
+              </button>
+            )}
+            {canLeave && (
+              <button onClick={() => setShowLeaveModal(true)} className="btn-glass danger">
+                <LogOut size={16} /> Leave Drive
+              </button>
+            )}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          <button 
-            onClick={() => setIsFullScreen(!isFullScreen)}
-            className="btn-glass secondary" 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1rem' }}
-            title={isFullScreen ? "Exit Full Screen" : "Full Screen"}
-          >
-            {isFullScreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-            <span>{isFullScreen ? "Minimize" : "Full Screen"}</span>
-          </button>
-          {(isHead || isPriSpoc) && (
-            <button 
-              onClick={() => setShowSettingsModal(true)}
-              className="btn-glass primary" 
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1rem' }}
-            >
-              <Settings size={18} /> Manage Drive
-            </button>
-          )}
-          {canLeave && (
-            <button onClick={() => setShowLeaveModal(true)} className="btn-glass danger">
-              <LogOut size={16} /> Leave Drive
-            </button>
-          )}
-        </div>
-      </div>
+      )}
 
       {/* Secondary SPOCs Bar */}
-      {(currentDrive.secondarySpocs?.length > 0 || user?.role === 'HEAD') && (
+      {!isFullScreen && (currentDrive.secondarySpocs?.length > 0 || user?.role === 'HEAD') && (
         <div style={{ padding: '0.75rem 1.5rem', marginBottom: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Secondary SPOCs:</div>
           {currentDrive.secondarySpocs?.map((spoc, index) => (
@@ -450,78 +443,183 @@ export default function DriveRoom() {
       )}
 
       <div className="glass-panel cyber-glow-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
-        {/* Active Users Bar */}
-        {currentDrive.activeUsers && Object.keys(currentDrive.activeUsers).length > 0 && (
+        
+        {/* Fullscreen top header bar */}
+        {isFullScreen && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0.6rem 1.25rem',
+            borderBottom: '1px solid rgba(255,255,255,0.08)',
+            background: 'rgba(0, 0, 0, 0.25)',
+            zIndex: 11,
+            gap: '1rem'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <button 
+                onClick={() => setIsFullScreen(false)} 
+                style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px', borderRadius: '4px' }}
+                title="Exit Full Screen"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '600' }}>{currentDrive.company}</h3>
+                  <span style={{ fontSize: '0.7rem', opacity: 0.6, background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>Group Chat</span>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                  Primary SPOC: <span style={{ color: 'var(--primary-color)' }}>{currentDrive.coordinator.split('@')[0]}</span>
+                </p>
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {(isHead || isPriSpoc) && (
+                <button 
+                  onClick={() => setShowSettingsModal(true)}
+                  className="btn-glass primary" 
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.4rem 0.75rem', fontSize: '0.75rem' }}
+                >
+                  <Settings size={14} /> <span>Manage</span>
+                </button>
+              )}
+              {canLeave && (
+                <button 
+                  onClick={() => setShowLeaveModal(true)} 
+                  className="btn-glass danger"
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.4rem 0.75rem', fontSize: '0.75rem' }}
+                >
+                  <LogOut size={14} /> <span>Leave</span>
+                </button>
+              )}
+              <button
+                onClick={() => setIsFullScreen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '6px',
+                  borderRadius: '50%',
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                title="Exit Full Screen"
+              >
+                <Minimize2 size={18} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Active Users Bar (Normal Mode) */}
+        {!isFullScreen && (
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
-            gap: '0.5rem', 
+            justifyContent: 'space-between', 
             padding: '0.6rem 1.25rem', 
             borderBottom: '1px solid rgba(255,255,255,0.05)', 
             background: 'rgba(0, 0, 0, 0.1)',
-            flexWrap: 'wrap',
             zIndex: 11
           }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Active:</span>
-            <div style={{ display: 'flex', gap: '-5px', alignItems: 'center', flexWrap: 'wrap' }}>
-              {Object.entries(currentDrive.activeUsers)
-                .filter(([emailKey, timestamp]) => {
-                  return new Date().getTime() - new Date(timestamp).getTime() < 20000;
-                })
-                .map(([emailKey]) => {
-                  const originalEmail = emailKey.replace(/_/g, '.');
-                  const isMe = originalEmail === user?.email;
-                  const formatInitials = (email) => {
-                    const name = email.split('@')[0].split('.')[0].substring(0, 2);
-                    return name.toUpperCase();
-                  };
-                  return (
-                    <div 
-                      key={emailKey}
-                      title={`${originalEmail} ${isMe ? '(You)' : ''}`}
-                      style={{ 
-                        width: '28px', 
-                        height: '28px', 
-                        borderRadius: '50%', 
-                        background: isMe ? 'var(--primary-color)' : 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(37, 99, 235, 0.2))',
-                        border: '2px solid var(--border-color)',
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        color: isMe ? '#fff' : 'var(--primary-color)', 
-                        fontWeight: 'bold', 
-                        fontSize: '0.7rem',
-                        position: 'relative',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                        marginLeft: '-4px',
-                        zIndex: isMe ? 2 : 1,
-                        cursor: 'default',
-                        transition: 'transform 0.2s'
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                        playSFX('hover');
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                      }}
-                    >
-                      {formatInitials(originalEmail)}
-                      <span style={{ 
-                        position: 'absolute', 
-                        bottom: 0, 
-                        right: 0, 
-                        width: '7px', 
-                        height: '7px', 
-                        borderRadius: '50%', 
-                        background: 'var(--success-color)',
-                        border: '1px solid var(--bg-color)',
-                        boxShadow: '0 0 5px var(--success-color)'
-                      }} />
-                    </div>
-                  );
-                })}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Active:</span>
+              <div style={{ display: 'flex', gap: '-5px', alignItems: 'center', flexWrap: 'wrap' }}>
+                {currentDrive.activeUsers && Object.entries(currentDrive.activeUsers)
+                  .filter(([emailKey, timestamp]) => {
+                    return new Date().getTime() - new Date(timestamp).getTime() < 20000;
+                  })
+                  .map(([emailKey]) => {
+                    const originalEmail = emailKey.replace(/_/g, '.');
+                    const isMe = originalEmail === user?.email;
+                    const formatInitials = (email) => {
+                      const name = email.split('@')[0].split('.')[0].substring(0, 2);
+                      return name.toUpperCase();
+                    };
+                    return (
+                      <div 
+                        key={emailKey}
+                        title={`${originalEmail} ${isMe ? '(You)' : ''}`}
+                        style={{ 
+                          width: '28px', 
+                          height: '28px', 
+                          borderRadius: '50%', 
+                          background: isMe ? 'var(--primary-color)' : 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(37, 99, 235, 0.2))',
+                          border: '2px solid var(--border-color)',
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          color: isMe ? '#fff' : 'var(--primary-color)', 
+                          fontWeight: 'bold', 
+                          fontSize: '0.7rem',
+                          position: 'relative',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                          marginLeft: '-4px',
+                          zIndex: isMe ? 2 : 1,
+                          cursor: 'default',
+                          transition: 'transform 0.2s'
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                        }}
+                      >
+                        {formatInitials(originalEmail)}
+                        <span style={{ 
+                          position: 'absolute', 
+                          bottom: 0, 
+                          right: 0, 
+                          width: '7px', 
+                          height: '7px', 
+                          borderRadius: '50%', 
+                          background: 'var(--success-color)',
+                          border: '1px solid var(--bg-color)',
+                          boxShadow: '0 0 5px var(--success-color)'
+                        }} />
+                      </div>
+                    );
+                  })}
+                {(!currentDrive.activeUsers || Object.keys(currentDrive.activeUsers).filter(k => new Date().getTime() - new Date(currentDrive.activeUsers[k]).getTime() < 20000).length === 0) && (
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic', marginLeft: '0.25rem' }}>Just you</span>
+                )}
+              </div>
             </div>
+
+            <button
+              onClick={() => setIsFullScreen(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '6px',
+                borderRadius: '50%',
+                transition: 'background 0.2s, transform 0.2s',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                e.currentTarget.style.transform = 'scale(1.05)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'none';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+              title="Full Screen"
+            >
+              <Maximize2 size={18} />
+            </button>
           </div>
         )}
 

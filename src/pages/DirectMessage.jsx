@@ -209,7 +209,7 @@ export default function DirectMessage() {
       height: '100vh',
       zIndex: 9999,
       background: 'radial-gradient(circle at 10% 20%, var(--bg-color) 0%, var(--bg-gradient-end) 100%)',
-      padding: '1rem 1.5rem',
+      padding: '0.4rem',
       display: 'flex',
       flexDirection: 'column',
       boxSizing: 'border-box',
@@ -220,54 +220,175 @@ export default function DirectMessage() {
       height: 'calc(100vh - 120px)',
       transition: 'all 0.3s ease'
     }}>
-      <div className="glass-panel" style={{ padding: '1rem 1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button onClick={() => navigate('/dashboard')} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>
-            <ArrowLeft size={24} />
-          </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{
-              width: '45px', height: '45px', borderRadius: '50%',
-              background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(37, 99, 235, 0.2))',
-              border: '1px solid rgba(56, 189, 248, 0.3)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'var(--primary-color)', fontWeight: 'bold', fontSize: '1.2rem', flexShrink: 0
-            }}>
-              {otherPerson?.charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <h2 style={{ margin: 0, fontSize: '1.25rem' }}>{formatName(otherPerson)}</h2>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                Direct Message
-                <span style={{ 
-                  display: 'inline-block', 
-                  width: '8px', 
-                  height: '8px', 
-                  borderRadius: '50%', 
-                  background: isOnline ? 'var(--success-color)' : '#94a3b8', 
-                  boxShadow: isOnline ? '0 0 8px var(--success-color)' : 'none',
-                  marginLeft: '2px'
-                }} />
-                <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>
-                  {isOnline ? 'Online' : 'Offline'}
-                </span>
-              </p>
+      {!isFullScreen && (
+        <div className="glass-panel" style={{ padding: '1rem 1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button onClick={() => navigate('/dashboard')} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>
+              <ArrowLeft size={24} />
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{
+                width: '45px', height: '45px', borderRadius: '50%',
+                background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(37, 99, 235, 0.2))',
+                border: '1px solid rgba(56, 189, 248, 0.3)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--primary-color)', fontWeight: 'bold', fontSize: '1.2rem', flexShrink: 0
+              }}>
+                {otherPerson?.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '1.25rem' }}>{formatName(otherPerson)}</h2>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  Direct Message
+                  <span style={{ 
+                    display: 'inline-block', 
+                    width: '8px', 
+                    height: '8px', 
+                    borderRadius: '50%', 
+                    background: isOnline ? 'var(--success-color)' : '#94a3b8', 
+                    boxShadow: isOnline ? '0 0 8px var(--success-color)' : 'none',
+                    marginLeft: '2px'
+                  }} />
+                  <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>
+                    {isOnline ? 'Online' : 'Offline'}
+                  </span>
+                </p>
+              </div>
             </div>
           </div>
         </div>
-        
-        <button 
-          onClick={() => setIsFullScreen(!isFullScreen)}
-          className="btn-glass secondary" 
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1rem' }}
-          title={isFullScreen ? "Exit Full Screen" : "Full Screen"}
-        >
-          {isFullScreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-          <span>{isFullScreen ? "Minimize" : "Full Screen"}</span>
-        </button>
-      </div>
+      )}
 
       <div className="glass-panel cyber-glow-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+        {/* Fullscreen top header bar */}
+        {isFullScreen && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0.6rem 1.25rem',
+            borderBottom: '1px solid rgba(255,255,255,0.08)',
+            background: 'rgba(0, 0, 0, 0.25)',
+            zIndex: 11,
+            gap: '1rem'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <button 
+                onClick={() => setIsFullScreen(false)} 
+                style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px', borderRadius: '4px' }}
+                title="Exit Full Screen"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{
+                  width: '32px', height: '32px', borderRadius: '50%',
+                  background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(37, 99, 235, 0.2))',
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'var(--primary-color)', fontWeight: 'bold', fontSize: '0.9rem', flexShrink: 0
+                }}>
+                  {otherPerson?.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '600' }}>{formatName(otherPerson)}</h3>
+                  <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    Direct Message
+                    <span style={{ 
+                      display: 'inline-block', 
+                      width: '6px', 
+                      height: '6px', 
+                      borderRadius: '50%', 
+                      background: isOnline ? 'var(--success-color)' : '#94a3b8', 
+                      boxShadow: isOnline ? '0 0 5px var(--success-color)' : 'none'
+                    }} />
+                    <span style={{ opacity: 0.8 }}>
+                      {isOnline ? 'Online' : 'Offline'}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setIsFullScreen(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '6px',
+                borderRadius: '50%',
+                transition: 'background 0.2s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'none'}
+              title="Exit Full Screen"
+            >
+              <Minimize2 size={18} />
+            </button>
+          </div>
+        )}
+
+        {/* DM Status Bar (Normal Mode) */}
+        {!isFullScreen && (
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between', 
+            padding: '0.6rem 1.25rem', 
+            borderBottom: '1px solid rgba(255,255,255,0.05)', 
+            background: 'rgba(0, 0, 0, 0.1)',
+            zIndex: 11
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Status:</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span style={{ 
+                  display: 'inline-block', 
+                  width: '7px', 
+                  height: '7px', 
+                  borderRadius: '50%', 
+                  background: isOnline ? 'var(--success-color)' : '#94a3b8', 
+                  boxShadow: isOnline ? '0 0 6px var(--success-color)' : 'none'
+                }} />
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-primary)', fontWeight: '500' }}>
+                  {isOnline ? 'Online' : 'Offline'}
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setIsFullScreen(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '6px',
+                borderRadius: '50%',
+                transition: 'background 0.2s, transform 0.2s',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                e.currentTarget.style.transform = 'scale(1.05)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'none';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+              title="Full Screen"
+            >
+              <Maximize2 size={18} />
+            </button>
+          </div>
+        )}
         <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', zIndex: 10 }}>
           {dmData.messages?.map(msg => {
             const isMe = msg.sender === user?.email;
