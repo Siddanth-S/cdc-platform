@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Send, ArrowLeft, ShieldAlert, Paperclip, X, MessageSquarePlus, LogOut, Edit3, Settings, Users, UserCog, Power, Maximize2, Minimize2, CornerUpLeft, ChevronDown, Copy, Trash2, Pin, PinOff } from 'lucide-react';
 import { db } from '../firebase';
-import { collection, addDoc, query, orderBy, onSnapshot, doc, getDocs, setDoc, updateDoc, increment, arrayUnion, arrayRemove, deleteField, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, orderBy, onSnapshot, doc, getDocs, setDoc, updateDoc, increment, arrayUnion, arrayRemove, deleteField, deleteDoc } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 
 const btechBranches = ['CSE', 'IT', 'AI', 'DS', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'META', 'MINING'];
@@ -184,6 +184,14 @@ export default function DriveRoom() {
   const isCoordinator = user?.email === currentDrive?.coordinator;
   const canMessage = user?.role === 'HEAD' || isCoordinator;
   const pinnedMessages = messages.filter(m => m.pinned);
+  const activePinnedIdx = pinnedMessages.length > 0 ? Math.min(pinnedIndex, pinnedMessages.length - 1) : 0;
+  const activePinnedMsg = pinnedMessages[activePinnedIdx];
+  const formatPinnedSender = (email) => {
+    if (!email) return '';
+    const n = email.split('@')[0].split('.')[0].replace(/[0-9]/g, '');
+    return n.charAt(0).toUpperCase() + n.slice(1);
+  };
+  const pinnedPreview = (m) => m.text ? m.text.replace(/\n/g, ' ') : (m.fileName ? `📎 ${m.fileName}` : 'Attachment');
 
   // Enforce Access Control
   useEffect(() => {
@@ -211,6 +219,24 @@ export default function DriveRoom() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const [glowMsgId, setGlowMsgId] = useState(null);
+  const glowTimeoutRef = useRef(null);
+
+  // Scroll the message into view within the chat body (not scrollIntoView,
+  // which would also drag every other scrollable ancestor on the page) and
+  // briefly glow it so the user can spot it.
+  const jumpToMessage = useCallback((msgId) => {
+    const container = chatBodyRef.current;
+    const target = document.getElementById(`msg-${msgId}`);
+    if (container && target) {
+      container.scrollTo({ top: Math.max(target.offsetTop - 24, 0), behavior: 'smooth' });
+    }
+    if (glowTimeoutRef.current) clearTimeout(glowTimeoutRef.current);
+    setGlowMsgId(null);
+    requestAnimationFrame(() => setGlowMsgId(msgId));
+    glowTimeoutRef.current = setTimeout(() => setGlowMsgId(null), 1600);
+  }, []);
 
   const handleSend = async (e) => {
     e.preventDefault();
@@ -377,18 +403,21 @@ export default function DriveRoom() {
     if (targetEmail === user.email) return; 
     
     try {
-      // Find existing DM
+      // Find existing DM. Must filter by array-contains so the query matches the
+      // firestore.rules read condition (an unscoped collection scan is rejected
+      // outright since rules can't validate it against every possible document).
       const dmsRef = collection(db, 'dms');
-      const snapshot = await getDocs(dmsRef);
+      const q = query(dmsRef, where('participants', 'array-contains', user.email));
+      const snapshot = await getDocs(q);
       let existingDmId = null;
-      
+
       snapshot.forEach(doc => {
         const data = doc.data();
-        if (data.participants.includes(user.email) && data.participants.includes(targetEmail) && data.participants.length === 2) {
+        if (data.participants.includes(targetEmail) && data.participants.length === 2) {
           existingDmId = doc.id;
         }
       });
-      
+
       if (existingDmId) {
         navigate(`/dm/${existingDmId}`);
       } else {
@@ -402,6 +431,7 @@ export default function DriveRoom() {
       }
     } catch (error) {
       console.error("Failed to initiate DM", error);
+      toast.error("Couldn't open chat. Please try again.");
     }
   };
 
@@ -683,37 +713,28 @@ export default function DriveRoom() {
         )}
 
         {/* Pinned bar - Telegram channel style */}
-        {pinnedMessages.length > 0 && (() => {
-          const activeIdx = Math.min(pinnedIndex, pinnedMessages.length - 1);
-          const active = pinnedMessages[activeIdx];
-          const fmt = (email) => {
-            if (!email) return '';
-            const n = email.split('@')[0].split('.')[0].replace(/[0-9]/g, '');
-            return n.charAt(0).toUpperCase() + n.slice(1);
-          };
-          const preview = (m) => m.text ? m.text.replace(/\n/g, ' ') : (m.fileName ? `📎 ${m.fileName}` : 'Attachment');
-          return (
+        {pinnedMessages.length > 0 && (
             <div style={{ borderBottom: '1px solid var(--border-color)', background: 'var(--chat-panel-bg)', backdropFilter: 'blur(8px)', zIndex: 11 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.45rem 1rem' }}>
-                {/* Click to cycle through pinned messages */}
+                {/* Click to jump to the pinned message in the chat */}
                 <div
-                  onClick={() => pinnedMessages.length > 1 && setPinnedIndex((activeIdx + 1) % pinnedMessages.length)}
-                  style={{ display: 'flex', alignItems: 'stretch', gap: '0.6rem', flex: 1, minWidth: 0, cursor: pinnedMessages.length > 1 ? 'pointer' : 'default' }}
+                  onClick={() => jumpToMessage(activePinnedMsg.id)}
+                  style={{ display: 'flex', alignItems: 'stretch', gap: '0.6rem', flex: 1, minWidth: 0, cursor: 'pointer' }}
                 >
                   {/* Segmented accent rail (one segment per pinned message) */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', width: '3px', flexShrink: 0, alignSelf: 'stretch', minHeight: '30px' }}>
                     {pinnedMessages.slice(0, 5).map((_, i) => (
-                      <div key={i} style={{ flex: 1, borderRadius: '2px', background: i === activeIdx ? 'var(--primary-color)' : 'rgba(96, 165, 250, 0.25)', transition: 'background 0.2s' }} />
+                      <div key={i} style={{ flex: 1, borderRadius: '2px', background: i === activePinnedIdx ? 'var(--primary-color)' : 'rgba(96, 165, 250, 0.25)', transition: 'background 0.2s' }} />
                     ))}
                   </div>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                       <Pin size={11} fill="var(--primary-color)" />
-                      Pinned Message{pinnedMessages.length > 1 ? ` (${activeIdx + 1}/${pinnedMessages.length})` : ''}
+                      Pinned Message{pinnedMessages.length > 1 ? ` (${activePinnedIdx + 1}/${pinnedMessages.length})` : ''}
                     </div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: '1px' }}>
-                      <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{fmt(active.sender)}: </span>
-                      {preview(active)}
+                      <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{formatPinnedSender(activePinnedMsg.sender)}: </span>
+                      {pinnedPreview(activePinnedMsg)}
                     </div>
                   </div>
                 </div>
@@ -734,7 +755,7 @@ export default function DriveRoom() {
                     <button
                       onClick={async () => {
                         try {
-                          await updateDoc(doc(db, 'drives', id, 'messages', active.id), { pinned: false });
+                          await updateDoc(doc(db, 'drives', id, 'messages', activePinnedMsg.id), { pinned: false });
                           triggerToast("Notice unpinned!");
                         } catch (err) { console.error("Error unpinning", err); }
                       }}
@@ -755,12 +776,12 @@ export default function DriveRoom() {
                   {pinnedMessages.map((msg, i) => (
                     <div
                       key={msg.id}
-                      onClick={() => { setPinnedIndex(i); setShowNoticeBoard(false); }}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem', background: i === activeIdx ? 'rgba(96, 165, 250, 0.1)' : 'var(--input-bg)', border: '1px solid var(--border-color)', borderLeft: '3px solid var(--primary-color)', borderRadius: '8px', padding: '0.45rem 0.65rem', cursor: 'pointer' }}
+                      onClick={() => { setPinnedIndex(i); setShowNoticeBoard(false); jumpToMessage(msg.id); }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem', background: i === activePinnedIdx ? 'rgba(96, 165, 250, 0.1)' : 'var(--input-bg)', border: '1px solid var(--border-color)', borderLeft: '3px solid var(--primary-color)', borderRadius: '8px', padding: '0.45rem 0.65rem', cursor: 'pointer' }}
                     >
                       <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{fmt(msg.sender)} · {new Date(msg.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{preview(msg)}</div>
+                        <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{formatPinnedSender(msg.sender)} · {new Date(msg.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pinnedPreview(msg)}</div>
                       </div>
                       {canMessage && (
                         <button
@@ -784,8 +805,7 @@ export default function DriveRoom() {
                 </div>
               )}
             </div>
-          );
-        })()}
+        )}
 
         <div ref={chatBodyRef} className="drive-chat-body" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', position: 'relative', zIndex: 10 }}>
           {messages.length === 0 && (
@@ -825,8 +845,9 @@ export default function DriveRoom() {
             });
             
             return (
-              <div 
-                key={msg.id} 
+              <div
+                key={msg.id}
+                id={`msg-${msg.id}`}
                 className={`drive-msg-container msg-wrapper ${isNew ? 'new-msg-glow' : ''}`}
                 onMouseEnter={() => { if (window.innerWidth > 768) setHoveredMsgId(msg.id); }}
                 onMouseLeave={() => {
@@ -844,8 +865,8 @@ export default function DriveRoom() {
                 onTouchEnd={handleTouchEnd}
                 style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', position: 'relative', alignItems: 'flex-start', willChange: 'transform' }}
               >
-                <div className="drive-msg-bubble" style={{ 
-                  background: isImageOnly ? 'transparent' : (isMe ? 'linear-gradient(135deg, var(--primary-color), var(--primary-hover))' : 'var(--chat-bubble-incoming-bg)'), 
+                <div className={`drive-msg-bubble ${glowMsgId === msg.id ? 'jump-glow' : ''}`} style={{
+                  background: isImageOnly ? 'transparent' : (isMe ? 'linear-gradient(135deg, var(--primary-color), var(--primary-hover))' : 'var(--chat-bubble-incoming-bg)'),
                   color: isMe ? '#fff' : 'var(--text-primary)',
                   border: isImageOnly ? 'none' : (isMe ? 'none' : '1px solid var(--chat-bubble-incoming-border)'),
                   padding: isImageOnly ? '0' : '0.35rem 0.6rem',
@@ -853,7 +874,7 @@ export default function DriveRoom() {
                   borderBottomRightRadius: isMe ? '4px' : '14px',
                   borderBottomLeftRadius: !isMe ? '4px' : '14px',
                   maxWidth: isImageOnly ? '300px' : '72%',
-                  width: isImageOnly ? '100%' : 'fit-content',
+                  width: 'fit-content',
                   wordBreak: 'break-word',
                   boxShadow: isImageOnly ? 'none' : (isMe ? '0 4px 15px rgba(59, 130, 246, 0.3)' : 'var(--glass-shadow)'),
                   backdropFilter: isImageOnly ? 'none' : 'blur(8px)',
@@ -873,7 +894,7 @@ export default function DriveRoom() {
                   )}
 
                   {/* Reply + actions cluster, floated just outside the bubble on hover/tap */}
-                  {(hoveredMsgId === msg.id || activeMenuMsgId === msg.id) && !isImageOnly && (
+                  {(hoveredMsgId === msg.id || activeMenuMsgId === msg.id) && (
                   <div className="msg-actions-cluster" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', [isMe ? 'right' : 'left']: 'calc(100% + 6px)', zIndex: 12, display: 'flex', alignItems: 'center', gap: '1px', background: 'var(--dropdown-bg)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '2px', boxShadow: '0 2px 10px var(--glass-shadow)' }}>
                     <button
                       onClick={(e) => { e.stopPropagation(); setReplyToMsg(msg); }}

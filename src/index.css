@@ -1097,6 +1097,18 @@ p {
   animation: cyber-new-msg 1.5s ease-out forwards !important;
 }
 
+/* Jump-to-pinned-message highlight. Applied/removed via React state (not a
+   one-shot mount flag like .new-msg-glow), so it must replay every time the
+   class is re-added, including for the same message clicked twice in a row. */
+@keyframes jump-glow-pulse {
+  0% { box-shadow: 0 0 0 var(--primary-color); }
+  15% { box-shadow: 0 0 28px var(--primary-color), inset 0 0 18px rgba(56, 189, 248, 0.45); }
+  100% { box-shadow: none; }
+}
+.jump-glow {
+  animation: jump-glow-pulse 1.6s ease-out !important;
+}
+
 /* Chat Toolbar CSS */
 .msg-action-toolbar {
   display: flex;

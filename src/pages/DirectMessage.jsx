@@ -482,7 +482,7 @@ export default function DirectMessage() {
                   borderBottomRightRadius: isMe ? '4px' : '14px',
                   borderBottomLeftRadius: !isMe ? '4px' : '14px',
                   maxWidth: isImageOnly ? '300px' : '72%',
-                  width: isImageOnly ? '100%' : 'fit-content',
+                  width: 'fit-content',
                   wordBreak: 'break-word',
                   boxShadow: isImageOnly ? 'none' : (isMe ? '0 4px 15px rgba(59, 130, 246, 0.3)' : 'var(--glass-shadow)'),
                   backdropFilter: isImageOnly ? 'none' : 'blur(8px)',
