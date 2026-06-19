@@ -833,7 +833,7 @@ export default function DriveRoom() {
                   background: isImageOnly ? 'transparent' : (isMe ? 'linear-gradient(135deg, var(--primary-color), var(--primary-hover))' : 'var(--chat-bubble-incoming-bg)'), 
                   color: isMe ? '#fff' : 'var(--text-primary)',
                   border: isImageOnly ? 'none' : (isMe ? 'none' : '1px solid var(--chat-bubble-incoming-border)'),
-                  padding: isImageOnly ? '0' : '0.5rem 0.75rem', 
+                  padding: isImageOnly ? '0' : (isMe ? '0.5rem 2.5rem 0.5rem 0.75rem' : '0.5rem 0.75rem'), 
                   borderRadius: '16px', 
                   borderBottomRightRadius: isMe ? '4px' : '16px',
                   borderBottomLeftRadius: !isMe ? '4px' : '16px',
@@ -958,57 +958,52 @@ export default function DriveRoom() {
                       </div>
                       
                       {/* Reply curved arrow icon on the right end of the head line */}
-                      {hoveredMsgId === msg.id && (
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); setReplyToMsg(msg); }}
-                          style={{ 
-                            background: 'none', 
-                            border: 'none', 
-                            cursor: 'pointer', 
-                            color: 'var(--primary-color)', 
-                            display: 'inline-flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center',
-                            padding: '2px',
-                            borderRadius: '4px',
-                            transition: 'background 0.2s',
-                            pointerEvents: 'auto'
-                          }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                          title="Reply"
-                        >
-                          <CornerUpLeft size={12} />
-                        </button>
-                      )}
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setReplyToMsg(msg); }}
+                        style={{ 
+                          background: 'none', 
+                          border: 'none', 
+                          cursor: 'pointer', 
+                          color: 'var(--text-secondary)', 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          padding: '2px',
+                          borderRadius: '4px',
+                          transition: 'background 0.2s, color 0.2s',
+                          opacity: 0.5
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'; e.currentTarget.style.opacity = '1'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.opacity = '0.5'; }}
+                        title="Reply"
+                      >
+                        <CornerUpLeft size={14} />
+                      </button>
                     </div>
                   )}
                   {isMe && (
-                    <div style={{ position: 'absolute', top: '6px', right: '8px', zIndex: 10, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <div style={{ position: 'absolute', top: '4px', right: '6px', zIndex: 10, display: 'flex', alignItems: 'center', gap: '2px' }}>
                       {/* Reply curved arrow icon */}
-                      {hoveredMsgId === msg.id && (
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); setReplyToMsg(msg); }}
-                          style={{ 
-                            background: 'none', 
-                            border: 'none', 
-                            cursor: 'pointer', 
-                            color: '#fff', 
-                            display: 'inline-flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center',
-                            padding: '2px',
-                            borderRadius: '4px',
-                            transition: 'background 0.2s',
-                            pointerEvents: 'auto'
-                          }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                          title="Reply"
-                        >
-                          <CornerUpLeft size={12} />
-                        </button>
-                      )}
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setReplyToMsg(msg); }}
+                        style={{ 
+                          background: 'none', 
+                          border: 'none', 
+                          cursor: 'pointer', 
+                          color: 'rgba(255, 255, 255, 0.6)', 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          padding: '2px',
+                          borderRadius: '4px',
+                          transition: 'background 0.2s, color 0.2s'
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'; e.currentTarget.style.color = '#fff'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'; }}
+                        title="Reply"
+                      >
+                        <CornerUpLeft size={14} />
+                      </button>
                       
                       {/* Dropdown Chevron */}
                       <div style={{ position: 'relative', display: 'inline-block' }}>

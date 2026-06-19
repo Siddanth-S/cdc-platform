@@ -865,12 +865,65 @@ p {
   .login-content-pad {
     padding: 1.5rem 1rem !important;
   }
+
+  /* Mobile chat input */
+  .glass-panel form {
+    gap: 0.5rem !important;
+  }
+  .glass-panel .cyber-input {
+    padding: 0.7rem 1rem !important;
+    font-size: 0.9rem !important;
+  }
+  .glass-panel .cyber-btn {
+    padding: 0.7rem 1rem !important;
+  }
+  .glass-panel .btn-secondary {
+    padding: 0.7rem !important;
+  }
+
+  /* Prevent action toolbar from overflowing on mobile */
+  .msg-action-toolbar {
+    gap: 0.25rem !important;
+    padding: 0.25rem 0.4rem !important;
+    font-size: 0.85rem !important;
+  }
+
+  /* Prevent chat header controls from wrapping */
+  .drive-room-header {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+  }
+
+  /* Ensure dropdown menus don't overflow screen */
+  .cyber-dropdown {
+    max-width: calc(100vw - 2rem) !important;
+    right: 0 !important;
+  }
+
+  /* Fullscreen modal mobile-safe */
+  .cyber-modal-container {
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+
+  /* Reaction picker mobile */
+  .reaction-picker {
+    gap: 0.3rem !important;
+    padding: 0.4rem !important;
+  }
 }
 
 /* Very small screens */
 @media (max-width: 480px) {
   .dashboard-grid {
     grid-template-columns: 1fr !important;
+  }
+  .drive-msg-bubble {
+    max-width: 88% !important;
+  }
+  .msg-action-toolbar {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
   }
 }
 
