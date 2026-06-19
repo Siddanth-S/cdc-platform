@@ -321,8 +321,8 @@ export default function DirectMessage() {
                       </div>
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.75rem', flexWrap: 'wrap' }}>
-                      <div className="msg-text" style={{ lineHeight: '1.3' }}>
+                    <div style={{ position: 'relative', display: 'block' }}>
+                      <span className="msg-text" style={{ lineHeight: '1.4', color: 'inherit', wordBreak: 'break-word' }}>
                         {msg.text}
                         {msg.fileName && (
                           (() => {
@@ -331,7 +331,7 @@ export default function DirectMessage() {
 
                             if (isImage) {
                               return (
-                                <div style={{ marginTop: msg.text ? '0.5rem' : '0', overflow: 'hidden', borderRadius: '8px' }}>
+                                <div style={{ marginTop: '0.4rem', overflow: 'hidden', borderRadius: '8px', display: 'block' }}>
                                   <img 
                                     src={msg.fileData} 
                                     alt={msg.fileName} 
@@ -351,19 +351,19 @@ export default function DirectMessage() {
                             } else if (isPdf) {
                               return (
                                 <div style={{ 
-                                  marginTop: msg.text ? '0.5rem' : '0', 
+                                  marginTop: '0.4rem', 
                                   background: 'rgba(239, 68, 68, 0.08)', 
                                   border: '1px solid rgba(239, 68, 68, 0.3)',
-                                  padding: '0.6rem 0.85rem', 
+                                  padding: '0.4rem 0.6rem', 
                                   borderRadius: '8px', 
                                   display: 'flex', 
                                   alignItems: 'center', 
                                   justifyContent: 'space-between',
-                                  gap: '1rem',
-                                  fontSize: '0.85rem'
+                                  gap: '0.75rem',
+                                  fontSize: '0.8rem'
                                 }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
-                                    <span style={{ fontSize: '1.2rem', color: '#f87171', fontWeight: 'bold' }}>📕</span>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
+                                    <span style={{ fontSize: '1rem', color: '#f87171', fontWeight: 'bold' }}>📕</span>
                                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }} title={msg.fileName}>
                                       {msg.fileName}
                                     </span>
@@ -375,10 +375,10 @@ export default function DirectMessage() {
                                       color: '#f87171', 
                                       textDecoration: 'none', 
                                       fontWeight: 'bold',
-                                      fontSize: '0.75rem',
+                                      fontSize: '0.7rem',
                                       textTransform: 'uppercase',
                                       border: '1px solid rgba(239, 68, 68, 0.5)',
-                                      padding: '0.2rem 0.5rem',
+                                      padding: '0.15rem 0.4rem',
                                       borderRadius: '4px',
                                       background: 'rgba(239, 68, 68, 0.05)',
                                       flexShrink: 0
@@ -391,19 +391,19 @@ export default function DirectMessage() {
                             } else if (isExcel) {
                               return (
                                 <div style={{ 
-                                  marginTop: msg.text ? '0.5rem' : '0', 
+                                  marginTop: '0.4rem', 
                                   background: 'rgba(16, 185, 129, 0.08)', 
                                   border: '1px solid rgba(16, 185, 129, 0.3)',
-                                  padding: '0.6rem 0.85rem', 
+                                  padding: '0.4rem 0.6rem', 
                                   borderRadius: '8px', 
                                   display: 'flex', 
                                   alignItems: 'center', 
                                   justifyContent: 'space-between',
-                                  gap: '1rem',
-                                  fontSize: '0.85rem'
+                                  gap: '0.75rem',
+                                  fontSize: '0.8rem'
                                 }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
-                                    <span style={{ fontSize: '1.2rem', color: '#34d399', fontWeight: 'bold' }}>📊</span>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
+                                    <span style={{ fontSize: '1rem', color: '#34d399', fontWeight: 'bold' }}>📊</span>
                                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }} title={msg.fileName}>
                                       {msg.fileName}
                                     </span>
@@ -415,10 +415,10 @@ export default function DirectMessage() {
                                       color: '#34d399', 
                                       textDecoration: 'none', 
                                       fontWeight: 'bold',
-                                      fontSize: '0.75rem',
+                                      fontSize: '0.7rem',
                                       textTransform: 'uppercase',
                                       border: '1px solid rgba(16, 185, 129, 0.5)',
-                                      padding: '0.2rem 0.5rem',
+                                      padding: '0.15rem 0.4rem',
                                       borderRadius: '4px',
                                       background: 'rgba(16, 185, 129, 0.05)',
                                       flexShrink: 0
@@ -431,19 +431,19 @@ export default function DirectMessage() {
                             } else {
                               return (
                                 <div style={{ 
-                                  marginTop: msg.text ? '0.5rem' : '0', 
+                                  marginTop: '0.4rem', 
                                   background: 'rgba(96, 165, 250, 0.08)', 
                                   border: '1px solid rgba(96, 165, 250, 0.3)',
-                                  padding: '0.6rem 0.85rem', 
+                                  padding: '0.4rem 0.6rem', 
                                   borderRadius: '8px', 
                                   display: 'flex', 
                                   alignItems: 'center', 
                                   justifyContent: 'space-between',
-                                  gap: '1rem',
-                                  fontSize: '0.85rem'
+                                  gap: '0.75rem',
+                                  fontSize: '0.8rem'
                                 }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
-                                    <span style={{ fontSize: '1.2rem', color: 'var(--primary-color)', fontWeight: 'bold' }}>📎</span>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
+                                    <span style={{ fontSize: '1rem', color: 'var(--primary-color)', fontWeight: 'bold' }}>📎</span>
                                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }} title={msg.fileName}>
                                       {msg.fileName}
                                     </span>
@@ -455,10 +455,10 @@ export default function DirectMessage() {
                                       color: 'var(--primary-color)', 
                                       textDecoration: 'none', 
                                       fontWeight: 'bold',
-                                      fontSize: '0.75rem',
+                                      fontSize: '0.7rem',
                                       textTransform: 'uppercase',
                                       border: '1px solid var(--primary-color)',
-                                      padding: '0.2rem 0.5rem',
+                                      padding: '0.15rem 0.4rem',
                                       borderRadius: '4px',
                                       background: 'rgba(96, 165, 250, 0.05)',
                                       flexShrink: 0
@@ -471,10 +471,22 @@ export default function DirectMessage() {
                             }
                           })()
                         )}
-                      </div>
-                      <div style={{ fontSize: '0.6rem', opacity: 0.7, textAlign: 'right', whiteSpace: 'nowrap', alignSelf: 'flex-end', marginBottom: '-2px' }}>
+                      </span>
+                      
+                      <span style={{ 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        gap: '4px',
+                        fontSize: '0.6rem', 
+                        color: isMe ? 'rgba(255, 255, 255, 0.7)' : 'var(--text-secondary)',
+                        marginLeft: '8px',
+                        float: 'right',
+                        marginTop: '0.3rem',
+                        whiteSpace: 'nowrap',
+                        verticalAlign: 'bottom'
+                      }}>
                         {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </div>
+                      </span>
                     </div>
                   )}
                   

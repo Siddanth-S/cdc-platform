@@ -680,28 +680,15 @@ export default function DriveRoom() {
                   position: 'relative',
                   marginTop: '0.2rem'
                 }}>
-                  {/* Internal Sender Tag */}
-                  {(msg.role === 'HEAD' || msg.role === 'SPOC' || msg.role === 'SEC_SPOC' || msg.role === 'COORDINATOR' || (!isMe && msg.role !== 'HEAD' && msg.role !== 'SPOC' && msg.role !== 'SEC_SPOC' && msg.role !== 'COORDINATOR')) && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem', opacity: 0.9 }}>
-                      {(!isMe && msg.role !== 'HEAD' && msg.role !== 'SPOC' && msg.role !== 'SEC_SPOC' && msg.role !== 'COORDINATOR') && (
-                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#38bdf8' }}>
-                          {formatName(msg.sender)}
-                        </span>
-                      )}
-                      {(msg.role === 'HEAD' || msg.role === 'SPOC' || msg.role === 'SEC_SPOC' || msg.role === 'COORDINATOR') && (
-                        <span style={{ 
-                          background: 'rgba(56, 189, 248, 0.15)', 
-                          color: '#38bdf8', 
-                          border: '1px solid rgba(56, 189, 248, 0.3)',
-                          padding: '0.1rem 0.3rem', 
-                          borderRadius: '6px', 
-                          fontSize: '0.55rem', 
-                          fontWeight: '800',
-                          letterSpacing: '0.5px'
-                        }}>
-                          {displayRole}
-                        </span>
-                      )}
+                  {/* Internal Sender Tag - Telegram Style */}
+                  {!isMe && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '2px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                      <span style={{ color: msg.role === 'HEAD' ? '#fb7185' : (msg.role === 'SPOC' || msg.role === 'COORDINATOR' ? '#38bdf8' : '#c084fc') }}>
+                        {formatName(msg.sender)}
+                      </span>
+                      <span style={{ fontSize: '0.6rem', opacity: 0.6, fontWeight: 'normal', color: 'var(--text-secondary)' }}>
+                        ({displayRole})
+                      </span>
                     </div>
                   )}
                   {msg.replyTo && (
@@ -745,8 +732,8 @@ export default function DriveRoom() {
                       </div>
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.75rem', flexWrap: 'wrap' }}>
-                      <div className="msg-text" style={{ lineHeight: '1.3' }}>
+                    <div style={{ position: 'relative', display: 'block' }}>
+                      <span className="msg-text" style={{ lineHeight: '1.4', color: 'inherit', wordBreak: 'break-word' }}>
                         {msg.text}
                         {msg.fileName && (
                           (() => {
@@ -756,7 +743,7 @@ export default function DriveRoom() {
 
                             if (isImage) {
                               return (
-                                <div style={{ marginTop: msg.text ? '0.5rem' : '0', overflow: 'hidden', borderRadius: '8px' }}>
+                                <div style={{ marginTop: '0.4rem', overflow: 'hidden', borderRadius: '8px', display: 'block' }}>
                                   <img 
                                     src={msg.fileData} 
                                     alt={msg.fileName} 
@@ -776,19 +763,19 @@ export default function DriveRoom() {
                             } else if (isPdf) {
                               return (
                                 <div style={{ 
-                                  marginTop: msg.text ? '0.5rem' : '0', 
+                                  marginTop: '0.4rem', 
                                   background: 'rgba(239, 68, 68, 0.08)', 
                                   border: '1px solid rgba(239, 68, 68, 0.3)',
-                                  padding: '0.6rem 0.85rem', 
+                                  padding: '0.4rem 0.6rem', 
                                   borderRadius: '8px', 
                                   display: 'flex', 
                                   alignItems: 'center', 
                                   justifyContent: 'space-between',
-                                  gap: '1rem',
-                                  fontSize: '0.85rem'
+                                  gap: '0.75rem',
+                                  fontSize: '0.8rem'
                                 }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
-                                    <span style={{ fontSize: '1.2rem', color: '#f87171', fontWeight: 'bold' }}>📕</span>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
+                                    <span style={{ fontSize: '1rem', color: '#f87171', fontWeight: 'bold' }}>📕</span>
                                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }} title={msg.fileName}>
                                       {msg.fileName}
                                     </span>
@@ -800,10 +787,10 @@ export default function DriveRoom() {
                                       color: '#f87171', 
                                       textDecoration: 'none', 
                                       fontWeight: 'bold',
-                                      fontSize: '0.75rem',
+                                      fontSize: '0.7rem',
                                       textTransform: 'uppercase',
                                       border: '1px solid rgba(239, 68, 68, 0.5)',
-                                      padding: '0.2rem 0.5rem',
+                                      padding: '0.15rem 0.4rem',
                                       borderRadius: '4px',
                                       background: 'rgba(239, 68, 68, 0.05)',
                                       flexShrink: 0
@@ -816,19 +803,19 @@ export default function DriveRoom() {
                             } else if (isExcel) {
                               return (
                                 <div style={{ 
-                                  marginTop: msg.text ? '0.5rem' : '0', 
+                                  marginTop: '0.4rem', 
                                   background: 'rgba(16, 185, 129, 0.08)', 
                                   border: '1px solid rgba(16, 185, 129, 0.3)',
-                                  padding: '0.6rem 0.85rem', 
+                                  padding: '0.4rem 0.6rem', 
                                   borderRadius: '8px', 
                                   display: 'flex', 
                                   alignItems: 'center', 
                                   justifyContent: 'space-between',
-                                  gap: '1rem',
-                                  fontSize: '0.85rem'
+                                  gap: '0.75rem',
+                                  fontSize: '0.8rem'
                                 }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
-                                    <span style={{ fontSize: '1.2rem', color: '#34d399', fontWeight: 'bold' }}>📊</span>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
+                                    <span style={{ fontSize: '1rem', color: '#34d399', fontWeight: 'bold' }}>📊</span>
                                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }} title={msg.fileName}>
                                       {msg.fileName}
                                     </span>
@@ -843,7 +830,7 @@ export default function DriveRoom() {
                                       fontSize: '0.75rem',
                                       textTransform: 'uppercase',
                                       border: '1px solid rgba(16, 185, 129, 0.5)',
-                                      padding: '0.2rem 0.5rem',
+                                      padding: '0.15rem 0.4rem',
                                       borderRadius: '4px',
                                       background: 'rgba(16, 185, 129, 0.05)',
                                       flexShrink: 0
@@ -856,19 +843,19 @@ export default function DriveRoom() {
                             } else {
                               return (
                                 <div style={{ 
-                                  marginTop: msg.text ? '0.5rem' : '0', 
+                                  marginTop: '0.4rem', 
                                   background: 'rgba(96, 165, 250, 0.08)', 
                                   border: '1px solid rgba(96, 165, 250, 0.3)',
-                                  padding: '0.6rem 0.85rem', 
+                                  padding: '0.4rem 0.6rem', 
                                   borderRadius: '8px', 
                                   display: 'flex', 
                                   alignItems: 'center', 
                                   justifyContent: 'space-between',
-                                  gap: '1rem',
-                                  fontSize: '0.85rem'
+                                  gap: '0.75rem',
+                                  fontSize: '0.8rem'
                                 }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
-                                    <span style={{ fontSize: '1.2rem', color: 'var(--primary-color)', fontWeight: 'bold' }}>📎</span>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
+                                    <span style={{ fontSize: '1rem', color: 'var(--primary-color)', fontWeight: 'bold' }}>📎</span>
                                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }} title={msg.fileName}>
                                       {msg.fileName}
                                     </span>
@@ -880,10 +867,10 @@ export default function DriveRoom() {
                                       color: 'var(--primary-color)', 
                                       textDecoration: 'none', 
                                       fontWeight: 'bold',
-                                      fontSize: '0.75rem',
+                                      fontSize: '0.7rem',
                                       textTransform: 'uppercase',
                                       border: '1px solid var(--primary-color)',
-                                      padding: '0.2rem 0.5rem',
+                                      padding: '0.15rem 0.4rem',
                                       borderRadius: '4px',
                                       background: 'rgba(96, 165, 250, 0.05)',
                                       flexShrink: 0
@@ -896,49 +883,48 @@ export default function DriveRoom() {
                             }
                           })()
                         )}
-                      </div>
-                      <div style={{ fontSize: '0.65rem', color: isMe ? 'rgba(255,255,255,0.7)' : 'var(--text-secondary)', textAlign: 'right', marginTop: '0.25rem' }}>
+                      </span>
+                      
+                      <span style={{ 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        gap: '4px',
+                        fontSize: '0.6rem', 
+                        color: isMe ? 'rgba(255, 255, 255, 0.7)' : 'var(--text-secondary)',
+                        marginLeft: '8px',
+                        float: 'right',
+                        marginTop: '0.3rem',
+                        whiteSpace: 'nowrap',
+                        verticalAlign: 'bottom'
+                      }}>
                         {msg.timestamp ? new Date(msg.timestamp.toMillis ? msg.timestamp.toMillis() : msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Read Receipts for Coordinators */}
-                  {readByCoordinators.length > 0 && (
-                    <div style={{ 
-                      display: 'flex', 
-                      gap: '2px', 
-                      alignItems: 'center', 
-                      marginTop: '0.25rem', 
-                      justifyContent: 'flex-end',
-                      opacity: 0.85
-                    }}>
-                      <span style={{ fontSize: '0.55rem', color: isMe ? 'rgba(255,255,255,0.7)' : 'var(--text-secondary)', marginRight: '2px' }}>Seen by:</span>
-                      {readByCoordinators.map(email => {
-                        const nameKey = email.split('@')[0].split('.')[0].substring(0, 2).toUpperCase();
-                        return (
-                          <div 
-                            key={email}
-                            title={`Seen by ${email}`}
-                            style={{
-                              width: '14px',
-                              height: '14px',
-                              borderRadius: '50%',
-                              background: isMe ? 'rgba(255, 255, 255, 0.2)' : 'rgba(56, 189, 248, 0.25)',
-                              border: `1px solid ${isMe ? 'rgba(255, 255, 255, 0.4)' : 'rgba(56, 189, 248, 0.5)'}`,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '0.5rem',
-                              fontWeight: '800',
-                              color: '#fff',
-                              cursor: 'default'
-                            }}
-                          >
-                            {nameKey}
-                          </div>
-                        );
-                      })}
+                        
+                        {/* Compact Read Receipts inline */}
+                        {readByCoordinators.length > 0 && (
+                          <span style={{ display: 'inline-flex', gap: '1px', marginLeft: '2px' }} title={`Seen by: ${readByCoordinators.join(', ')}`}>
+                            {readByCoordinators.map(email => {
+                              const nameKey = email.split('@')[0].split('.')[0].substring(0, 2).toUpperCase();
+                              return (
+                                <span key={email} style={{
+                                  width: '12px',
+                                  height: '12px',
+                                  borderRadius: '50%',
+                                  background: isMe ? 'rgba(255, 255, 255, 0.25)' : 'rgba(56, 189, 248, 0.25)',
+                                  border: `1px solid ${isMe ? 'rgba(255, 255, 255, 0.4)' : 'rgba(56, 189, 248, 0.5)'}`,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '0.45rem',
+                                  fontWeight: '800',
+                                  color: '#fff',
+                                }}>
+                                  {nameKey}
+                                </span>
+                              );
+                            })}
+                          </span>
+                        )}
+                      </span>
                     </div>
                   )}
 
