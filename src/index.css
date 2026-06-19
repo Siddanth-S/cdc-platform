@@ -80,6 +80,15 @@
   padding: 0;
 }
 
+/* Mobile Safari's address bar shows/hides as you scroll, which changes the
+   real visible viewport without the page resizing - anything sized with a
+   fixed 100vh would then show a strip of whatever is behind it (the html
+   element's default white canvas) above or below the app. Matching the
+   background here means that strip is never visible even for a frame. */
+html {
+  background: var(--bg-color);
+}
+
 body {
   font-family: 'Inter', sans-serif;
   background: radial-gradient(circle at 10% 20%, var(--bg-color) 0%, var(--bg-gradient-end) 100%);
@@ -87,6 +96,7 @@ body {
   animation: ambient-bg 15s ease infinite;
   color: var(--text-primary);
   min-height: 100vh;
+  min-height: 100dvh;
   line-height: 1.5;
   overflow-x: hidden;
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -274,6 +284,14 @@ p {
 .w-full { width: 100%; }
 .h-full { height: 100%; }
 
+/* Use instead of inline height:'100vh' on full-page containers - dvh tracks
+   Safari's actual visible viewport as its address bar shows/hides, vh does
+   not. The vh line stays first as a fallback for browsers without dvh. */
+.full-screen-height {
+  height: 100vh;
+  height: 100dvh;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
@@ -378,7 +396,12 @@ p {
   }
   .sidebar.mobile-open, .cyber-sidebar.mobile-open {
     transform: translateX(0) !important;
-    width: 280px !important;
+    /* Full takeover, not a partial drawer - this is the chat list "screen"
+       on a phone (WhatsApp/Telegram pattern), not an overlay panel peeking
+       out from the side. Picking a chat already navigates away and closes
+       this via the location-change effect in Layout.jsx. */
+    width: 100% !important;
+    background: var(--bg-color) !important;
   }
   .mobile-sidebar-backdrop {
     position: absolute;
@@ -1039,7 +1062,7 @@ p {
   }
   .cyber-sidebar.mobile-open {
     transform: translateX(0) !important;
-    width: 260px !important;
+    width: 100% !important;
   }
   
   /* Fix dashboard filter wrapping */
@@ -1231,27 +1254,41 @@ p {
      desktop. On a phone they need to be much smaller and tighter or the
      bar overflows its own height and the brand text clips. */
   .navbar-cyber {
-    padding: 0.6rem 0.75rem !important;
+    padding: 0.5rem 0.6rem !important;
   }
   .navbar-logo-mark {
-    width: 30px !important;
-    height: 29px !important;
+    width: 24px !important;
+    height: 23px !important;
   }
   .navbar-cyber a[href="/"] {
-    gap: 0.5rem !important;
+    gap: 0.4rem !important;
+  }
+  .navbar-cyber > div:last-child {
+    gap: 0.4rem !important;
   }
   .navbar-admin-link {
-    height: 32px !important;
+    height: 28px !important;
+    width: 28px !important;
+    padding: 0 !important;
   }
   .navbar-profile-trigger {
-    height: 32px !important;
+    height: 28px !important;
+  }
+  .navbar-profile-avatar {
+    width: 22px !important;
+    height: 22px !important;
   }
   .logo-glow {
-    padding: 0.45rem !important;
+    padding: 0.3rem !important;
   }
   .logo-glow svg {
-    width: 20px !important;
-    height: 20px !important;
+    width: 17px !important;
+    height: 17px !important;
+  }
+
+  .btn-create-glow {
+    padding: 0.6rem 1rem !important;
+    font-size: 0.88rem !important;
   }
 
   /* Drive header action buttons ("Manage Drive" / "Leave Drive") were

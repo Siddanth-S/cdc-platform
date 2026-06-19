@@ -48,7 +48,7 @@ export default function Layout() {
   }, [location]);
 
   return (
-    <div className="app-container" style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+    <div className="app-container full-screen-height" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <Navbar />
       <WelcomeToast user={user} />
       

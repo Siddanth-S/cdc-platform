@@ -49,7 +49,8 @@ function AppRoutes() {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -30 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
-        style={{ width: '100vw', height: '100vh', position: 'absolute', top: 0, left: 0, overflow: 'hidden' }}
+        className="full-screen-height"
+        style={{ width: '100vw', position: 'absolute', top: 0, left: 0, overflow: 'hidden' }}
       >
         <Suspense fallback={<RouteFallback />}>
           <Routes location={location}>

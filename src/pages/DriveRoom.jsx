@@ -458,12 +458,11 @@ export default function DriveRoom() {
   const canLeave = !isHead && !isPriSpoc && !isSecSpoc;
 
   return (
-    <div style={isFullScreen ? {
+    <div className={isFullScreen ? 'full-screen-height' : ''} style={isFullScreen ? {
       position: 'fixed',
       top: 0,
       left: 0,
       width: '100vw',
-      height: '100vh',
       zIndex: 9999,
       background: 'radial-gradient(circle at 10% 20%, var(--bg-color) 0%, var(--bg-gradient-end) 100%)',
       padding: '0.4rem',
