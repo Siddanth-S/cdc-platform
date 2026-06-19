@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { GraduationCap, LogOut, User, Edit3, Sun, Moon, ShieldCheck } from 'lucide-react';
+import { GraduationCap, LogOut, CircleUserRound, Edit3, Sun, Moon, LayoutDashboard } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import NotificationsDropdown from './NotificationsDropdown';
 import { parseEmailProfile } from '../utils/profileParser';
@@ -150,21 +150,16 @@ export default function Navbar() {
         </div>
       </Link>
       
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4" style={{ gap: '0.6rem' }}>
         {user?.role === 'HEAD' && (
           <Link
             to="/admin"
             className="navbar-admin-link"
-            title="Admin Overview"
-            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.8rem', borderRadius: '10px', textDecoration: 'none', color: 'var(--primary-color)', background: 'rgba(96, 165, 250, 0.1)', border: '1px solid var(--primary-color)', fontWeight: 600, fontSize: '0.8rem', transition: 'all 0.2s ease' }}
+            title="SPOC Overview Dashboard"
           >
-            <ShieldCheck size={16} /> <span className="navbar-admin-label">Admin</span>
+            <LayoutDashboard size={16} /> <span className="navbar-admin-label">Overview</span>
           </Link>
         )}
-        <div className="navbar-user-info" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ fontWeight: '500', fontSize: '0.9rem' }}>{profileData?.name || user?.email.split('@')[0]}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--primary-color)', fontWeight: '600', letterSpacing: '0.5px' }}>{user?.role}</div>
-        </div>
 
         <div style={{ position: 'relative' }}>
           <button
@@ -178,21 +173,18 @@ export default function Navbar() {
                 setShowHoverCard(true);
               }
             }}
-            className="cyber-logout-btn"
-            title="Edit Profile" 
-            style={{ 
-              padding: '0.4rem', 
-              borderRadius: '50%', 
-              color: 'var(--primary-color)',
-              background: 'rgba(59, 130, 246, 0.1)',
-              boxShadow: '0 0 15px rgba(59, 130, 246, 0.4)',
-              border: '1px solid var(--primary-color)',
-              transition: 'all 0.3s ease'
-            }}
+            className={`navbar-profile-trigger ${showHoverCard ? 'active' : ''}`}
+            title="Profile"
           >
-            <User size={24} className="logo-glow" />
+            <span className="navbar-profile-avatar">
+              <CircleUserRound size={20} />
+            </span>
+            <span className="navbar-profile-text">
+              <span className="navbar-profile-name">{profileData?.name || user?.email.split('@')[0]}</span>
+              <span className="navbar-profile-role">{user?.role}</span>
+            </span>
           </button>
-          
+
           {showHoverCard && profileData && (
             <>
               <div style={{ position: 'fixed', inset: 0, zIndex: 999 }} onClick={() => { setShowHoverCard(false); setIsEditingInline(false); }}></div>

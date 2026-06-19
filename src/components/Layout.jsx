@@ -68,15 +68,23 @@ export default function Layout() {
       <div className="app-body" style={{ display: 'flex', flex: 1, overflow: 'hidden', width: '100%', position: 'relative' }}>
         
         {/* Floating Action Button when sidebar is closed on desktop */}
-        {!desktopSidebarOpen && (
-          <button 
-            className="cyber-fab animate-fade-in"
-            onClick={() => setDesktopSidebarOpen(true)}
-          >
-            <MessageCircle size={20} />
-            <span>Open Chats</span>
-          </button>
-        )}
+        <AnimatePresence>
+          {!desktopSidebarOpen && (
+            <motion.button
+              key="open-chats-fab"
+              className="cyber-fab"
+              onClick={() => setDesktopSidebarOpen(true)}
+              initial={{ opacity: 0, scale: 0.9, x: -10 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.9, x: -10 }}
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+            >
+              <MessageCircle size={20} />
+              <span>Open Chats</span>
+            </motion.button>
+          )}
+        </AnimatePresence>
 
         {/* Left Sidebar for Chats */}
         <div className={`sidebar cyber-sidebar ${mobileSidebarOpen ? 'mobile-open' : ''} ${!desktopSidebarOpen ? 'desktop-closed' : ''}`} style={{ margin: '0 1rem 1rem 1rem', borderRadius: '16px', height: '100%' }}>
