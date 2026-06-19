@@ -244,6 +244,18 @@ p {
   opacity: 0.7;
 }
 
+.input-field:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.input-label-locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 /* Utilities */
 .text-center { text-align: center; }
 .text-primary { color: var(--primary-color); }

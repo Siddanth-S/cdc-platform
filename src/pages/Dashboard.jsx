@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Plus, Users, Search, Pin, CheckCircle2, Filter, X } from 'lucide-react';
+import { Building2, Plus, Users, Search, Pin, CheckCircle2, Filter, X, Lock } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, onSnapshot, doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
@@ -20,6 +20,7 @@ export default function Dashboard() {
   const [userProfile, setUserProfile] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [profileForm, setProfileForm] = useState({ name: '', degree: '', branch: '', gradYear: '', phoneNumber: '', personalEmail: '' });
+  const [lockedFields, setLockedFields] = useState({ name: false, degree: false, branch: false, gradYear: false });
 
   // Sync User Profile
   useEffect(() => {
@@ -34,6 +35,14 @@ export default function Dashboard() {
         } else {
           const parsed = parseEmailProfile(user.email);
           if (parsed) setProfileForm({ name: parsed.name || '', degree: parsed.degree || '', branch: parsed.branch || '', gradYear: parsed.gradYear || '', phoneNumber: '', personalEmail: '' });
+          // Only lock fields the email actually yielded a value for - dummy/non-standard
+          // emails (no dot-separated roll number) get empty strings back and must stay editable.
+          setLockedFields({
+            name: !!parsed?.name,
+            degree: !!parsed?.degree,
+            branch: !!parsed?.branch,
+            gradYear: !!parsed?.gradYear,
+          });
           setShowProfileModal(true);
         }
       }
@@ -268,7 +277,8 @@ export default function Dashboard() {
 
       <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
         {displayDrives.map(drive => {
-          const isSpoc = drive.coordinator === user?.email || drive.secondarySpocs?.includes(user?.email);
+          const isPrimarySpoc = drive.coordinator === user?.email;
+          const isSpoc = isPrimarySpoc || drive.secondarySpocs?.includes(user?.email);
           const isJoined = joinedDrives.includes(String(drive.id)) || user?.role === 'HEAD' || isSpoc;
           const isPinned = isDrivePinned(drive) || isSpoc;
           const isEligible = user?.role === 'HEAD' || !drive.eligibleBranches || (userProfile?.branch && drive.eligibleBranches.includes(userProfile.branch)) || isSpoc;
@@ -320,7 +330,7 @@ export default function Dashboard() {
                           letterSpacing: '0.5px',
                           boxShadow: '0 0 8px rgba(168, 85, 247, 0.3)'
                         }}>
-                          SPOC: You
+                          {isPrimarySpoc ? 'Primary SPOC' : 'Secondary SPOC'}
                         </span>
                       )}
                       {userProfile?.branch !== 'ADMIN' && (
@@ -520,56 +530,67 @@ export default function Dashboard() {
       {showProfileModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', overflowY: 'auto', padding: '1rem', zIndex: 1000 }}>
           <div className="glass-card cyber-modal-container animate-fade-in" style={{ margin: 'auto', width: '100%', maxWidth: '450px', padding: '1.5rem', textAlign: 'center', border: '1px solid var(--primary-color)', boxShadow: '0 0 30px rgba(59, 130, 246, 0.2)' }}>
-            <h2 style={{ margin: '0 0 1rem 0', fontSize: '1.6rem', color: '#fff', textShadow: '0 0 10px rgba(255,255,255,0.3)' }}>Complete Your Profile</h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontSize: '0.95rem' }}>
-              Please verify your details below (auto-filled where possible) and provide your contact information.
+            <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.6rem', color: '#fff', textShadow: '0 0 10px rgba(255,255,255,0.3)' }}>Complete Your Profile</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.95rem' }}>
+              Please verify your details below and provide your contact information.
             </p>
-            <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
+            <form onSubmit={handleSaveProfile} style={{ textAlign: 'left' }}>
+
+              {(lockedFields.name || lockedFields.degree || lockedFields.branch || lockedFields.gradYear) && (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.78rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', marginBottom: '1.25rem', lineHeight: '1.4' }}>
+                  <Lock size={14} style={{ flexShrink: 0, marginTop: '1px', color: 'var(--primary-color)' }} />
+                  <span>Fields marked with a lock are detected from your NITK email and can't be edited here.</span>
+                </div>
+              )}
 
               <div className="mobile-stack-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Name *</label>
+                <div className="input-group">
+                  <label className="input-label input-label-locked">Name * {lockedFields.name && <Lock size={11} />}</label>
                   <input
                     type="text"
-                    className="cyber-input"
+                    className="input-field"
                     value={profileForm.name}
                     onChange={e => setProfileForm({...profileForm, name: e.target.value})}
                     required
+                    disabled={lockedFields.name}
                     placeholder="John Doe"
                   />
                 </div>
-                <div>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Expected Graduation *</label>
+                <div className="input-group">
+                  <label className="input-label input-label-locked">Expected Graduation * {lockedFields.gradYear && <Lock size={11} />}</label>
                   <input
                     type="text"
-                    className="cyber-input"
+                    className="input-field"
                     value={profileForm.gradYear}
                     onChange={e => setProfileForm({...profileForm, gradYear: e.target.value})}
                     required
+                    disabled={lockedFields.gradYear}
                     placeholder="2027"
                   />
                 </div>
               </div>
 
               <div className="mobile-stack-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Degree *</label>
+                <div className="input-group">
+                  <label className="input-label input-label-locked">Degree * {lockedFields.degree && <Lock size={11} />}</label>
                   <input
                     type="text"
-                    className="cyber-input"
+                    className="input-field"
                     value={profileForm.degree}
                     onChange={e => setProfileForm({...profileForm, degree: e.target.value})}
                     required
+                    disabled={lockedFields.degree}
                     placeholder="B.Tech"
                   />
                 </div>
-                <div>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Branch *</label>
+                <div className="input-group">
+                  <label className="input-label input-label-locked">Branch * {lockedFields.branch && <Lock size={11} />}</label>
                   <select
-                    className="cyber-input"
+                    className="input-field"
                     value={profileForm.branch}
                     onChange={e => setProfileForm({...profileForm, branch: e.target.value})}
                     required
+                    disabled={lockedFields.branch}
                   >
                     <option value="" disabled>Select branch</option>
                     <optgroup label="B.Tech">
@@ -581,39 +602,39 @@ export default function Dashboard() {
                   </select>
                 </div>
               </div>
-              <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '0.5rem 0' }}></div>
+              <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '0 0 1.25rem' }}></div>
 
-              <div>
-                <label style={{ fontSize: '0.8rem', color: 'var(--primary-color)', marginBottom: '0.25rem', display: 'block' }}>Phone Number *</label>
-                <input 
-                  type="tel" 
-                  className="cyber-input" 
+              <div className="input-group">
+                <label className="input-label">Phone Number *</label>
+                <input
+                  type="tel"
+                  className="input-field"
                   value={profileForm.phoneNumber}
                   onChange={e => setProfileForm({...profileForm, phoneNumber: e.target.value})}
                   required
                   placeholder="+91 9876543210"
-                  style={{ borderColor: 'var(--primary-color)' }}
                 />
               </div>
 
-              <div>
-                <label style={{ fontSize: '0.8rem', color: 'var(--primary-color)', marginBottom: '0.25rem', display: 'block' }}>Personal Email ID *</label>
-                <input 
-                  type="email" 
-                  className="cyber-input" 
+              <div className="input-group" style={{ marginBottom: '0.5rem' }}>
+                <label className="input-label">Personal Email ID *</label>
+                <input
+                  type="email"
+                  className="input-field"
                   value={profileForm.personalEmail}
                   onChange={e => setProfileForm({...profileForm, personalEmail: e.target.value})}
                   required
                   placeholder="john.doe@gmail.com"
-                  style={{ borderColor: 'var(--primary-color)' }}
                 />
               </div>
 
               <button type="submit" className="btn btn-primary w-full" style={{ padding: '0.8rem', marginTop: '0.5rem', boxShadow: '0 0 15px rgba(59, 130, 246, 0.4)' }}>Save & Continue</button>
-              
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', marginTop: '1rem', lineHeight: '1.4' }}>
-                Couldn't auto-detect some of your details? Just fill them in above.
-              </div>
+
+              {!(lockedFields.name && lockedFields.degree && lockedFields.branch && lockedFields.gradYear) && (
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', marginTop: '1rem', lineHeight: '1.4' }}>
+                  Couldn't auto-detect some of your details? Just fill them in above.
+                </div>
+              )}
             </form>
           </div>
         </div>
