@@ -409,6 +409,13 @@ p {
     background: rgba(0, 0, 0, 0.55);
     z-index: 999;
   }
+  /* The mobile toggle bar above already labels this screen "Direct
+     Messages" - this in-panel header repeating the same label (it's only
+     needed on desktop, where there's no separate toggle bar) is redundant
+     once the panel is a full-screen takeover. */
+  .sidebar-panel-header {
+    display: none !important;
+  }
   .main-content {
     padding: 0 1rem 1rem 1rem;
   }

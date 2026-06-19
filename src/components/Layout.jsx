@@ -2,7 +2,7 @@ import { Outlet, useNavigate, useLocation, useOutlet } from 'react-router-dom';
 import Navbar from './Navbar';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { MessageSquare, Menu, X, ChevronLeft, MessageCircle } from 'lucide-react';
+import { MessageSquare, ChevronLeft, MessageCircle } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -61,9 +61,6 @@ export default function Layout() {
         <span style={{ fontSize: '0.9rem', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '0.5rem', pointerEvents: 'none' }}>
           <MessageSquare size={16} className="text-primary" /> Direct Messages
         </span>
-        <button style={{ background: 'none', border: 'none', color: 'var(--text-primary)', pointerEvents: 'none' }}>
-          {mobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
       </div>
 
       <div className="app-body" style={{ display: 'flex', flex: 1, overflow: 'hidden', width: '100%', position: 'relative' }}>
@@ -97,7 +94,7 @@ export default function Layout() {
 
         {/* Left Sidebar for Chats */}
         <div className={`sidebar cyber-sidebar ${mobileSidebarOpen ? 'mobile-open' : ''} ${!desktopSidebarOpen ? 'desktop-closed' : ''}`} style={{ margin: '0 1rem 1rem 1rem', borderRadius: '16px', height: '100%' }}>
-          <div style={{ padding: '1.25rem', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', fontSize: '1.1rem' }}>
+          <div className="sidebar-panel-header" style={{ padding: '1.25rem', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', fontSize: '1.1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <MessageSquare size={20} className="text-primary" /> Direct Messages
             </div>
