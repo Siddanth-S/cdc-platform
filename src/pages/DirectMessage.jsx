@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Send, ArrowLeft, Paperclip, X, User, Plus, Maximize2, Minimize2, CornerUpLeft, ChevronDown, Copy, Trash2 } from 'lucide-react';
@@ -24,6 +24,40 @@ export default function DirectMessage() {
   const [lightboxImg, setLightboxImg] = useState(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [activeMenuMsgId, setActiveMenuMsgId] = useState(null);
+
+  // Swipe-to-reply touch tracking
+  const swipeRef = useRef({ startX: 0, startY: 0, swiping: false, msgObj: null, el: null });
+
+  const handleTouchStart = useCallback((e, msg) => {
+    const touch = e.touches[0];
+    swipeRef.current = { startX: touch.clientX, startY: touch.clientY, swiping: false, msgObj: msg, el: e.currentTarget };
+  }, []);
+
+  const handleTouchMove = useCallback((e) => {
+    const s = swipeRef.current;
+    if (!s.startX) return;
+    const touch = e.touches[0];
+    const dx = s.startX - touch.clientX; // positive = swipe left
+    const dy = Math.abs(touch.clientY - s.startY);
+    if (dx > 20 && dy < 40) {
+      s.swiping = true;
+      const offset = Math.min(dx, 80);
+      if (s.el) s.el.style.transform = `translateX(-${offset}px)`;
+      if (s.el) s.el.style.transition = 'none';
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    const s = swipeRef.current;
+    if (s.el) {
+      s.el.style.transform = 'translateX(0)';
+      s.el.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+    }
+    if (s.swiping && s.msgObj) {
+      setReplyToMsg(s.msgObj);
+    }
+    swipeRef.current = { startX: 0, startY: 0, swiping: false, msgObj: null, el: null };
+  }, []);
   
   // Capture the last read time when component mounts, so we know which messages are "new" to glow
   const [lastRead] = useState(() => Number(localStorage.getItem(`read_dm_${id}_${user?.email}`) || 0));
@@ -416,7 +450,10 @@ export default function DirectMessage() {
                     setHoveredMsgId(hoveredMsgId === msg.id ? null : msg.id);
                   }
                 }}
-                style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', position: 'relative', alignItems: 'flex-start' }}
+                style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', position: 'relative', alignItems: 'flex-start', willChange: 'transform' }}
+                onTouchStart={(e) => handleTouchStart(e, msg)}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
               >
                 
                 <div className="drive-msg-bubble" style={{ 
@@ -477,14 +514,14 @@ export default function DirectMessage() {
                           padding: '1px',
                           borderRadius: '4px',
                           transition: 'background 0.2s, opacity 0.2s',
-                          opacity: (hoveredMsgId === msg.id || activeMenuMsgId === msg.id) ? 0.8 : 0,
-                          pointerEvents: (hoveredMsgId === msg.id || activeMenuMsgId === msg.id) ? 'auto' : 'none'
+                          opacity: (hoveredMsgId === msg.id || activeMenuMsgId === msg.id) ? 0.9 : 0.45,
+                          pointerEvents: 'auto'
                         }}
                         onMouseEnter={e => e.currentTarget.style.background = isImageOnly ? 'rgba(0,0,0,0.6)' : (isMe ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)')}
                         onMouseLeave={e => e.currentTarget.style.background = isImageOnly ? 'rgba(0,0,0,0.4)' : 'none'}
                         title="Actions"
                       >
-                        <ChevronDown size={14} />
+                        <ChevronDown size={16} />
                       </button>
                       {activeMenuMsgId === msg.id && (
                         <>
