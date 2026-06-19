@@ -5,7 +5,7 @@ import { Send, ArrowLeft, ShieldAlert, Paperclip, X, MessageSquarePlus, LogOut, 
 import { db } from '../firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, doc, getDocs, setDoc, updateDoc, increment, arrayUnion, arrayRemove, deleteField } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
-import { playSFX } from '../utils/sfx';
+const playSFX = () => {};
 
 const btechBranches = ['CSE', 'IT', 'AI', 'DS', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'META', 'MINING'];
 const pgBranches = ['Construction Tech & Management', 'MBA', 'Environmental Eng', 'Geotechnical Eng', 'Transportation Eng', 'Structural Eng', 'Power Electronics', 'Mechanical Design', 'Thermal Eng', 'Manufacturing Eng', 'Mechatronics', 'Water Resources', 'Marine Structures', 'Geoinformatics', 'MCA', 'Chemistry', 'Physics', 'Signal Processing & ML', 'Communication Eng & Networks', 'VLSI Design', 'Information Security', 'Industrial Biotechnology', 'Environmental Science & Tech', 'Materials Eng', 'Nanotechnology'];
@@ -663,17 +663,18 @@ export default function DriveRoom() {
                 style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', position: 'relative', alignItems: 'flex-start' }}
               >
                 <div className="drive-msg-bubble" style={{ 
-                  background: isMe ? 'linear-gradient(135deg, var(--primary-color), var(--primary-hover))' : 'var(--chat-bubble-incoming-bg)', 
+                  background: isImageOnly ? 'transparent' : (isMe ? 'linear-gradient(135deg, var(--primary-color), var(--primary-hover))' : 'var(--chat-bubble-incoming-bg)'), 
                   color: isMe ? '#fff' : 'var(--text-primary)',
-                  border: isMe ? 'none' : '1px solid var(--chat-bubble-incoming-border)',
-                  padding: '0.5rem 0.75rem', 
+                  border: isImageOnly ? 'none' : (isMe ? 'none' : '1px solid var(--chat-bubble-incoming-border)'),
+                  padding: isImageOnly ? '0' : '0.5rem 0.75rem', 
                   borderRadius: '16px', 
                   borderBottomRightRadius: isMe ? '4px' : '16px',
                   borderBottomLeftRadius: !isMe ? '4px' : '16px',
-                  maxWidth: '75%',
+                  maxWidth: isImageOnly ? '320px' : '75%',
+                  width: isImageOnly ? '100%' : 'auto',
                   wordBreak: 'break-word',
-                  boxShadow: isMe ? '0 4px 15px rgba(59, 130, 246, 0.3)' : 'var(--glass-shadow)',
-                  backdropFilter: 'blur(8px)',
+                  boxShadow: isImageOnly ? 'none' : (isMe ? '0 4px 15px rgba(59, 130, 246, 0.3)' : 'var(--glass-shadow)'),
+                  backdropFilter: isImageOnly ? 'none' : 'blur(8px)',
                   position: 'relative',
                   marginTop: '0.2rem'
                 }}>
@@ -708,168 +709,197 @@ export default function DriveRoom() {
                     </div>
                   )}
                   
-                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.75rem', flexWrap: 'wrap' }}>
-                    <div className="msg-text" style={{ lineHeight: '1.3' }}>
-                      {msg.text}
-                      {msg.fileName && (
-                        (() => {
-                          const isImage = msg.fileName.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i);
-                          const isPdf = msg.fileName.match(/\.pdf$/i);
-                          const isExcel = msg.fileName.match(/\.(xls|xlsx|csv)$/i);
+                  {isImageOnly ? (
+                    <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '12px', width: 'fit-content' }}>
+                      <img 
+                        src={msg.fileData} 
+                        alt={msg.fileName} 
+                        style={{ 
+                          maxWidth: '100%', 
+                          maxHeight: '360px', 
+                          objectFit: 'contain', 
+                          borderRadius: '12px',
+                          cursor: 'pointer',
+                          border: '1px solid var(--border-color)',
+                          display: 'block'
+                        }}
+                        onClick={() => setLightboxImg(msg.fileData)}
+                      />
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '8px',
+                        right: '8px',
+                        background: 'rgba(0, 0, 0, 0.55)',
+                        backdropFilter: 'blur(4px)',
+                        color: '#fff',
+                        padding: '2px 8px',
+                        borderRadius: '10px',
+                        fontSize: '0.65rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        pointerEvents: 'none'
+                      }}>
+                        {msg.timestamp ? new Date(msg.timestamp.toMillis ? msg.timestamp.toMillis() : msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.75rem', flexWrap: 'wrap' }}>
+                      <div className="msg-text" style={{ lineHeight: '1.3' }}>
+                        {msg.text}
+                        {msg.fileName && (
+                          (() => {
+                            const isImage = msg.fileName.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i);
+                            const isPdf = msg.fileName.match(/\.pdf$/i);
+                            const isExcel = msg.fileName.match(/\.(xls|xlsx|csv)$/i);
 
-                          if (isImage) {
-                            return (
-                              <div style={{ marginTop: msg.text ? '0.5rem' : '0', overflow: 'hidden', borderRadius: '8px' }}>
-                                <img 
-                                  src={msg.fileData} 
-                                  alt={msg.fileName} 
-                                  style={{ 
-                                    maxWidth: '100%', 
-                                    maxHeight: '200px', 
-                                    objectFit: 'cover', 
-                                    borderRadius: '8px',
-                                    cursor: 'pointer',
-                                    border: '1px solid rgba(255,255,255,0.1)',
-                                    display: 'block'
-                                  }}
-                                  onClick={() => {
-                                    playSFX('click');
-                                    setLightboxImg(msg.fileData);
-                                  }}
-                                />
-                              </div>
-                            );
-                          } else if (isPdf) {
-                            return (
-                              <div style={{ 
-                                marginTop: msg.text ? '0.5rem' : '0', 
-                                background: 'rgba(239, 68, 68, 0.08)', 
-                                border: '1px solid rgba(239, 68, 68, 0.3)',
-                                padding: '0.6rem 0.85rem', 
-                                borderRadius: '8px', 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'space-between',
-                                gap: '1rem',
-                                fontSize: '0.85rem'
-                              }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
-                                  <span style={{ fontSize: '1.2rem', color: '#f87171', fontWeight: 'bold' }}>📕</span>
-                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }} title={msg.fileName}>
-                                    {msg.fileName}
-                                  </span>
+                            if (isImage) {
+                              return (
+                                <div style={{ marginTop: msg.text ? '0.5rem' : '0', overflow: 'hidden', borderRadius: '8px' }}>
+                                  <img 
+                                    src={msg.fileData} 
+                                    alt={msg.fileName} 
+                                    style={{ 
+                                      maxWidth: '100%', 
+                                      maxHeight: '200px', 
+                                      objectFit: 'cover', 
+                                      borderRadius: '8px',
+                                      cursor: 'pointer',
+                                      border: '1px solid rgba(255,255,255,0.1)',
+                                      display: 'block'
+                                    }}
+                                    onClick={() => setLightboxImg(msg.fileData)}
+                                  />
                                 </div>
-                                <a 
-                                  href={msg.fileData} 
-                                  download={msg.fileName} 
-                                  onClick={() => playSFX('click')}
-                                  style={{ 
-                                    color: '#f87171', 
-                                    textDecoration: 'none', 
-                                    fontWeight: 'bold',
-                                    fontSize: '0.75rem',
-                                    textTransform: 'uppercase',
-                                    border: '1px solid rgba(239, 68, 68, 0.5)',
-                                    padding: '0.2rem 0.5rem',
-                                    borderRadius: '4px',
-                                    background: 'rgba(239, 68, 68, 0.05)',
-                                    flexShrink: 0
-                                  }}
-                                >
-                                  Get PDF
-                                </a>
-                              </div>
-                            );
-                          } else if (isExcel) {
-                            return (
-                              <div style={{ 
-                                marginTop: msg.text ? '0.5rem' : '0', 
-                                background: 'rgba(16, 185, 129, 0.08)', 
-                                border: '1px solid rgba(16, 185, 129, 0.3)',
-                                padding: '0.6rem 0.85rem', 
-                                borderRadius: '8px', 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'space-between',
-                                gap: '1rem',
-                                fontSize: '0.85rem'
-                              }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
-                                  <span style={{ fontSize: '1.2rem', color: '#34d399', fontWeight: 'bold' }}>📊</span>
-                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }} title={msg.fileName}>
-                                    {msg.fileName}
-                                  </span>
+                              );
+                            } else if (isPdf) {
+                              return (
+                                <div style={{ 
+                                  marginTop: msg.text ? '0.5rem' : '0', 
+                                  background: 'rgba(239, 68, 68, 0.08)', 
+                                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                                  padding: '0.6rem 0.85rem', 
+                                  borderRadius: '8px', 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  justifyContent: 'space-between',
+                                  gap: '1rem',
+                                  fontSize: '0.85rem'
+                                }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                                    <span style={{ fontSize: '1.2rem', color: '#f87171', fontWeight: 'bold' }}>📕</span>
+                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }} title={msg.fileName}>
+                                      {msg.fileName}
+                                    </span>
+                                  </div>
+                                  <a 
+                                    href={msg.fileData} 
+                                    download={msg.fileName} 
+                                    style={{ 
+                                      color: '#f87171', 
+                                      textDecoration: 'none', 
+                                      fontWeight: 'bold',
+                                      fontSize: '0.75rem',
+                                      textTransform: 'uppercase',
+                                      border: '1px solid rgba(239, 68, 68, 0.5)',
+                                      padding: '0.2rem 0.5rem',
+                                      borderRadius: '4px',
+                                      background: 'rgba(239, 68, 68, 0.05)',
+                                      flexShrink: 0
+                                    }}
+                                  >
+                                    Get PDF
+                                  </a>
                                 </div>
-                                <a 
-                                  href={msg.fileData} 
-                                  download={msg.fileName} 
-                                  onClick={() => playSFX('click')}
-                                  style={{ 
-                                    color: '#34d399', 
-                                    textDecoration: 'none', 
-                                    fontWeight: 'bold',
-                                    fontSize: '0.75rem',
-                                    textTransform: 'uppercase',
-                                    border: '1px solid rgba(16, 185, 129, 0.5)',
-                                    padding: '0.2rem 0.5rem',
-                                    borderRadius: '4px',
-                                    background: 'rgba(16, 185, 129, 0.05)',
-                                    flexShrink: 0
-                                  }}
-                                >
-                                  Get Sheet
-                                </a>
-                              </div>
-                            );
-                          } else {
-                            return (
-                              <div style={{ 
-                                marginTop: msg.text ? '0.5rem' : '0', 
-                                background: 'rgba(96, 165, 250, 0.08)', 
-                                border: '1px solid rgba(96, 165, 250, 0.3)',
-                                padding: '0.6rem 0.85rem', 
-                                borderRadius: '8px', 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'space-between',
-                                gap: '1rem',
-                                fontSize: '0.85rem'
-                              }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
-                                  <Paperclip size={14} className="text-primary" />
-                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }} title={msg.fileName}>
-                                    {msg.fileName}
-                                  </span>
+                              );
+                            } else if (isExcel) {
+                              return (
+                                <div style={{ 
+                                  marginTop: msg.text ? '0.5rem' : '0', 
+                                  background: 'rgba(16, 185, 129, 0.08)', 
+                                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                                  padding: '0.6rem 0.85rem', 
+                                  borderRadius: '8px', 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  justifyContent: 'space-between',
+                                  gap: '1rem',
+                                  fontSize: '0.85rem'
+                                }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                                    <span style={{ fontSize: '1.2rem', color: '#34d399', fontWeight: 'bold' }}>📊</span>
+                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }} title={msg.fileName}>
+                                      {msg.fileName}
+                                    </span>
+                                  </div>
+                                  <a 
+                                    href={msg.fileData} 
+                                    download={msg.fileName} 
+                                    style={{ 
+                                      color: '#34d399', 
+                                      textDecoration: 'none', 
+                                      fontWeight: 'bold',
+                                      fontSize: '0.75rem',
+                                      textTransform: 'uppercase',
+                                      border: '1px solid rgba(16, 185, 129, 0.5)',
+                                      padding: '0.2rem 0.5rem',
+                                      borderRadius: '4px',
+                                      background: 'rgba(16, 185, 129, 0.05)',
+                                      flexShrink: 0
+                                    }}
+                                  >
+                                    Get Sheet
+                                  </a>
                                 </div>
-                                <a 
-                                  href={msg.fileData} 
-                                  download={msg.fileName} 
-                                  onClick={() => playSFX('click')}
-                                  style={{ 
-                                    color: 'var(--primary-color)', 
-                                    textDecoration: 'none', 
-                                    fontWeight: 'bold',
-                                    fontSize: '0.75rem',
-                                    textTransform: 'uppercase',
-                                    border: '1px solid var(--primary-color)',
-                                    padding: '0.2rem 0.5rem',
-                                    borderRadius: '4px',
-                                    background: 'rgba(96, 165, 250, 0.05)',
-                                    flexShrink: 0
-                                  }}
-                                >
-                                  Download
-                                </a>
-                              </div>
-                            );
-                          }
-                        })()
-                      )}
+                              );
+                            } else {
+                              return (
+                                <div style={{ 
+                                  marginTop: msg.text ? '0.5rem' : '0', 
+                                  background: 'rgba(96, 165, 250, 0.08)', 
+                                  border: '1px solid rgba(96, 165, 250, 0.3)',
+                                  padding: '0.6rem 0.85rem', 
+                                  borderRadius: '8px', 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  justifyContent: 'space-between',
+                                  gap: '1rem',
+                                  fontSize: '0.85rem'
+                                }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                                    <span style={{ fontSize: '1.2rem', color: 'var(--primary-color)', fontWeight: 'bold' }}>📎</span>
+                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }} title={msg.fileName}>
+                                      {msg.fileName}
+                                    </span>
+                                  </div>
+                                  <a 
+                                    href={msg.fileData} 
+                                    download={msg.fileName} 
+                                    style={{ 
+                                      color: 'var(--primary-color)', 
+                                      textDecoration: 'none', 
+                                      fontWeight: 'bold',
+                                      fontSize: '0.75rem',
+                                      textTransform: 'uppercase',
+                                      border: '1px solid var(--primary-color)',
+                                      padding: '0.2rem 0.5rem',
+                                      borderRadius: '4px',
+                                      background: 'rgba(96, 165, 250, 0.05)',
+                                      flexShrink: 0
+                                    }}
+                                  >
+                                    Download
+                                  </a>
+                                </div>
+                              );
+                            }
+                          })()
+                        )}
+                      </div>
+                      <div style={{ fontSize: '0.65rem', color: isMe ? 'rgba(255,255,255,0.7)' : 'var(--text-secondary)', textAlign: 'right', marginTop: '0.25rem' }}>
+                        {msg.timestamp ? new Date(msg.timestamp.toMillis ? msg.timestamp.toMillis() : msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                      </div>
                     </div>
-                    <div style={{ fontSize: '0.6rem', opacity: 0.7, textAlign: 'right', whiteSpace: 'nowrap', alignSelf: 'flex-end', marginBottom: '-2px' }}>
-                      {msg.timestamp ? new Date(msg.timestamp.toMillis ? msg.timestamp.toMillis() : msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                    </div>
-                  </div>
+                  )}
 
                   {/* Read Receipts for Coordinators */}
                   {readByCoordinators.length > 0 && (

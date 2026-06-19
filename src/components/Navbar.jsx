@@ -1,20 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { GraduationCap, LogOut, User, Edit3, Sun, Moon, Volume2, VolumeX } from 'lucide-react';
+import { GraduationCap, LogOut, User, Edit3, Sun, Moon } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import NotificationsDropdown from './NotificationsDropdown';
 import { parseEmailProfile } from '../utils/profileParser';
 import { db } from '../firebase';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
-import { playSFX } from '../utils/sfx';
+const playSFX = () => {};
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
-  const [sfxEnabled, setSfxEnabled] = useState(() => localStorage.getItem('sfx_enabled') !== 'false');
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -24,16 +23,6 @@ export default function Navbar() {
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(nextTheme);
-    playSFX('click');
-  };
-
-  const toggleSfx = () => {
-    const next = !sfxEnabled;
-    setSfxEnabled(next);
-    localStorage.setItem('sfx_enabled', next ? 'true' : 'false');
-    if (next) {
-      setTimeout(() => playSFX('click'), 10);
-    }
   };
 
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -223,30 +212,39 @@ export default function Navbar() {
                     
                     <div style={{ height: '1px', background: 'rgba(59, 130, 246, 0.3)', margin: '0.5rem 0' }}></div>
                     
-                    {/* Theme Toggle inside Profile Menu */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
-                      <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Theme:</span>
-                      <button 
-                        onClick={toggleTheme}
-                        style={{ 
-                          background: 'rgba(59, 130, 246, 0.1)', 
-                          border: '1px solid var(--primary-color)', 
-                          color: 'var(--primary-color)',
-                          padding: '0.4rem 0.8rem', 
-                          borderRadius: '8px', 
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                          fontSize: '0.8rem',
-                          fontWeight: 'bold',
+                    {/* Theme Toggle Switch inside Profile Menu */}
+                    <button 
+                      onClick={toggleTheme} 
+                      style={{ 
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '0.6rem 0.8rem', background: 'transparent', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s ease', marginBottom: '0.5rem'
+                      }}
+                      onMouseOver={(e) => { e.currentTarget.style.background = 'var(--input-bg)'; }}
+                      onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {theme === 'dark' ? <Sun size={16} className="text-primary" /> : <Moon size={16} className="text-primary" />}
+                        <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+                      </div>
+                      <div style={{ 
+                        width: '34px', 
+                        height: '20px', 
+                        borderRadius: '10px', 
+                        background: theme === 'dark' ? 'var(--primary-color)' : 'var(--text-secondary)',
+                        position: 'relative',
+                        transition: 'all 0.2s ease'
+                      }}>
+                        <div style={{
+                          width: '14px',
+                          height: '14px',
+                          borderRadius: '50%',
+                          background: '#fff',
+                          position: 'absolute',
+                          top: '3px',
+                          left: theme === 'dark' ? '17px' : '3px',
                           transition: 'all 0.2s ease'
-                        }}
-                      >
-                        {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
-                        {theme === 'dark' ? 'Light' : 'Dark'}
-                      </button>
-                    </div>
+                        }} />
+                      </div>
+                    </button>
 
                     <div style={{ height: '1px', background: 'rgba(59, 130, 246, 0.3)', margin: '0.5rem 0' }}></div>
 
