@@ -5,18 +5,20 @@ import { Send, ArrowLeft, ShieldAlert, Paperclip, X, MessageSquarePlus, LogOut, 
 import { db } from '../firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, doc, getDocs, setDoc, updateDoc, increment, arrayUnion, arrayRemove, deleteField } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
+import { playSFX } from '../utils/sfx';
 
 const btechBranches = ['CSE', 'IT', 'AI', 'DS', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'META', 'MINING'];
 const pgBranches = ['Construction Tech & Management', 'MBA', 'Environmental Eng', 'Geotechnical Eng', 'Transportation Eng', 'Structural Eng', 'Power Electronics', 'Mechanical Design', 'Thermal Eng', 'Manufacturing Eng', 'Mechatronics', 'Water Resources', 'Marine Structures', 'Geoinformatics', 'MCA', 'Chemistry', 'Physics', 'Signal Processing & ML', 'Communication Eng & Networks', 'VLSI Design', 'Information Security', 'Industrial Biotechnology', 'Environmental Science & Tech', 'Materials Eng', 'Nanotechnology'];
 
 export default function DriveRoom() {
   const { id } = useParams();
-  const { user } = useAuth();
+  const { user, CDC_HEADS } = useAuth();
   const navigate = useNavigate();
   
   const [currentDrive, setCurrentDrive] = useState(null);
   const [showSpocModal, setShowSpocModal] = useState(false);
   const [newSpocEmail, setNewSpocEmail] = useState('');
+  const [showNoticeBoard, setShowNoticeBoard] = useState(false);
   
   // Capture the last read time when component mounts, so we know which messages are "new" to glow
   const [lastRead] = useState(() => Number(localStorage.getItem(`read_drive_${id}_${user?.email}`) || 0));
@@ -86,13 +88,50 @@ export default function DriveRoom() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const msgs = [];
       snapshot.forEach(doc => msgs.push({ id: doc.id, ...doc.data() }));
-      setMessages(msgs);
+      setMessages(prev => {
+        if (prev.length > 0 && msgs.length > prev.length) {
+          const lastMsg = msgs[msgs.length - 1];
+          if (lastMsg.sender !== user?.email) {
+            playSFX('received');
+          }
+        }
+        return msgs;
+      });
     });
     return () => unsubscribe();
-  }, [id]);
+  }, [id, user?.email]);
+
+  // Presence Heartbeat
+  useEffect(() => {
+    if (!id || !user?.email) return;
+    const safeEmail = user.email.replace(/\./g, '_');
+
+    const updatePresence = async () => {
+      try {
+        await updateDoc(doc(db, 'drives', id), {
+          [`activeUsers.${safeEmail}`]: new Date().toISOString(),
+          [`lastRead.${safeEmail}`]: new Date().toISOString()
+        });
+      } catch (err) {
+        console.error("Presence update failed", err);
+      }
+    };
+
+    updatePresence();
+    const interval = setInterval(updatePresence, 10000);
+
+    return () => {
+      clearInterval(interval);
+      const driveRef = doc(db, 'drives', id);
+      updateDoc(driveRef, {
+        [`activeUsers.${safeEmail}`]: deleteField()
+      }).catch(err => console.error("Presence cleanup failed", err));
+    };
+  }, [id, user?.email]);
 
   const isCoordinator = user?.email === currentDrive?.coordinator;
   const canMessage = user?.role === 'HEAD' || isCoordinator;
+  const pinnedMessages = messages.filter(m => m.pinned);
 
   // Enforce Access Control
   useEffect(() => {
@@ -137,6 +176,7 @@ export default function DriveRoom() {
     }
     
     try {
+      playSFX('sent');
       await addDoc(collection(db, 'drives', id, 'messages'), {
         sender: user.email,
         role: user.role === 'HEAD' ? 'HEAD' : (currentDrive.coordinator === user.email ? 'SPOC' : 'SEC_SPOC'),
@@ -381,6 +421,193 @@ export default function DriveRoom() {
       )}
 
       <div className="glass-panel cyber-glow-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+        {/* Active Users Bar */}
+        {currentDrive.activeUsers && Object.keys(currentDrive.activeUsers).length > 0 && (
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.5rem', 
+            padding: '0.6rem 1.25rem', 
+            borderBottom: '1px solid rgba(255,255,255,0.05)', 
+            background: 'rgba(0, 0, 0, 0.1)',
+            flexWrap: 'wrap',
+            zIndex: 11
+          }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Active:</span>
+            <div style={{ display: 'flex', gap: '-5px', alignItems: 'center', flexWrap: 'wrap' }}>
+              {Object.entries(currentDrive.activeUsers)
+                .filter(([emailKey, timestamp]) => {
+                  return new Date().getTime() - new Date(timestamp).getTime() < 20000;
+                })
+                .map(([emailKey]) => {
+                  const originalEmail = emailKey.replace(/_/g, '.');
+                  const isMe = originalEmail === user?.email;
+                  const formatInitials = (email) => {
+                    const name = email.split('@')[0].split('.')[0].substring(0, 2);
+                    return name.toUpperCase();
+                  };
+                  return (
+                    <div 
+                      key={emailKey}
+                      title={`${originalEmail} ${isMe ? '(You)' : ''}`}
+                      style={{ 
+                        width: '28px', 
+                        height: '28px', 
+                        borderRadius: '50%', 
+                        background: isMe ? 'var(--primary-color)' : 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(37, 99, 235, 0.2))',
+                        border: '2px solid var(--border-color)',
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        color: isMe ? '#fff' : 'var(--primary-color)', 
+                        fontWeight: 'bold', 
+                        fontSize: '0.7rem',
+                        position: 'relative',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                        marginLeft: '-4px',
+                        zIndex: isMe ? 2 : 1,
+                        cursor: 'default',
+                        transition: 'transform 0.2s'
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        playSFX('hover');
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                      }}
+                    >
+                      {formatInitials(originalEmail)}
+                      <span style={{ 
+                        position: 'absolute', 
+                        bottom: 0, 
+                        right: 0, 
+                        width: '7px', 
+                        height: '7px', 
+                        borderRadius: '50%', 
+                        background: 'var(--success-color)',
+                        border: '1px solid var(--bg-color)',
+                        boxShadow: '0 0 5px var(--success-color)'
+                      }} />
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        )}
+
+        {/* Notice Board */}
+        {pinnedMessages.length > 0 && (
+          <div style={{ 
+            borderBottom: '1px solid var(--border-color)', 
+            background: 'rgba(251, 191, 36, 0.05)',
+            transition: 'all 0.3s ease',
+            zIndex: 11
+          }}>
+            <div 
+              onClick={() => { playSFX('click'); setShowNoticeBoard(!showNoticeBoard); }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.6rem 1.25rem',
+                cursor: 'pointer',
+                userSelect: 'none'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--warning-color)' }}>
+                <span role="img" aria-label="announcement" style={{ fontSize: '1rem' }}>📢</span> 
+                <span>Notice Board ({pinnedMessages.length} Pinned {pinnedMessages.length === 1 ? 'Notice' : 'Notices'})</span>
+              </div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                {showNoticeBoard ? 'Collapse ▲' : 'Expand ▼'}
+              </span>
+            </div>
+
+            {showNoticeBoard && (
+              <div className="animate-fade-in" style={{ 
+                maxHeight: '180px', 
+                overflowY: 'auto', 
+                padding: '0 1.25rem 1rem 1.25rem', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '0.5rem' 
+              }}>
+                {pinnedMessages.map(msg => {
+                  const formatName = (email) => {
+                    if (!email) return '';
+                    return email.split('@')[0].split('.')[0].replace(/[0-9]/g, '').charAt(0).toUpperCase() + email.split('@')[0].split('.')[0].replace(/[0-9]/g, '').slice(1);
+                  };
+                  return (
+                    <div 
+                      key={msg.id} 
+                      style={{ 
+                        background: 'rgba(15, 23, 42, 0.6)', 
+                        border: '1px solid rgba(251, 191, 36, 0.3)',
+                        borderRadius: '8px',
+                        padding: '0.6rem 0.85rem',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        gap: '1rem',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--primary-color)' }}>
+                            {formatName(msg.sender)}
+                          </span>
+                          <span style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>
+                            {new Date(msg.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                          </span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-primary)', whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: '1.4' }}>
+                          {msg.text}
+                          {msg.fileName && (
+                            <span style={{ display: 'block', color: 'var(--primary-color)', fontSize: '0.75rem', marginTop: '0.2rem', textDecoration: 'underline' }}>
+                              📎 {msg.fileName}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      
+                      {canMessage && (
+                        <button 
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            playSFX('click');
+                            try {
+                              await updateDoc(doc(db, 'drives', id, 'messages', msg.id), {
+                                pinned: false
+                              });
+                              triggerToast("Notice unpinned!");
+                            } catch (err) {
+                              console.error("Error unpinning", err);
+                            }
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--danger-color)',
+                            cursor: 'pointer',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold',
+                            padding: '0.1rem 0.3rem',
+                            flexShrink: 0
+                          }}
+                        >
+                          Unpin
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', zIndex: 10 }}>
           {messages.length === 0 && (
              <div style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '2rem' }}>
@@ -398,6 +625,22 @@ export default function DriveRoom() {
               const namePart = email.split('@')[0].split('.')[0].replace(/[0-9]/g, '');
               return namePart.charAt(0).toUpperCase() + namePart.slice(1);
             };
+
+            const allCoordinators = [
+              currentDrive?.coordinator,
+              ...(currentDrive?.secondarySpocs || []),
+              ...(CDC_HEADS || [])
+            ].filter(Boolean);
+            const uniqueCoordinators = [...new Set(allCoordinators)];
+            
+            const readByCoordinators = uniqueCoordinators.filter(email => {
+              if (email === msg.sender) return false;
+              const safeEmail = email.replace(/\./g, '_');
+              const readTime = currentDrive?.lastRead?.[safeEmail];
+              if (!readTime) return false;
+              // Firestore string date ISO comparison
+              return new Date(readTime).getTime() >= new Date(msg.timestamp).getTime();
+            });
             
             return (
               <div 
@@ -468,10 +711,158 @@ export default function DriveRoom() {
                     <div className="msg-text" style={{ lineHeight: '1.3' }}>
                       {msg.text}
                       {msg.fileName && (
-                        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.3rem 0.5rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', marginTop: msg.text ? '0.3rem' : '0' }}>
-                          <Paperclip size={12} />
-                          <a href={msg.fileData} download={msg.fileName} style={{ color: 'inherit', textDecoration: 'underline' }}>{msg.fileName}</a>
-                        </div>
+                        (() => {
+                          const isImage = msg.fileName.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i);
+                          const isPdf = msg.fileName.match(/\.pdf$/i);
+                          const isExcel = msg.fileName.match(/\.(xls|xlsx|csv)$/i);
+
+                          if (isImage) {
+                            return (
+                              <div style={{ marginTop: msg.text ? '0.5rem' : '0', overflow: 'hidden', borderRadius: '8px' }}>
+                                <img 
+                                  src={msg.fileData} 
+                                  alt={msg.fileName} 
+                                  style={{ 
+                                    maxWidth: '100%', 
+                                    maxHeight: '200px', 
+                                    objectFit: 'cover', 
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    display: 'block'
+                                  }}
+                                  onClick={() => {
+                                    playSFX('click');
+                                    window.open(msg.fileData, '_blank');
+                                  }}
+                                />
+                              </div>
+                            );
+                          } else if (isPdf) {
+                            return (
+                              <div style={{ 
+                                marginTop: msg.text ? '0.5rem' : '0', 
+                                background: 'rgba(239, 68, 68, 0.08)', 
+                                border: '1px solid rgba(239, 68, 68, 0.3)',
+                                padding: '0.6rem 0.85rem', 
+                                borderRadius: '8px', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'space-between',
+                                gap: '1rem',
+                                fontSize: '0.85rem'
+                              }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                                  <span style={{ fontSize: '1.2rem', color: '#f87171', fontWeight: 'bold' }}>📕</span>
+                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }} title={msg.fileName}>
+                                    {msg.fileName}
+                                  </span>
+                                </div>
+                                <a 
+                                  href={msg.fileData} 
+                                  download={msg.fileName} 
+                                  onClick={() => playSFX('click')}
+                                  style={{ 
+                                    color: '#f87171', 
+                                    textDecoration: 'none', 
+                                    fontWeight: 'bold',
+                                    fontSize: '0.75rem',
+                                    textTransform: 'uppercase',
+                                    border: '1px solid rgba(239, 68, 68, 0.5)',
+                                    padding: '0.2rem 0.5rem',
+                                    borderRadius: '4px',
+                                    background: 'rgba(239, 68, 68, 0.05)',
+                                    flexShrink: 0
+                                  }}
+                                >
+                                  Get PDF
+                                </a>
+                              </div>
+                            );
+                          } else if (isExcel) {
+                            return (
+                              <div style={{ 
+                                marginTop: msg.text ? '0.5rem' : '0', 
+                                background: 'rgba(16, 185, 129, 0.08)', 
+                                border: '1px solid rgba(16, 185, 129, 0.3)',
+                                padding: '0.6rem 0.85rem', 
+                                borderRadius: '8px', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'space-between',
+                                gap: '1rem',
+                                fontSize: '0.85rem'
+                              }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                                  <span style={{ fontSize: '1.2rem', color: '#34d399', fontWeight: 'bold' }}>📊</span>
+                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }} title={msg.fileName}>
+                                    {msg.fileName}
+                                  </span>
+                                </div>
+                                <a 
+                                  href={msg.fileData} 
+                                  download={msg.fileName} 
+                                  onClick={() => playSFX('click')}
+                                  style={{ 
+                                    color: '#34d399', 
+                                    textDecoration: 'none', 
+                                    fontWeight: 'bold',
+                                    fontSize: '0.75rem',
+                                    textTransform: 'uppercase',
+                                    border: '1px solid rgba(16, 185, 129, 0.5)',
+                                    padding: '0.2rem 0.5rem',
+                                    borderRadius: '4px',
+                                    background: 'rgba(16, 185, 129, 0.05)',
+                                    flexShrink: 0
+                                  }}
+                                >
+                                  Get Sheet
+                                </a>
+                              </div>
+                            );
+                          } else {
+                            return (
+                              <div style={{ 
+                                marginTop: msg.text ? '0.5rem' : '0', 
+                                background: 'rgba(96, 165, 250, 0.08)', 
+                                border: '1px solid rgba(96, 165, 250, 0.3)',
+                                padding: '0.6rem 0.85rem', 
+                                borderRadius: '8px', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'space-between',
+                                gap: '1rem',
+                                fontSize: '0.85rem'
+                              }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                                  <Paperclip size={14} className="text-primary" />
+                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }} title={msg.fileName}>
+                                    {msg.fileName}
+                                  </span>
+                                </div>
+                                <a 
+                                  href={msg.fileData} 
+                                  download={msg.fileName} 
+                                  onClick={() => playSFX('click')}
+                                  style={{ 
+                                    color: 'var(--primary-color)', 
+                                    textDecoration: 'none', 
+                                    fontWeight: 'bold',
+                                    fontSize: '0.75rem',
+                                    textTransform: 'uppercase',
+                                    border: '1px solid var(--primary-color)',
+                                    padding: '0.2rem 0.5rem',
+                                    borderRadius: '4px',
+                                    background: 'rgba(96, 165, 250, 0.05)',
+                                    flexShrink: 0
+                                  }}
+                                >
+                                  Download
+                                </a>
+                              </div>
+                            );
+                          }
+                        })()
                       )}
                     </div>
                     <div style={{ fontSize: '0.6rem', opacity: 0.7, textAlign: 'right', whiteSpace: 'nowrap', alignSelf: 'flex-end', marginBottom: '-2px' }}>
@@ -479,10 +870,72 @@ export default function DriveRoom() {
                     </div>
                   </div>
 
+                  {/* Read Receipts for Coordinators */}
+                  {readByCoordinators.length > 0 && (
+                    <div style={{ 
+                      display: 'flex', 
+                      gap: '2px', 
+                      alignItems: 'center', 
+                      marginTop: '0.25rem', 
+                      justifyContent: 'flex-end',
+                      opacity: 0.85
+                    }}>
+                      <span style={{ fontSize: '0.55rem', color: isMe ? 'rgba(255,255,255,0.7)' : 'var(--text-secondary)', marginRight: '2px' }}>Seen by:</span>
+                      {readByCoordinators.map(email => {
+                        const nameKey = email.split('@')[0].split('.')[0].substring(0, 2).toUpperCase();
+                        return (
+                          <div 
+                            key={email}
+                            title={`Seen by ${email}`}
+                            style={{
+                              width: '14px',
+                              height: '14px',
+                              borderRadius: '50%',
+                              background: isMe ? 'rgba(255, 255, 255, 0.2)' : 'rgba(56, 189, 248, 0.25)',
+                              border: `1px solid ${isMe ? 'rgba(255, 255, 255, 0.4)' : 'rgba(56, 189, 248, 0.5)'}`,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.5rem',
+                              fontWeight: '800',
+                              color: '#fff',
+                              cursor: 'default'
+                            }}
+                          >
+                            {nameKey}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
                   {hoveredMsgId === msg.id && (
                     <div className={`msg-action-toolbar ${isMe ? 'is-me' : 'not-me'}`}>
                       <button onClick={() => setReplyToMsg(msg)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: '#38bdf8', padding: '0 0.3rem', fontWeight: 'bold' }}>Reply</button>
                       <div style={{ width: '1px', height: '14px', background: 'rgba(255,255,255,0.2)', margin: '0 0.2rem' }} />
+                      
+                      {canMessage && (
+                        <>
+                          <button 
+                            onClick={async () => {
+                              playSFX('click');
+                              try {
+                                await updateDoc(doc(db, 'drives', id, 'messages', msg.id), {
+                                  pinned: !msg.pinned
+                                });
+                                triggerToast(msg.pinned ? "Notice unpinned!" : "Notice pinned!");
+                              } catch (err) {
+                                console.error("Error toggling pin", err);
+                              }
+                            }} 
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: '#fbbf24', padding: '0 0.3rem', fontWeight: 'bold' }}
+                          >
+                            {msg.pinned ? 'Unpin' : 'Pin'}
+                          </button>
+                          <div style={{ width: '1px', height: '14px', background: 'rgba(255,255,255,0.2)', margin: '0 0.2rem' }} />
+                        </>
+                      )}
+
                       {['👍', '❤️', '😂'].map(emoji => (
                         <button key={emoji} onClick={() => handleReaction(msg.id, emoji, msg.reactions)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', padding: '0 0.2rem', transition: 'transform 0.1s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>{emoji}</button>
                       ))}

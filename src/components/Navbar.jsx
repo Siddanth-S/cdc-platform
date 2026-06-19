@@ -1,16 +1,41 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { GraduationCap, LogOut, User, Edit3 } from 'lucide-react';
+import { GraduationCap, LogOut, User, Edit3, Sun, Moon, Volume2, VolumeX } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import NotificationsDropdown from './NotificationsDropdown';
 import { parseEmailProfile } from '../utils/profileParser';
 import { db } from '../firebase';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { playSFX } from '../utils/sfx';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+  const [sfxEnabled, setSfxEnabled] = useState(() => localStorage.getItem('sfx_enabled') !== 'false');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    playSFX('click');
+  };
+
+  const toggleSfx = () => {
+    const next = !sfxEnabled;
+    setSfxEnabled(next);
+    localStorage.setItem('sfx_enabled', next ? 'true' : 'false');
+    if (next) {
+      setTimeout(() => playSFX('click'), 10);
+    }
+  };
+
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showHoverCard, setShowHoverCard] = useState(false);
   const [isEditingInline, setIsEditingInline] = useState(false);
@@ -105,10 +130,60 @@ export default function Navbar() {
           <div style={{ fontWeight: '500', fontSize: '0.9rem' }}>{profileData?.name || user?.email.split('@')[0]}</div>
           <div style={{ fontSize: '0.75rem', color: 'var(--primary-color)', fontWeight: '600', letterSpacing: '0.5px' }}>{user?.role}</div>
         </div>
-        
+
+        {/* Theme and SFX Toggles */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button
+            onClick={toggleTheme}
+            className="cyber-logout-btn"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            style={{
+              padding: '0.5rem',
+              borderRadius: '50%',
+              color: 'var(--primary-color)',
+              background: 'rgba(59, 130, 246, 0.08)',
+              border: '1px solid var(--border-color)',
+              boxShadow: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '36px',
+              height: '36px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+          
+          <button
+            onClick={toggleSfx}
+            className="cyber-logout-btn"
+            title={sfxEnabled ? 'Disable Sound Effects' : 'Enable Sound Effects'}
+            style={{
+              padding: '0.5rem',
+              borderRadius: '50%',
+              color: 'var(--primary-color)',
+              background: 'rgba(59, 130, 246, 0.08)',
+              border: '1px solid var(--border-color)',
+              boxShadow: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '36px',
+              height: '36px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {sfxEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+          </button>
+        </div>
+
         <div style={{ position: 'relative' }}>
           <button 
             onClick={() => {
+              playSFX('click');
               if (showHoverCard) {
                 setShowHoverCard(false);
                 setIsEditingInline(false);
@@ -198,7 +273,7 @@ export default function Navbar() {
                     <div style={{ height: '1px', background: 'rgba(59, 130, 246, 0.3)', margin: '0.5rem 0' }}></div>
                     
                     <button 
-                      onClick={handleOpenProfile} 
+                      onClick={() => { playSFX('click'); handleOpenProfile(); }} 
                       style={{ 
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.6rem', background: 'transparent', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.4)', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s ease', marginBottom: '0.5rem'
                       }}
@@ -209,7 +284,7 @@ export default function Navbar() {
                     </button>
                     
                     <button 
-                      onClick={handleLogout} 
+                      onClick={() => { playSFX('click'); handleLogout(); }} 
                       style={{ 
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.6rem', background: 'rgba(244, 63, 94, 0.1)', color: '#f43f5e', border: '1px solid rgba(244, 63, 94, 0.3)', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s ease'
                       }}

@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Send, ArrowLeft, Paperclip, X, User, Plus } from 'lucide-react';
 import { db } from '../firebase';
-import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove, deleteField } from 'firebase/firestore';
+import { playSFX } from '../utils/sfx';
 
 export default function DirectMessage() {
   const { id } = useParams();
@@ -41,7 +42,15 @@ export default function DirectMessage() {
       if (docSnap.exists()) {
         const data = { id: docSnap.id, ...docSnap.data() };
         if (data.participants.includes(user.email)) {
-          setDmData(data);
+          setDmData(prev => {
+            if (prev && prev.messages && data.messages && data.messages.length > prev.messages.length) {
+              const lastMsg = data.messages[data.messages.length - 1];
+              if (lastMsg.sender !== user.email) {
+                playSFX('received');
+              }
+            }
+            return data;
+          });
         } else {
           navigate('/dashboard');
         }
@@ -52,6 +61,33 @@ export default function DirectMessage() {
 
     return () => unsubscribe();
   }, [id, user, navigate]);
+
+  // Presence Heartbeat
+  useEffect(() => {
+    if (!id || !user?.email) return;
+    const safeEmail = user.email.replace(/\./g, '_');
+
+    const updatePresence = async () => {
+      try {
+        await updateDoc(doc(db, 'dms', id), {
+          [`activeUsers.${safeEmail}`]: new Date().toISOString()
+        });
+      } catch (err) {
+        console.error("Presence update failed", err);
+      }
+    };
+
+    updatePresence();
+    const interval = setInterval(updatePresence, 10000);
+
+    return () => {
+      clearInterval(interval);
+      const dmRef = doc(db, 'dms', id);
+      updateDoc(dmRef, {
+        [`activeUsers.${safeEmail}`]: deleteField()
+      }).catch(err => console.error("Presence cleanup failed", err));
+    };
+  }, [id, user?.email]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -79,6 +115,7 @@ export default function DirectMessage() {
     }
     
     try {
+      playSFX('sent');
       await updateDoc(doc(db, 'dms', id), {
         messages: arrayUnion({
           id: Date.now(),
@@ -150,7 +187,10 @@ export default function DirectMessage() {
 
   if (!dmData) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading Direct Message...</div>;
 
-  const otherPerson = dmData.participants.find(p => p !== user.email);
+  const otherPerson = dmData.participants.find(p => p !== user?.email);
+  const otherSafeEmail = otherPerson ? otherPerson.replace(/\./g, '_') : '';
+  const otherLastSeen = dmData?.activeUsers?.[otherSafeEmail];
+  const isOnline = otherLastSeen && (new Date().getTime() - new Date(otherLastSeen).getTime() < 20000);
 
   const formatName = (email) => {
     if (!email) return '';
@@ -176,7 +216,21 @@ export default function DirectMessage() {
           </div>
           <div>
             <h2 style={{ margin: 0, fontSize: '1.25rem' }}>{formatName(otherPerson)}</h2>
-            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Direct Message</p>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              Direct Message
+              <span style={{ 
+                display: 'inline-block', 
+                width: '8px', 
+                height: '8px', 
+                borderRadius: '50%', 
+                background: isOnline ? 'var(--success-color)' : '#94a3b8', 
+                boxShadow: isOnline ? '0 0 8px var(--success-color)' : 'none',
+                marginLeft: '2px'
+              }} />
+              <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>
+                {isOnline ? 'Online' : 'Offline'}
+              </span>
+            </p>
           </div>
         </div>
       </div>
@@ -233,10 +287,158 @@ export default function DirectMessage() {
                     <div className="msg-text" style={{ lineHeight: '1.3' }}>
                       {msg.text}
                       {msg.fileName && (
-                        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.3rem 0.5rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', marginTop: msg.text ? '0.3rem' : '0' }}>
-                          <Paperclip size={12} />
-                          <a href={msg.fileData} download={msg.fileName} style={{ color: 'inherit', textDecoration: 'underline' }}>{msg.fileName}</a>
-                        </div>
+                        (() => {
+                          const isImage = msg.fileName.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i);
+                          const isPdf = msg.fileName.match(/\.pdf$/i);
+                          const isExcel = msg.fileName.match(/\.(xls|xlsx|csv)$/i);
+
+                          if (isImage) {
+                            return (
+                              <div style={{ marginTop: msg.text ? '0.5rem' : '0', overflow: 'hidden', borderRadius: '8px' }}>
+                                <img 
+                                  src={msg.fileData} 
+                                  alt={msg.fileName} 
+                                  style={{ 
+                                    maxWidth: '100%', 
+                                    maxHeight: '200px', 
+                                    objectFit: 'cover', 
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    display: 'block'
+                                  }}
+                                  onClick={() => {
+                                    playSFX('click');
+                                    window.open(msg.fileData, '_blank');
+                                  }}
+                                />
+                              </div>
+                            );
+                          } else if (isPdf) {
+                            return (
+                              <div style={{ 
+                                marginTop: msg.text ? '0.5rem' : '0', 
+                                background: 'rgba(239, 68, 68, 0.08)', 
+                                border: '1px solid rgba(239, 68, 68, 0.3)',
+                                padding: '0.6rem 0.85rem', 
+                                borderRadius: '8px', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'space-between',
+                                gap: '1rem',
+                                fontSize: '0.85rem'
+                              }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                                  <span style={{ fontSize: '1.2rem', color: '#f87171', fontWeight: 'bold' }}>📕</span>
+                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }} title={msg.fileName}>
+                                    {msg.fileName}
+                                  </span>
+                                </div>
+                                <a 
+                                  href={msg.fileData} 
+                                  download={msg.fileName} 
+                                  onClick={() => playSFX('click')}
+                                  style={{ 
+                                    color: '#f87171', 
+                                    textDecoration: 'none', 
+                                    fontWeight: 'bold',
+                                    fontSize: '0.75rem',
+                                    textTransform: 'uppercase',
+                                    border: '1px solid rgba(239, 68, 68, 0.5)',
+                                    padding: '0.2rem 0.5rem',
+                                    borderRadius: '4px',
+                                    background: 'rgba(239, 68, 68, 0.05)',
+                                    flexShrink: 0
+                                  }}
+                                >
+                                  Get PDF
+                                </a>
+                              </div>
+                            );
+                          } else if (isExcel) {
+                            return (
+                              <div style={{ 
+                                marginTop: msg.text ? '0.5rem' : '0', 
+                                background: 'rgba(16, 185, 129, 0.08)', 
+                                border: '1px solid rgba(16, 185, 129, 0.3)',
+                                padding: '0.6rem 0.85rem', 
+                                borderRadius: '8px', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'space-between',
+                                gap: '1rem',
+                                fontSize: '0.85rem'
+                              }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                                  <span style={{ fontSize: '1.2rem', color: '#34d399', fontWeight: 'bold' }}>📊</span>
+                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }} title={msg.fileName}>
+                                    {msg.fileName}
+                                  </span>
+                                </div>
+                                <a 
+                                  href={msg.fileData} 
+                                  download={msg.fileName} 
+                                  onClick={() => playSFX('click')}
+                                  style={{ 
+                                    color: '#34d399', 
+                                    textDecoration: 'none', 
+                                    fontWeight: 'bold',
+                                    fontSize: '0.75rem',
+                                    textTransform: 'uppercase',
+                                    border: '1px solid rgba(16, 185, 129, 0.5)',
+                                    padding: '0.2rem 0.5rem',
+                                    borderRadius: '4px',
+                                    background: 'rgba(16, 185, 129, 0.05)',
+                                    flexShrink: 0
+                                  }}
+                                >
+                                  Get Sheet
+                                </a>
+                              </div>
+                            );
+                          } else {
+                            return (
+                              <div style={{ 
+                                marginTop: msg.text ? '0.5rem' : '0', 
+                                background: 'rgba(96, 165, 250, 0.08)', 
+                                border: '1px solid rgba(96, 165, 250, 0.3)',
+                                padding: '0.6rem 0.85rem', 
+                                borderRadius: '8px', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'space-between',
+                                gap: '1rem',
+                                fontSize: '0.85rem'
+                              }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                                  <Paperclip size={14} className="text-primary" />
+                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }} title={msg.fileName}>
+                                    {msg.fileName}
+                                  </span>
+                                </div>
+                                <a 
+                                  href={msg.fileData} 
+                                  download={msg.fileName} 
+                                  onClick={() => playSFX('click')}
+                                  style={{ 
+                                    color: 'var(--primary-color)', 
+                                    textDecoration: 'none', 
+                                    fontWeight: 'bold',
+                                    fontSize: '0.75rem',
+                                    textTransform: 'uppercase',
+                                    border: '1px solid var(--primary-color)',
+                                    padding: '0.2rem 0.5rem',
+                                    borderRadius: '4px',
+                                    background: 'rgba(96, 165, 250, 0.05)',
+                                    flexShrink: 0
+                                  }}
+                                >
+                                  Download
+                                </a>
+                              </div>
+                            );
+                          }
+                        })()
                       )}
                     </div>
                     <div style={{ fontSize: '0.6rem', opacity: 0.7, textAlign: 'right', whiteSpace: 'nowrap', alignSelf: 'flex-end', marginBottom: '-2px' }}>
