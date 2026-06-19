@@ -87,6 +87,14 @@ export default function Layout() {
           )}
         </AnimatePresence>
 
+        {/* Dims and closes the rest of the page while the mobile DM drawer is
+            open - without it, the dashboard underneath was fully visible and
+            tappable in the strip the drawer didn't cover, which read as
+            broken rather than an intentional overlay. */}
+        {mobileSidebarOpen && (
+          <div className="mobile-sidebar-backdrop" onClick={() => setMobileSidebarOpen(false)} />
+        )}
+
         {/* Left Sidebar for Chats */}
         <div className={`sidebar cyber-sidebar ${mobileSidebarOpen ? 'mobile-open' : ''} ${!desktopSidebarOpen ? 'desktop-closed' : ''}`} style={{ margin: '0 1rem 1rem 1rem', borderRadius: '16px', height: '100%' }}>
           <div style={{ padding: '1.25rem', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', fontSize: '1.1rem' }}>

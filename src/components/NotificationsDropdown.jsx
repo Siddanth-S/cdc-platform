@@ -142,13 +142,13 @@ export default function NotificationsDropdown() {
             }}
           >
             <div style={{
-              padding: '1rem',
+              padding: '0.7rem 0.9rem',
               borderBottom: '1px solid var(--border-color)',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center'
             }}>
-              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '600', color: 'var(--text-primary)' }}>Notifications</h3>
+              <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: '600', color: 'var(--text-primary)' }}>Notifications</h3>
               {unreadCount > 0 && (
                 <button onClick={markAllAsRead} style={{
                   background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: '500'
@@ -169,10 +169,10 @@ export default function NotificationsDropdown() {
                     key={notif.id}
                     onClick={() => !notif.read && markAsRead(notif.id)}
                     style={{
-                      padding: '1rem',
+                      padding: '0.65rem 0.9rem',
                       borderBottom: '1px solid var(--border-color)',
                       display: 'flex',
-                      gap: '0.75rem',
+                      gap: '0.6rem',
                       cursor: notif.read ? 'default' : 'pointer',
                       background: notif.read ? 'transparent' : 'rgba(59, 130, 246, 0.05)',
                       transition: 'background 0.2s'
@@ -184,10 +184,10 @@ export default function NotificationsDropdown() {
                       {notif.read ? <CheckCircle2 size={16} /> : <Circle size={16} fill="var(--primary-color)" />}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.85rem', color: notif.read ? 'var(--text-secondary)' : 'var(--text-primary)', lineHeight: '1.4' }}>
+                      <p style={{ margin: '0 0 0.2rem 0', fontSize: '0.8rem', color: notif.read ? 'var(--text-secondary)' : 'var(--text-primary)', lineHeight: '1.3' }}>
                         {notif.message}
                       </p>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                      <span style={{ fontSize: '0.66rem', color: 'var(--text-secondary)' }}>
                         {new Date(notif.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                       </span>
                     </div>

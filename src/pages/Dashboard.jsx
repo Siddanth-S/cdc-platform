@@ -245,7 +245,7 @@ export default function Dashboard() {
             <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
             <input 
               type="text" 
-              placeholder="Search for companies or roles..." 
+              placeholder="Search companies, roles..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="cyber-input"
@@ -363,7 +363,7 @@ export default function Dashboard() {
 
               {/* Data Rows */}
               <div className="cyber-card-body" style={{ padding: '0 1.5rem', flex: 1 }}>
-                <div style={{ background: 'var(--input-bg)', padding: '1.25rem', borderRadius: '12px', marginBottom: '1.5rem', border: '1px solid var(--border-color)', boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.05)' }}>
+                <div className="drive-info-box" style={{ background: 'var(--input-bg)', padding: '1.25rem', borderRadius: '12px', marginBottom: '1.5rem', border: '1px solid var(--border-color)', boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.05)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.85rem', alignItems: 'center' }}>
                     <span style={{ color: 'var(--text-secondary)' }}>SPOC:</span>
                     <span className="cyber-badge">{drive.coordinator.split('@')[0]}</span>
@@ -657,7 +657,7 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {[
                 { label: 'All Drives', mode: 'ALL', description: 'Show all available drives' },
                 { label: 'Active', mode: 'ACTIVE', description: 'Only show currently active drives' },
@@ -679,7 +679,7 @@ export default function Dashboard() {
                       background: isActive ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
                       border: isActive ? '1px solid var(--primary-color)' : '1px solid var(--border-color)',
                       borderRadius: '10px',
-                      padding: '0.75rem 1rem',
+                      padding: '0.6rem 0.85rem',
                       textAlign: 'left',
                       cursor: 'pointer',
                       transition: 'all 0.2s',
@@ -701,8 +701,8 @@ export default function Dashboard() {
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: '600', color: isActive ? 'var(--primary-color)' : 'var(--text-primary)', fontSize: '0.9rem' }}>{opt.label}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{opt.description}</div>
+                      <div style={{ fontWeight: '600', color: isActive ? 'var(--primary-color)' : 'var(--text-primary)', fontSize: '0.88rem' }}>{opt.label}</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '1px' }}>{opt.description}</div>
                     </div>
                     {isActive && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary-color)' }} />}
                   </button>

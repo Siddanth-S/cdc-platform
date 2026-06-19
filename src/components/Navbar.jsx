@@ -138,11 +138,11 @@ export default function Navbar() {
   return (
     <nav className="navbar-cyber" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0, overflow: 'hidden', flexShrink: 1 }}>
-        <span className="cdc-logo-mark" style={{ width: 52, height: 50 }} aria-hidden="true" />
+        <span className="cdc-logo-mark navbar-logo-mark" style={{ width: 52, height: 50 }} aria-hidden="true" />
         <div style={{ minWidth: 0, overflow: 'hidden' }}>
           <h2 className="cyber-glitch-text" style={{ margin: 0, fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Career Development Center, NITK</h2>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden' }}>
-            <span className="navbar-subtitle-text">Placement and Internship Portal</span>
+            <span className="navbar-subtitle-text" style={{ overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>Placement and Internship Portal</span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--success-color)', padding: '3px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold', border: '1px solid rgba(16, 185, 129, 0.3)', flexShrink: 0 }}>
               <span className="live-dot" style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success-color)' }}></span> <span className="live-badge-text">LIVE</span>
             </span>

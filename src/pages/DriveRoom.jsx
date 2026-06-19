@@ -485,7 +485,7 @@ export default function DriveRoom() {
               <ArrowLeft size={24} />
             </button>
             <div>
-              <h2 style={{ margin: 0 }}>{currentDrive.company}</h2>
+              <h2 style={{ margin: 0, fontSize: '1.4rem' }}>{currentDrive.company}</h2>
               <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                 Primary SPOC: <span style={{ color: 'var(--primary-color)' }}>{currentDrive.coordinator.split('@')[0]}</span>
               </p>

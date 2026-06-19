@@ -340,6 +340,9 @@ p {
   .cyber-glitch-text {
     font-size: 2rem !important;
   }
+  .navbar-cyber .cyber-glitch-text {
+    font-size: 1.1rem !important;
+  }
   .dashboard-grid {
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
   }
@@ -376,6 +379,12 @@ p {
   .sidebar.mobile-open, .cyber-sidebar.mobile-open {
     transform: translateX(0) !important;
     width: 280px !important;
+  }
+  .mobile-sidebar-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 999;
   }
   .main-content {
     padding: 0 1rem 1rem 1rem;
@@ -968,9 +977,16 @@ p {
 @media (max-width: 768px) {
   /* Scale down massive headers */
   .cyber-glitch-text {
-    font-size: 1.75rem !important;
+    font-size: 1.4rem !important;
   }
-  
+  /* The navbar brand reuses .cyber-glitch-text for its gradient text, but
+     it's persistent chrome on every screen, not a page title - it needs
+     to be much smaller than a page heading or it eats the whole bar and
+     clips the rest of the navbar content. */
+  .navbar-cyber .cyber-glitch-text {
+    font-size: 0.95rem !important;
+  }
+
   /* Make message bubbles utilize more width and be smaller */
   .msg-wrapper {
     gap: 0.4rem !important;
@@ -1183,22 +1199,92 @@ p {
     padding: 0.75rem !important;
   }
   .cyber-card-header, .cyber-card-footer {
-    padding: 0.85rem !important;
+    padding: 0.7rem 0.85rem !important;
   }
   .cyber-card-body {
     padding: 0 0.85rem !important;
+  }
+  .cyber-card-header h3 {
+    font-size: 1.05rem !important;
   }
   .cyber-modal-container {
     padding: 1rem !important;
   }
   .drive-room-header {
     padding: 0.6rem 0.75rem !important;
+    margin-bottom: 0.6rem !important;
+  }
+  .drive-room-header h2 {
+    font-size: 1.05rem !important;
+  }
+  .drive-room-header p {
+    font-size: 0.72rem !important;
   }
   .drive-chat-body {
     padding: 0.75rem !important;
   }
   .navbar-profile-dropdown {
     padding: 1rem !important;
+  }
+
+  /* Navbar: logo, brand text and the icon cluster are all sized for
+     desktop. On a phone they need to be much smaller and tighter or the
+     bar overflows its own height and the brand text clips. */
+  .navbar-cyber {
+    padding: 0.6rem 0.75rem !important;
+  }
+  .navbar-logo-mark {
+    width: 30px !important;
+    height: 29px !important;
+  }
+  .navbar-cyber a[href="/"] {
+    gap: 0.5rem !important;
+  }
+  .navbar-admin-link {
+    height: 32px !important;
+  }
+  .navbar-profile-trigger {
+    height: 32px !important;
+  }
+  .logo-glow {
+    padding: 0.45rem !important;
+  }
+  .logo-glow svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  /* Drive header action buttons ("Manage Drive" / "Leave Drive") were
+     wrapping their label onto a second line at this width - keep them on
+     one line and let them shrink instead. */
+  .drive-room-header .btn-glass {
+    padding: 0.5rem 0.7rem !important;
+    font-size: 0.78rem !important;
+    white-space: nowrap !important;
+    gap: 0.35rem !important;
+  }
+
+  /* Per-drive info box (SPOC/Status) inside each dashboard card - was
+     using desktop-scale padding+margin for two short rows of text. */
+  .drive-info-box {
+    padding: 0.65rem 0.85rem !important;
+    margin-bottom: 0.85rem !important;
+  }
+
+  .secondary-spoc-bar {
+    padding: 0.6rem 0.85rem !important;
+    margin-bottom: 0.6rem !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Admin stat tiles: minmax(180px,...) only ever fits one column on a
+     phone, turning 4 short numbers into 4 full-width rows. */
+  .admin-stat-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.65rem !important;
+  }
+  .admin-stat-grid .cyber-card {
+    padding: 0.85rem !important;
   }
 }
 
