@@ -505,17 +505,9 @@ p {
   mask-repeat: no-repeat;
   -webkit-mask-position: center;
   mask-position: center;
-  filter: drop-shadow(0 0 4px var(--primary-color)) drop-shadow(0 0 9px rgba(96, 165, 250, 0.7));
-  transition: filter 0.3s ease;
-}
-
-@keyframes cdc-logo-pulse {
-  0%, 100% { filter: drop-shadow(0 0 4px var(--primary-color)) drop-shadow(0 0 9px rgba(96, 165, 250, 0.7)); }
-  50% { filter: drop-shadow(0 0 7px var(--primary-color)) drop-shadow(0 0 16px rgba(96, 165, 250, 0.9)); }
-}
-
-.cdc-logo-mark-pulse {
-  animation: cdc-logo-pulse 3s infinite ease-in-out;
+  /* Static, not animated - an animated filter on a masked element repaints
+     every frame forever and was a real source of jank while zooming. */
+  filter: drop-shadow(0 0 6px rgba(96, 165, 250, 0.75));
 }
 
 

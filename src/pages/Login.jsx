@@ -143,9 +143,7 @@ export default function Login() {
           
           {/* Logo */}
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
-            <div className="logo-glow" style={{ background: 'rgba(59, 130, 246, 0.15)', padding: '1rem', borderRadius: '50%', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
-              <span className="cdc-logo-mark" style={{ width: 44, height: 42 }} aria-hidden="true" />
-            </div>
+            <span className="cdc-logo-mark" style={{ width: 84, height: 80 }} aria-hidden="true" />
           </div>
           <h1 style={{ marginBottom: '0.25rem', fontSize: '1.6rem', letterSpacing: '-0.5px' }}>NITK CDC Portal</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.75rem' }}>Career Development Center</p>
