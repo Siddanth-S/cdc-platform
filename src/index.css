@@ -505,9 +505,21 @@ p {
   mask-repeat: no-repeat;
   -webkit-mask-position: center;
   mask-position: center;
-  /* Static, not animated - an animated filter on a masked element repaints
-     every frame forever and was a real source of jank while zooming. */
+  /* Static by default - an animated filter on a masked element repaints
+     every frame forever, which is real cost if the element is always
+     mounted (e.g. the navbar). Use .cdc-logo-mark-breathe to opt in to
+     the pulse animation on a single, occasionally-mounted instance like
+     the login page, where that cost doesn't multiply. */
   filter: drop-shadow(0 0 6px rgba(96, 165, 250, 0.75));
+}
+
+@keyframes cdc-logo-breathe {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 6px rgba(96, 165, 250, 0.75)); }
+  50% { transform: scale(1.08); filter: drop-shadow(0 0 16px rgba(96, 165, 250, 1)); }
+}
+
+.cdc-logo-mark-breathe {
+  animation: cdc-logo-breathe 2.8s infinite ease-in-out;
 }
 
 
@@ -531,12 +543,16 @@ p {
 
 .cyber-card {
   position: relative;
+  /* No backdrop-filter here on purpose: this renders once per drive in the
+     dashboard grid, and backdrop-filter's blur cost multiplies by however
+     many cards are on screen - with dozens of drives that's what was
+     actually causing the zoom/scroll stutter on the dashboard. The
+     gradient is already opaque enough that the blur added little anyway. */
   background: linear-gradient(180deg, var(--card-bg-start) 0%, var(--card-bg-end) 100%);
   border: 1px solid var(--border-color);
-  backdrop-filter: blur(12px);
   border-radius: 16px;
   overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
 }
 .cyber-card::before {
   content: '';
