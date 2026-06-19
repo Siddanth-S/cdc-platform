@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Plus, Users, Search, Pin, CheckCircle2, Filter, X, Lock } from 'lucide-react';
+import { Building2, Plus, Users, Search, Pin, CheckCircle2, Filter, X, Lock, LayoutDashboard } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, onSnapshot, doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
@@ -238,9 +238,14 @@ export default function Dashboard() {
           <p style={{ color: 'var(--text-secondary)' }}>Join drives to receive real-time updates.</p>
         </div>
         {user?.role === 'HEAD' && (
-          <button onClick={() => setShowModal(true)} className="btn btn-create-glow" style={{ padding: '0.75rem 1.5rem', fontSize: '1rem', fontWeight: 'bold' }}>
-            <Plus size={18} /> Create Drive
-          </button>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <button onClick={() => navigate('/admin')} className="btn-glass" style={{ padding: '0.75rem 1.25rem', fontSize: '1rem', fontWeight: 'bold' }}>
+              <LayoutDashboard size={18} /> Overview
+            </button>
+            <button onClick={() => setShowModal(true)} className="btn btn-create-glow" style={{ padding: '0.75rem 1.5rem', fontSize: '1rem', fontWeight: 'bold' }}>
+              <Plus size={18} /> Create Drive
+            </button>
+          </div>
         )}
       </div>
 

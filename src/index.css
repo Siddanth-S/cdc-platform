@@ -913,29 +913,6 @@ p {
   100% { left: 200%; }
 }
 
-/* Navbar admin link */
-.navbar-admin-link {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.5rem 0.85rem;
-  border-radius: 12px;
-  text-decoration: none;
-  color: var(--primary-color);
-  background: rgba(96, 165, 250, 0.08);
-  border: 1px solid var(--border-color);
-  font-weight: 600;
-  font-size: 0.8rem;
-  transition: all 0.25s ease;
-  height: 38px;
-  box-sizing: border-box;
-}
-.navbar-admin-link:hover {
-  background: rgba(96, 165, 250, 0.15);
-  border-color: var(--primary-color);
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.25);
-}
-
 /* Navbar profile trigger (avatar + name + role combined into one chip) */
 .navbar-profile-trigger {
   display: flex;
@@ -1041,13 +1018,7 @@ p {
     display: none !important;
   }
 
-  /* Compact admin link and profile chip to icon-only buttons on phones */
-  .navbar-admin-label {
-    display: none !important;
-  }
-  .navbar-admin-link {
-    padding: 0.5rem !important;
-  }
+  /* Compact profile chip to an icon-only button on phones */
   .navbar-profile-text {
     display: none !important;
   }
@@ -1272,11 +1243,6 @@ p {
   }
   .navbar-cyber > div:last-child {
     gap: 0.4rem !important;
-  }
-  .navbar-admin-link {
-    height: 28px !important;
-    width: 28px !important;
-    padding: 0 !important;
   }
   .navbar-profile-trigger {
     height: 28px !important;

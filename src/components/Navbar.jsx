@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, CircleUserRound, Edit3, Sun, Moon, LayoutDashboard } from 'lucide-react';
+import { LogOut, CircleUserRound, Edit3, Sun, Moon } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import NotificationsDropdown from './NotificationsDropdown';
 import { parseEmailProfile } from '../utils/profileParser';
@@ -151,16 +151,6 @@ export default function Navbar() {
       </Link>
 
       <div className="flex items-center gap-4" style={{ gap: '0.6rem', flexShrink: 0 }}>
-        {user?.role === 'HEAD' && (
-          <Link
-            to="/admin"
-            className="navbar-admin-link"
-            title="SPOC Overview Dashboard"
-          >
-            <LayoutDashboard size={16} /> <span className="navbar-admin-label">Overview</span>
-          </Link>
-        )}
-
         <NotificationsDropdown />
 
         <div style={{ position: 'relative' }}>
