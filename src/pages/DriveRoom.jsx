@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Send, ArrowLeft, ShieldAlert, Paperclip, X, MessageSquarePlus, LogOut, Plus, Edit3, Settings, Users, UserCog, Power } from 'lucide-react';
+import { Send, ArrowLeft, ShieldAlert, Paperclip, X, MessageSquarePlus, LogOut, Plus, Edit3, Settings, Users, UserCog, Power, Maximize2, Minimize2 } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, doc, getDocs, setDoc, updateDoc, increment, arrayUnion, arrayRemove, deleteField } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
@@ -43,6 +43,7 @@ export default function DriveRoom() {
   const [showEditBranchesModal, setShowEditBranchesModal] = useState(false);
   const [editBranches, setEditBranches] = useState([]);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
   
   const triggerToast = (msg) => {
     toast.success(msg, {
@@ -371,7 +372,25 @@ export default function DriveRoom() {
   const canLeave = !isHead && !isPriSpoc && !isSecSpoc;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
+    <div style={isFullScreen ? {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
+      zIndex: 9999,
+      background: 'radial-gradient(circle at 10% 20%, var(--bg-color) 0%, var(--bg-gradient-end) 100%)',
+      padding: '1rem 1.5rem',
+      display: 'flex',
+      flexDirection: 'column',
+      boxSizing: 'border-box',
+      transition: 'all 0.3s ease'
+    } : {
+      display: 'flex',
+      flexDirection: 'column',
+      height: 'calc(100vh - 120px)',
+      transition: 'all 0.3s ease'
+    }}>
 
       <div className="glass-panel" style={{ padding: '1rem 1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -385,7 +404,16 @@ export default function DriveRoom() {
             </p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <button 
+            onClick={() => setIsFullScreen(!isFullScreen)}
+            className="btn-glass secondary" 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1rem' }}
+            title={isFullScreen ? "Exit Full Screen" : "Full Screen"}
+          >
+            {isFullScreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+            <span>{isFullScreen ? "Minimize" : "Full Screen"}</span>
+          </button>
           {(isHead || isPriSpoc) && (
             <button 
               onClick={() => setShowSettingsModal(true)}

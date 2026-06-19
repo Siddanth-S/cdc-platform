@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Send, ArrowLeft, Paperclip, X, User, Plus } from 'lucide-react';
+import { Send, ArrowLeft, Paperclip, X, User, Plus, Maximize2, Minimize2 } from 'lucide-react';
 import { db } from '../firebase';
 import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove, deleteField } from 'firebase/firestore';
 const playSFX = () => {};
@@ -21,6 +21,7 @@ export default function DirectMessage() {
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const [lightboxImg, setLightboxImg] = useState(null);
+  const [isFullScreen, setIsFullScreen] = useState(false);
   
   // Capture the last read time when component mounts, so we know which messages are "new" to glow
   const [lastRead] = useState(() => Number(localStorage.getItem(`read_dm_${id}_${user?.email}`) || 0));
@@ -200,40 +201,70 @@ export default function DirectMessage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
-      <div className="glass-panel" style={{ padding: '1rem 1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <button onClick={() => navigate('/dashboard')} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>
-          <ArrowLeft size={24} />
-        </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{
-            width: '45px', height: '45px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(37, 99, 235, 0.2))',
-            border: '1px solid rgba(56, 189, 248, 0.3)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'var(--primary-color)', fontWeight: 'bold', fontSize: '1.2rem', flexShrink: 0
-          }}>
-            {otherPerson?.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <h2 style={{ margin: 0, fontSize: '1.25rem' }}>{formatName(otherPerson)}</h2>
-            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              Direct Message
-              <span style={{ 
-                display: 'inline-block', 
-                width: '8px', 
-                height: '8px', 
-                borderRadius: '50%', 
-                background: isOnline ? 'var(--success-color)' : '#94a3b8', 
-                boxShadow: isOnline ? '0 0 8px var(--success-color)' : 'none',
-                marginLeft: '2px'
-              }} />
-              <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>
-                {isOnline ? 'Online' : 'Offline'}
-              </span>
-            </p>
+    <div style={isFullScreen ? {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
+      zIndex: 9999,
+      background: 'radial-gradient(circle at 10% 20%, var(--bg-color) 0%, var(--bg-gradient-end) 100%)',
+      padding: '1rem 1.5rem',
+      display: 'flex',
+      flexDirection: 'column',
+      boxSizing: 'border-box',
+      transition: 'all 0.3s ease'
+    } : {
+      display: 'flex',
+      flexDirection: 'column',
+      height: 'calc(100vh - 120px)',
+      transition: 'all 0.3s ease'
+    }}>
+      <div className="glass-panel" style={{ padding: '1rem 1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button onClick={() => navigate('/dashboard')} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>
+            <ArrowLeft size={24} />
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{
+              width: '45px', height: '45px', borderRadius: '50%',
+              background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(37, 99, 235, 0.2))',
+              border: '1px solid rgba(56, 189, 248, 0.3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'var(--primary-color)', fontWeight: 'bold', fontSize: '1.2rem', flexShrink: 0
+            }}>
+              {otherPerson?.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1.25rem' }}>{formatName(otherPerson)}</h2>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                Direct Message
+                <span style={{ 
+                  display: 'inline-block', 
+                  width: '8px', 
+                  height: '8px', 
+                  borderRadius: '50%', 
+                  background: isOnline ? 'var(--success-color)' : '#94a3b8', 
+                  boxShadow: isOnline ? '0 0 8px var(--success-color)' : 'none',
+                  marginLeft: '2px'
+                }} />
+                <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>
+                  {isOnline ? 'Online' : 'Offline'}
+                </span>
+              </p>
+            </div>
           </div>
         </div>
+        
+        <button 
+          onClick={() => setIsFullScreen(!isFullScreen)}
+          className="btn-glass secondary" 
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1rem' }}
+          title={isFullScreen ? "Exit Full Screen" : "Full Screen"}
+        >
+          {isFullScreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          <span>{isFullScreen ? "Minimize" : "Full Screen"}</span>
+        </button>
       </div>
 
       <div className="glass-panel cyber-glow-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
