@@ -649,7 +649,7 @@ export default function DriveRoom() {
             return (
               <div 
                 key={msg.id} 
-                className={`drive-msg-container ${msg.id === id ? 'new-msg-glow' : ''}`}
+                className={`drive-msg-container msg-wrapper ${msg.id === id ? 'new-msg-glow' : ''}`}
                 onMouseEnter={() => { if (window.innerWidth > 768) setHoveredMsgId(msg.id); }}
                 onMouseLeave={() => { 
                   if (window.innerWidth > 768) {
@@ -662,7 +662,6 @@ export default function DriveRoom() {
                     setHoveredMsgId(hoveredMsgId === msg.id ? null : msg.id);
                   }
                 }}
-                className="msg-wrapper"
                 style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', position: 'relative', alignItems: 'flex-start' }}
               >
                 <div className="drive-msg-bubble" style={{ 
@@ -673,8 +672,8 @@ export default function DriveRoom() {
                   borderRadius: '16px', 
                   borderBottomRightRadius: isMe ? '4px' : '16px',
                   borderBottomLeftRadius: !isMe ? '4px' : '16px',
-                  maxWidth: isImageOnly ? '320px' : '75%',
-                  width: isImageOnly ? '100%' : 'auto',
+                  maxWidth: isImageOnly ? '320px' : '65%',
+                  width: isImageOnly ? '100%' : 'fit-content',
                   wordBreak: 'break-word',
                   boxShadow: isImageOnly ? 'none' : (isMe ? '0 4px 15px rgba(59, 130, 246, 0.3)' : 'var(--glass-shadow)'),
                   backdropFilter: isImageOnly ? 'none' : 'blur(8px)',

@@ -273,8 +273,8 @@ export default function DirectMessage() {
                   borderRadius: '16px', 
                   borderBottomRightRadius: isMe ? '4px' : '16px',
                   borderBottomLeftRadius: !isMe ? '4px' : '16px',
-                  maxWidth: isImageOnly ? '320px' : '75%',
-                  width: isImageOnly ? '100%' : 'auto',
+                  maxWidth: isImageOnly ? '320px' : '65%',
+                  width: isImageOnly ? '100%' : 'fit-content',
                   wordBreak: 'break-word',
                   boxShadow: isImageOnly ? 'none' : (isMe ? '0 4px 15px rgba(59, 130, 246, 0.3)' : 'var(--glass-shadow)'),
                   backdropFilter: isImageOnly ? 'none' : 'blur(8px)',
@@ -513,11 +513,6 @@ export default function DirectMessage() {
                         {emoji} {count}
                       </span>
                     ))}
-                  </div>
-                )}
-                {!isImageOnly && (
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                    {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                   </div>
                 )}
               </div>
