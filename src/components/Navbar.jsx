@@ -131,55 +131,6 @@ export default function Navbar() {
           <div style={{ fontSize: '0.75rem', color: 'var(--primary-color)', fontWeight: '600', letterSpacing: '0.5px' }}>{user?.role}</div>
         </div>
 
-        {/* Theme and SFX Toggles */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <button
-            onClick={toggleTheme}
-            className="cyber-logout-btn"
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            style={{
-              padding: '0.5rem',
-              borderRadius: '50%',
-              color: 'var(--primary-color)',
-              background: 'rgba(59, 130, 246, 0.08)',
-              border: '1px solid var(--border-color)',
-              boxShadow: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '36px',
-              height: '36px',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
-          
-          <button
-            onClick={toggleSfx}
-            className="cyber-logout-btn"
-            title={sfxEnabled ? 'Disable Sound Effects' : 'Enable Sound Effects'}
-            style={{
-              padding: '0.5rem',
-              borderRadius: '50%',
-              color: 'var(--primary-color)',
-              background: 'rgba(59, 130, 246, 0.08)',
-              border: '1px solid var(--border-color)',
-              boxShadow: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '36px',
-              height: '36px',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            {sfxEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-          </button>
-        </div>
-
         <div style={{ position: 'relative' }}>
           <button 
             onClick={() => {
@@ -213,14 +164,14 @@ export default function Navbar() {
                 position: 'absolute',
                 top: 'calc(100% + 12px)',
                 right: '0',
-                background: 'linear-gradient(to bottom right, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))',
+                background: 'linear-gradient(to bottom right, var(--card-bg-start), var(--card-bg-end))',
                 backdropFilter: 'blur(12px)',
                 border: '1px solid var(--primary-color)',
                 borderRadius: '16px',
                 padding: '1.2rem',
                 width: '320px',
                 maxWidth: 'calc(100vw - 2rem)',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(59, 130, 246, 0.2)',
+                boxShadow: '0 10px 30px var(--glass-shadow), 0 0 20px rgba(59, 130, 246, 0.2)',
                 zIndex: 1000,
                 pointerEvents: 'auto',
                 display: 'flex',
@@ -238,7 +189,7 @@ export default function Navbar() {
                   borderBottom: '10px solid var(--primary-color)'
                 }}></div>
                 <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
-                  <div style={{ fontWeight: 'bold', color: '#fff', fontSize: '1.1rem', letterSpacing: '0.5px' }}>{profileData.name}</div>
+                  <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', fontSize: '1.1rem', letterSpacing: '0.5px' }}>{profileData.name}</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{user?.email}</div>
                 </div>
                 
@@ -248,30 +199,57 @@ export default function Navbar() {
                   <>
                     <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.6rem 1rem', fontSize: '0.85rem', padding: '0 0.5rem' }}>
                       <span style={{ color: 'var(--primary-color)', fontWeight: '600' }}>Degree:</span>
-                      <span style={{ color: '#fff' }}>{profileData.degree}</span>
+                      <span style={{ color: 'var(--text-primary)' }}>{profileData.degree}</span>
                       
                       <span style={{ color: 'var(--primary-color)', fontWeight: '600' }}>Branch:</span>
-                      <span style={{ color: '#fff' }}>{profileData.branch}</span>
+                      <span style={{ color: 'var(--text-primary)' }}>{profileData.branch}</span>
                       
                       <span style={{ color: 'var(--primary-color)', fontWeight: '600' }}>Grad Year:</span>
-                      <span style={{ color: '#fff' }}>{profileData.gradYear}</span>
+                      <span style={{ color: 'var(--text-primary)' }}>{profileData.gradYear}</span>
                       
                       {profileData.phoneNumber && (
                         <>
                           <span style={{ color: 'var(--primary-color)', fontWeight: '600' }}>Phone:</span>
-                          <span style={{ color: '#fff' }}>{profileData.phoneNumber}</span>
+                          <span style={{ color: 'var(--text-primary)' }}>{profileData.phoneNumber}</span>
                         </>
                       )}
                       {profileData.personalEmail && (
                         <>
                           <span style={{ color: 'var(--primary-color)', fontWeight: '600' }}>Email:</span>
-                          <span style={{ color: '#fff', wordBreak: 'break-all' }}>{profileData.personalEmail}</span>
+                          <span style={{ color: 'var(--text-primary)', wordBreak: 'break-all' }}>{profileData.personalEmail}</span>
                         </>
                       )}
                     </div>
                     
                     <div style={{ height: '1px', background: 'rgba(59, 130, 246, 0.3)', margin: '0.5rem 0' }}></div>
                     
+                    {/* Theme Toggle inside Profile Menu */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Theme:</span>
+                      <button 
+                        onClick={toggleTheme}
+                        style={{ 
+                          background: 'rgba(59, 130, 246, 0.1)', 
+                          border: '1px solid var(--primary-color)', 
+                          color: 'var(--primary-color)',
+                          padding: '0.4rem 0.8rem', 
+                          borderRadius: '8px', 
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          fontSize: '0.8rem',
+                          fontWeight: 'bold',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+                        {theme === 'dark' ? 'Light' : 'Dark'}
+                      </button>
+                    </div>
+
+                    <div style={{ height: '1px', background: 'rgba(59, 130, 246, 0.3)', margin: '0.5rem 0' }}></div>
+
                     <button 
                       onClick={() => { playSFX('click'); handleOpenProfile(); }} 
                       style={{ 

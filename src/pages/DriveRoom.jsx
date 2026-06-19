@@ -66,6 +66,7 @@ export default function DriveRoom() {
   const [replyToMsg, setReplyToMsg] = useState(null);
   const [showReactionPickerId, setShowReactionPickerId] = useState(null);
   const fileInputRef = useRef(null);
+  const [lightboxImg, setLightboxImg] = useState(null);
 
   // Sync Current Drive
   useEffect(() => {
@@ -662,16 +663,16 @@ export default function DriveRoom() {
                 style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', position: 'relative', alignItems: 'flex-start' }}
               >
                 <div className="drive-msg-bubble" style={{ 
-                  background: isMe ? 'linear-gradient(135deg, var(--primary-color), #2563eb)' : 'rgba(15, 23, 42, 0.7)', 
+                  background: isMe ? 'linear-gradient(135deg, var(--primary-color), var(--primary-hover))' : 'var(--chat-bubble-incoming-bg)', 
                   color: isMe ? '#fff' : 'var(--text-primary)',
-                  border: isMe ? 'none' : '1px solid rgba(96, 165, 250, 0.15)',
+                  border: isMe ? 'none' : '1px solid var(--chat-bubble-incoming-border)',
                   padding: '0.5rem 0.75rem', 
                   borderRadius: '16px', 
                   borderBottomRightRadius: isMe ? '4px' : '16px',
                   borderBottomLeftRadius: !isMe ? '4px' : '16px',
                   maxWidth: '75%',
                   wordBreak: 'break-word',
-                  boxShadow: isMe ? '0 4px 15px rgba(59, 130, 246, 0.3)' : '0 4px 15px rgba(0,0,0,0.2)',
+                  boxShadow: isMe ? '0 4px 15px rgba(59, 130, 246, 0.3)' : 'var(--glass-shadow)',
                   backdropFilter: 'blur(8px)',
                   position: 'relative',
                   marginTop: '0.2rem'
@@ -701,7 +702,7 @@ export default function DriveRoom() {
                     </div>
                   )}
                   {msg.replyTo && (
-                    <div style={{ background: 'rgba(0,0,0,0.2)', borderLeft: '3px solid rgba(255,255,255,0.4)', padding: '0.3rem 0.5rem', borderRadius: '4px', marginBottom: '0.3rem', fontSize: '0.75rem', opacity: 0.8 }}>
+                    <div style={{ background: 'rgba(0,0,0,0.1)', borderLeft: '3px solid var(--primary-color)', padding: '0.3rem 0.5rem', borderRadius: '4px', marginBottom: '0.3rem', fontSize: '0.75rem', opacity: 0.8 }}>
                       <div style={{ fontWeight: 'bold', marginBottom: '0.1rem' }}>{formatName(msg.replyTo.sender)}</div>
                       <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{msg.replyTo.text}</div>
                     </div>
@@ -733,7 +734,7 @@ export default function DriveRoom() {
                                   }}
                                   onClick={() => {
                                     playSFX('click');
-                                    window.open(msg.fileData, '_blank');
+                                    setLightboxImg(msg.fileData);
                                   }}
                                 />
                               </div>
@@ -961,7 +962,7 @@ export default function DriveRoom() {
                         return acc;
                       }, {})
                     ).map(([emoji, count]) => (
-                      <span key={emoji} style={{ background: 'rgba(30, 41, 59, 0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '0.1rem 0.4rem', fontSize: '0.75rem' }}>
+                      <span key={emoji} style={{ background: 'var(--input-bg)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '0.1rem 0.4rem', fontSize: '0.75rem', color: 'var(--text-primary)' }}>
                         {emoji} {count}
                       </span>
                     ))}
@@ -974,14 +975,14 @@ export default function DriveRoom() {
         </div>
 
         {canMessage ? (
-          <div className="glass-panel" style={{ padding: '1rem', borderTop: '1px solid rgba(255, 255, 255, 0.05)', background: 'rgba(15, 23, 42, 0.6)' }}>
+          <div className="glass-panel" style={{ padding: '1rem', borderTop: '1px solid var(--border-color)', background: 'var(--navbar-bg)' }}>
             {currentDrive?.typing?.filter(e => e !== user.email).length > 0 && (
               <div style={{ fontSize: '0.75rem', color: '#38bdf8', padding: '0 0.5rem 0.5rem 0.5rem', fontStyle: 'italic', animation: 'fadeIn 0.3s' }}>
                 {currentDrive.typing.filter(e => e !== user.email).map(e => e.split('@')[0]).join(', ')} is typing...
               </div>
             )}
             {replyToMsg && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.3)', padding: '0.5rem 1rem', borderRadius: '8px', marginBottom: '0.5rem', borderLeft: '3px solid #38bdf8' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--input-bg)', padding: '0.5rem 1rem', borderRadius: '8px', marginBottom: '0.5rem', borderLeft: '3px solid var(--primary-color)' }}>
                 <div style={{ fontSize: '0.85rem' }}>
                   <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>Replying to {replyToMsg.sender.split('@')[0]}</span>
                   <div style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{replyToMsg.text}</div>
@@ -1021,7 +1022,7 @@ export default function DriveRoom() {
             </form>
           </div>
         ) : (
-          <div style={{ padding: '1.25rem', borderTop: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.15)', textAlign: 'center', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
+          <div style={{ padding: '1.25rem', borderTop: '1px solid var(--border-color)', background: 'var(--input-bg)', textAlign: 'center', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
             <ShieldAlert size={18} className="text-warning-color" /> Only the assigned Primary SPOC and Admins can send messages here.
           </div>
         )}
@@ -1207,6 +1208,67 @@ export default function DriveRoom() {
               <button onClick={confirmLeaveDrive} className="btn w-full" style={{ padding: '0.8rem', background: 'var(--warning-color)', color: '#fff' }}>Leave Now</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Fullscreen Image Lightbox Overlay */}
+      {lightboxImg && (
+        <div 
+          onClick={() => setLightboxImg(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(11, 15, 25, 0.9)',
+            backdropFilter: 'blur(12px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1100,
+            cursor: 'zoom-out',
+            animation: 'fadeIn 0.25s ease-out'
+          }}
+        >
+          <button 
+            onClick={(e) => { e.stopPropagation(); setLightboxImg(null); }}
+            style={{
+              position: 'absolute',
+              top: '1.5rem',
+              right: '1.5rem',
+              background: 'rgba(255, 255, 255, 0.1)',
+              border: 'none',
+              color: '#fff',
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              fontSize: '1.5rem',
+              fontWeight: 'bold',
+              transition: 'all 0.2s ease',
+              zIndex: 1101
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.4)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+          >
+            &times;
+          </button>
+          <img 
+            src={lightboxImg} 
+            alt="Full preview"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '90%',
+              maxHeight: '90%',
+              objectFit: 'contain',
+              borderRadius: '8px',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              cursor: 'default',
+              animation: 'zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+            }}
+          />
         </div>
       )}
     </div>

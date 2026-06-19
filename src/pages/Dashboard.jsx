@@ -304,11 +304,8 @@ export default function Dashboard() {
                       margin: 0, 
                       fontSize: '1.25rem', 
                       letterSpacing: '0.5px', 
-                      background: 'linear-gradient(135deg, #fff 0%, #94a3b8 100%)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      fontWeight: '700',
-                      textShadow: '0 2px 10px rgba(255,255,255,0.1)'
+                      color: 'var(--text-primary)',
+                      fontWeight: '700'
                     }}>
                       {drive.company}
                     </h3>
@@ -371,7 +368,7 @@ export default function Dashboard() {
 
               {/* Data Rows */}
               <div style={{ padding: '0 1.5rem', flex: 1 }}>
-                <div style={{ background: 'rgba(0, 0, 0, 0.2)', padding: '1.25rem', borderRadius: '12px', marginBottom: '1.5rem', border: '1px solid rgba(255, 255, 255, 0.02)', boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.2)' }}>
+                <div style={{ background: 'var(--input-bg)', padding: '1.25rem', borderRadius: '12px', marginBottom: '1.5rem', border: '1px solid var(--border-color)', boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.05)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.85rem', alignItems: 'center' }}>
                     <span style={{ color: 'var(--text-secondary)' }}>SPOC:</span>
                     <span className="cyber-badge">{drive.coordinator.split('@')[0]}</span>
@@ -383,7 +380,7 @@ export default function Dashboard() {
                 </div>
               </div>
               
-              <div style={{ padding: '1.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.05)', background: 'rgba(0,0,0,0.1)' }}>
+              <div style={{ padding: '1.5rem', borderTop: '1px solid var(--border-color)', background: 'var(--input-bg)' }}>
                 {!isJoined ? (
                   isEligible ? (
                     <button 
@@ -397,7 +394,7 @@ export default function Dashboard() {
                     <button 
                       disabled
                       className="cyber-btn w-full"
-                      style={{ padding: '0.85rem', fontSize: '0.95rem', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-secondary)', cursor: 'not-allowed', border: '1px solid rgba(255, 255, 255, 0.1)' }}
+                      style={{ padding: '0.85rem', fontSize: '0.95rem', background: 'var(--input-bg)', color: 'var(--text-secondary)', cursor: 'not-allowed', border: '1px solid var(--border-color)' }}
                     >
                       Not Eligible: Branch Restriction
                     </button>
