@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, CircleUserRound, Edit3, Sun, Moon, LayoutDashboard } from 'lucide-react';
+import { LogOut, CircleUserRound, Edit3, Sun, Moon, LayoutDashboard, GraduationCap } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import NotificationsDropdown from './NotificationsDropdown';
 import { parseEmailProfile } from '../utils/profileParser';
@@ -138,7 +138,7 @@ export default function Navbar() {
   return (
     <nav className="navbar-cyber" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0, overflow: 'hidden', flexShrink: 1 }}>
-        <span className="cdc-logo-mark" style={{ width: 46, height: 44 }} aria-hidden="true" />
+        <GraduationCap className="text-primary" size={32} style={{ flexShrink: 0 }} />
         <div style={{ minWidth: 0, overflow: 'hidden' }}>
           <h2 className="cyber-glitch-text" style={{ margin: 0, fontSize: '1.25rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>NITK CDC</h2>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden' }}>
