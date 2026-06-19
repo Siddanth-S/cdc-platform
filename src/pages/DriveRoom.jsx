@@ -621,6 +621,9 @@ export default function DriveRoom() {
             const msgTime = msg.timestamp && msg.timestamp.toMillis ? msg.timestamp.toMillis() : Date.now();
             const isNew = !isMe && msg.timestamp && msgTime > lastRead;
             
+            const isImage = msg.fileName && msg.fileName.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i);
+            const isImageOnly = isImage && !msg.text;
+            
             const formatName = (email) => {
               if (!email) return '';
               const namePart = email.split('@')[0].split('.')[0].replace(/[0-9]/g, '');
