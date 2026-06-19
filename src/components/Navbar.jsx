@@ -161,6 +161,8 @@ export default function Navbar() {
           </Link>
         )}
 
+        <NotificationsDropdown />
+
         <div style={{ position: 'relative' }}>
           <button
             ref={profileBtnRef}
@@ -350,8 +352,6 @@ export default function Navbar() {
           )}
 
         </div>
-        
-        <NotificationsDropdown />
       </div>
     </nav>
   );
