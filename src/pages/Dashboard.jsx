@@ -6,6 +6,7 @@ import { db } from '../firebase';
 import { collection, onSnapshot, doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { parseEmailProfile } from '../utils/profileParser';
+import EmailAutocompleteInput from '../components/EmailAutocompleteInput';
 
 const btechBranches = ['CSE', 'IT', 'AI', 'DS', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'META', 'MINING'];
 const pgBranches = ['Construction Tech & Management', 'MBA', 'Environmental Eng', 'Geotechnical Eng', 'Transportation Eng', 'Structural Eng', 'Power Electronics', 'Mechanical Design', 'Thermal Eng', 'Manufacturing Eng', 'Mechatronics', 'Water Resources', 'Marine Structures', 'Geoinformatics', 'MCA', 'Chemistry', 'Physics', 'Signal Processing & ML', 'Communication Eng & Networks', 'VLSI Design', 'Information Security', 'Industrial Biotechnology', 'Environmental Science & Tech', 'Materials Eng', 'Nanotechnology'];
@@ -474,17 +475,17 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="input-group">
-                <label className="input-label">Primary SPOC (Email) *</label>
-                <input required type="email" className="input-field" value={newDrive.coordinator} onChange={e => setNewDrive({...newDrive, coordinator: e.target.value})} placeholder="student@nitk.edu.in" />
+                <label className="input-label">Primary SPOC (Name or Email) *</label>
+                <EmailAutocompleteInput required value={newDrive.coordinator} onChange={val => setNewDrive({...newDrive, coordinator: val})} placeholder="Type a name or email..." />
               </div>
               <div className="mobile-stack-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="input-group">
-                  <label className="input-label">Secondary SPOC 1 (Email) *</label>
-                  <input required type="email" className="input-field" value={newDrive.secondarySpoc1} onChange={e => setNewDrive({...newDrive, secondarySpoc1: e.target.value})} placeholder="spoc1@nitk.edu.in" />
+                  <label className="input-label">Secondary SPOC 1 (Name or Email) *</label>
+                  <EmailAutocompleteInput required value={newDrive.secondarySpoc1} onChange={val => setNewDrive({...newDrive, secondarySpoc1: val})} placeholder="Type a name or email..." />
                 </div>
                 <div className="input-group">
-                  <label className="input-label">Secondary SPOC 2 (Email) *</label>
-                  <input required type="email" className="input-field" value={newDrive.secondarySpoc2} onChange={e => setNewDrive({...newDrive, secondarySpoc2: e.target.value})} placeholder="spoc2@nitk.edu.in" />
+                  <label className="input-label">Secondary SPOC 2 (Name or Email) *</label>
+                  <EmailAutocompleteInput required value={newDrive.secondarySpoc2} onChange={val => setNewDrive({...newDrive, secondarySpoc2: val})} placeholder="Type a name or email..." />
                 </div>
               </div>
               <div className="flex gap-2 justify-between mt-4">

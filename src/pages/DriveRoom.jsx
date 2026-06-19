@@ -5,6 +5,7 @@ import { Send, ArrowLeft, ShieldAlert, Paperclip, X, MessageSquarePlus, LogOut, 
 import { db } from '../firebase';
 import { collection, addDoc, query, where, orderBy, onSnapshot, doc, getDocs, setDoc, updateDoc, increment, arrayUnion, arrayRemove, deleteField, deleteDoc } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
+import EmailAutocompleteInput from '../components/EmailAutocompleteInput';
 
 const btechBranches = ['CSE', 'IT', 'AI', 'DS', 'ECE', 'EEE', 'MECH', 'CIVIL', 'CHEM', 'META', 'MINING'];
 const pgBranches = ['Construction Tech & Management', 'MBA', 'Environmental Eng', 'Geotechnical Eng', 'Transportation Eng', 'Structural Eng', 'Power Electronics', 'Mechanical Design', 'Thermal Eng', 'Manufacturing Eng', 'Mechatronics', 'Water Resources', 'Marine Structures', 'Geoinformatics', 'MCA', 'Chemistry', 'Physics', 'Signal Processing & ML', 'Communication Eng & Networks', 'VLSI Design', 'Information Security', 'Industrial Biotechnology', 'Environmental Science & Tech', 'Materials Eng', 'Nanotechnology'];
@@ -1381,8 +1382,8 @@ export default function DriveRoom() {
             </div>
             <form onSubmit={handleChangeSpoc}>
               <div className="input-group">
-                <label className="input-label">New SPOC Email</label>
-                <input required type="email" className="input-field" value={newSpocEmail} onChange={e => setNewSpocEmail(e.target.value)} placeholder="student@nitk.edu.in" />
+                <label className="input-label">New SPOC (Name or Email)</label>
+                <EmailAutocompleteInput required value={newSpocEmail} onChange={setNewSpocEmail} placeholder="Type a name or email..." />
               </div>
               <div className="flex gap-2 justify-between mt-4">
                 <button type="button" className="btn btn-secondary w-full" onClick={() => setShowSpocModal(false)}>Cancel</button>
@@ -1402,8 +1403,8 @@ export default function DriveRoom() {
             </div>
             <form onSubmit={handleChangeSecSpoc}>
               <div className="input-group">
-                <label className="input-label">New SPOC Email</label>
-                <input required type="email" className="input-field" value={newSecSpocEmail} onChange={e => setNewSecSpocEmail(e.target.value)} placeholder="student@nitk.edu.in" />
+                <label className="input-label">New SPOC (Name or Email)</label>
+                <EmailAutocompleteInput required value={newSecSpocEmail} onChange={setNewSecSpocEmail} placeholder="Type a name or email..." />
               </div>
               <div className="flex gap-2 justify-between mt-4">
                 <button type="button" className="btn btn-secondary w-full" onClick={() => setShowSecSpocModal(false)}>Cancel</button>

@@ -625,6 +625,52 @@ p {
   color: var(--primary-color);
 }
 
+/* SPOC email autocomplete (drive creation + reassignment forms) */
+.spoc-autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  max-height: 240px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.4rem;
+  background: var(--dropdown-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px var(--glass-shadow), 0 0 15px rgba(56, 189, 248, 0.1);
+}
+.spoc-autocomplete-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  width: 100%;
+  padding: 0.45rem 0.7rem;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.spoc-autocomplete-item:hover, .spoc-autocomplete-item.active {
+  background: rgba(56, 189, 248, 0.15);
+}
+.spoc-autocomplete-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.spoc-autocomplete-email {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
 
 /* New Live UI Elements */
 .cyber-glitch-text {
