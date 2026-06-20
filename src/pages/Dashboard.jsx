@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Plus, Users, Search, Pin, CheckCircle2, Filter, X, Lock, LayoutDashboard } from 'lucide-react';
+import { Building2, Plus, Users, Search, Pin, CheckCircle2, Filter, X, Lock, LayoutDashboard, ArrowUpDown } from 'lucide-react';
 import { db } from '../firebase';
-import { collection, onSnapshot, doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
+import { collection, onSnapshot, doc, getDoc, getDocs, setDoc, updateDoc, increment, addDoc } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { parseEmailProfile } from '../utils/profileParser';
 import EmailAutocompleteInput from '../components/EmailAutocompleteInput';
@@ -12,7 +12,7 @@ const btechBranches = ['CSE', 'IT', 'AI', 'DS', 'ECE', 'EEE', 'MECH', 'CIVIL', '
 const pgBranches = ['Construction Tech & Management', 'MBA', 'Environmental Eng', 'Geotechnical Eng', 'Transportation Eng', 'Structural Eng', 'Power Electronics', 'Mechanical Design', 'Thermal Eng', 'Manufacturing Eng', 'Mechatronics', 'Water Resources', 'Marine Structures', 'Geoinformatics', 'MCA', 'Chemistry', 'Physics', 'Signal Processing & ML', 'Communication Eng & Networks', 'VLSI Design', 'Information Security', 'Industrial Biotechnology', 'Environmental Science & Tech', 'Materials Eng', 'Nanotechnology'];
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, CDC_HEADS } = useAuth();
   const navigate = useNavigate();
   
   const [drives, setDrives] = useState([]);
@@ -65,6 +65,38 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, []);
 
+  // One-time backfill: older demo drives predate the CTC field. Runs only
+  // once a HEAD session is confirmed (so the writes actually have
+  // permission to succeed) and only once ever, via the _meta sentinel -
+  // deliberately leaves ~1 in 5 drives without a CTC so "Setup Pending"
+  // still has something to show in the demo data.
+  useEffect(() => {
+    if (user?.role !== 'HEAD') return;
+    const backfillCtc = async () => {
+      try {
+        const sentinelRef = doc(db, '_meta', 'ctc_backfill_status');
+        const sentinelSnap = await getDoc(sentinelRef);
+        if (sentinelSnap.exists()) return;
+
+        const snapshot = await getDocs(collection(db, 'drives'));
+        const ctcPool = ['6 LPA', '8 LPA', '10 LPA', '12 LPA', '15 LPA', '18 LPA', '22 LPA', '28 LPA', '35 LPA', '45 LPA'];
+        let missingCount = 0;
+        for (const driveDoc of snapshot.docs) {
+          if (driveDoc.data().ctc) continue;
+          missingCount++;
+          if (missingCount % 5 === 0) continue;
+          const ctc = ctcPool[missingCount % ctcPool.length];
+          await updateDoc(doc(db, 'drives', driveDoc.id), { ctc }).catch(err => console.error('CTC backfill write failed', driveDoc.id, err));
+        }
+
+        await setDoc(sentinelRef, { version: 'v1', backfilledAt: new Date().toISOString() });
+      } catch (err) {
+        console.error('CTC backfill failed', err);
+      }
+    };
+    backfillCtc();
+  }, [user]);
+
   const [showModal, setShowModal] = useState(false);
   const emptyNewDrive = { company: '', role: '', ctc: '', coordinator: '', secondarySpoc1: '', secondarySpoc2: '', eligibleBranches: [] };
   const [newDrive, setNewDrive] = useState(emptyNewDrive);
@@ -79,14 +111,52 @@ export default function Dashboard() {
       },
     });
   };
-  
+
+  // Fire-and-forget side effect - never blocks the create-drive UI feedback.
+  const logActivityToHeads = (action) => {
+    const actor = user?.email?.split('@')[0] || 'Someone';
+    const stamp = new Date().toISOString();
+    const heads = CDC_HEADS || [];
+    Promise.all(heads.map(head => addDoc(collection(db, 'notifications'), {
+      recipient: head,
+      message: `${actor} ${action}`,
+      type: 'ACTIVITY',
+      actor: user?.email || '',
+      read: false,
+      timestamp: stamp
+    }))).catch(err => console.error('Activity log failed', err));
+  };
+
+  const notifySpocAssignment = (recipient, message) => {
+    if (!recipient) return;
+    addDoc(collection(db, 'notifications'), {
+      recipient,
+      message,
+      type: 'SPOC_ASSIGNED',
+      read: false,
+      timestamp: new Date().toISOString()
+    }).catch(err => console.error('SPOC notification failed', err));
+  };
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState(() => {
     const saved = localStorage.getItem(`filter_${user?.email}`);
-    const validModes = ['ALL', 'ACTIVE', 'CLOSED', 'ELIGIBLE', 'NOT_ELIGIBLE', 'JOINED', 'SPOC'];
+    const validModes = ['ALL', 'ACTIVE', 'CLOSED', 'ELIGIBLE', 'NOT_ELIGIBLE', 'JOINED', 'SPOC', 'SETUP_PENDING'];
     return validModes.includes(saved) ? saved : 'ALL';
   });
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [sortMode, setSortMode] = useState(() => {
+    const saved = localStorage.getItem(`sort_${user?.email}`);
+    return ['DEFAULT', 'CTC_DESC', 'CTC_ASC'].includes(saved) ? saved : 'DEFAULT';
+  });
+
+  // Pulls the leading number out of a free-text CTC string ("12 LPA" -> 12)
+  // for sorting - drives with no CTC set sort to the bottom either way.
+  const parseCtc = (ctc) => {
+    if (!ctc) return null;
+    const match = ctc.match(/[\d.]+/);
+    return match ? parseFloat(match[0]) : null;
+  };
 
   const [pinnedDrives, setPinnedDrives] = useState(() => {
     const saved = localStorage.getItem(`pinned_${user?.email}`);
@@ -133,11 +203,16 @@ export default function Dashboard() {
       localStorage.setItem(`pinned_${user.email}`, JSON.stringify(pinnedDrives));
       localStorage.setItem(`joined_${user.email}`, JSON.stringify(joinedDrives));
       localStorage.setItem(`filter_${user.email}`, filterMode);
+      localStorage.setItem(`sort_${user.email}`, sortMode);
     }
-  }, [pinnedDrives, joinedDrives, filterMode, user]);
+  }, [pinnedDrives, joinedDrives, filterMode, sortMode, user]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
+    if (newDrive.secondarySpoc1.trim().toLowerCase() === newDrive.secondarySpoc2.trim().toLowerCase()) {
+      toast.error('Secondary SPOC 1 and 2 must be different people.');
+      return;
+    }
     const newId = String(Date.now());
     try {
       await setDoc(doc(db, 'drives', newId), {
@@ -158,6 +233,12 @@ export default function Dashboard() {
     }
     setShowModal(false);
     triggerToast(`Drive for ${newDrive.company} created successfully! The Primary SPOC can add the role, CTC and eligibility before students can join.`);
+
+    notifySpocAssignment(newDrive.coordinator, `You have been assigned as the PRIMARY SPOC for ${newDrive.company}.`);
+    notifySpocAssignment(newDrive.secondarySpoc1, `You have been assigned as Secondary SPOC 1 for ${newDrive.company}.`);
+    notifySpocAssignment(newDrive.secondarySpoc2, `You have been assigned as Secondary SPOC 2 for ${newDrive.company}.`);
+    logActivityToHeads(`created a new drive for ${newDrive.company}.`);
+
     setNewDrive(emptyNewDrive);
   };
 
@@ -230,6 +311,7 @@ export default function Dashboard() {
         if (filterMode === 'ELIGIBLE' && !eligible) return false;
         if (filterMode === 'NOT_ELIGIBLE' && eligible) return false;
       }
+      if (filterMode === 'SETUP_PENDING' && isDriveSetupComplete(d)) return false;
       return true;
     })
     .sort((a, b) => {
@@ -239,6 +321,15 @@ export default function Dashboard() {
       const bPinned = isDrivePinned(b) || bIsSpoc;
       if (aPinned && !bPinned) return -1;
       if (!aPinned && bPinned) return 1;
+      if (sortMode === 'CTC_DESC' || sortMode === 'CTC_ASC') {
+        const aCtc = parseCtc(a.ctc);
+        const bCtc = parseCtc(b.ctc);
+        if (aCtc === null && bCtc !== null) return 1;
+        if (aCtc !== null && bCtc === null) return -1;
+        if (aCtc !== null && bCtc !== null && aCtc !== bCtc) {
+          return sortMode === 'CTC_DESC' ? bCtc - aCtc : aCtc - bCtc;
+        }
+      }
       return Number(a.id) - Number(b.id);
     });
 
@@ -299,6 +390,28 @@ export default function Dashboard() {
               <Filter size={18} /> Filter{filterMode !== 'ALL' ? `: ${filterMode.charAt(0) + filterMode.slice(1).toLowerCase().replace('_', ' ')}` : ''}
             </button>
           </div>
+        </div>
+
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <ArrowUpDown size={15} style={{ position: 'absolute', left: '0.85rem', color: 'var(--text-secondary)', pointerEvents: 'none' }} />
+          <select
+            value={sortMode}
+            onChange={e => setSortMode(e.target.value)}
+            className="cyber-input"
+            title="Sort by CTC"
+            style={{
+              padding: '0 1rem 0 2.4rem',
+              height: '100%',
+              cursor: 'pointer',
+              appearance: 'none',
+              color: sortMode !== 'DEFAULT' ? 'var(--primary-color)' : 'var(--text-primary)',
+              border: sortMode !== 'DEFAULT' ? '1px solid var(--primary-color)' : '1px solid var(--border-color)',
+            }}
+          >
+            <option value="DEFAULT">Sort: Default</option>
+            <option value="CTC_DESC">CTC: High to Low</option>
+            <option value="CTC_ASC">CTC: Low to High</option>
+          </select>
         </div>
       </div>
 
@@ -395,12 +508,6 @@ export default function Dashboard() {
                         </span>
                       )}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem', flexWrap: 'wrap' }}>
-                      {drive.role && <span>{drive.role}</span>}
-                      {drive.role && drive.ctc && <span style={{ opacity: 0.45 }}>•</span>}
-                      {drive.ctc && <span style={{ color: 'var(--success-color)', fontWeight: 600 }}>{drive.ctc}</span>}
-                      {!drive.role && !drive.ctc && <span style={{ fontStyle: 'italic', opacity: 0.7 }}>Role & CTC pending</span>}
-                    </div>
                   </div>
                 </div>
                 <button 
@@ -415,6 +522,14 @@ export default function Dashboard() {
               {/* Data Rows */}
               <div className="cyber-card-body" style={{ padding: '0 1.5rem', flex: 1 }}>
                 <div className="drive-info-box" style={{ background: 'var(--input-bg)', padding: '1.25rem', borderRadius: '12px', marginBottom: '1.5rem', border: '1px solid var(--border-color)', boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.05)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.85rem', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Role:</span>
+                    {drive.role ? <span className="cyber-badge">{drive.role}</span> : <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic', opacity: 0.7 }}>Not set yet</span>}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.85rem', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>CTC:</span>
+                    {drive.ctc ? <span style={{ color: 'var(--success-color)', fontWeight: 600 }}>{drive.ctc}</span> : <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic', opacity: 0.7 }}>Not set yet</span>}
+                  </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.85rem', alignItems: 'center' }}>
                     <span style={{ color: 'var(--text-secondary)' }}>SPOC:</span>
                     <span className="cyber-badge">{drive.coordinator.split('@')[0]}</span>
@@ -733,7 +848,8 @@ export default function Dashboard() {
                 { label: 'Eligible', mode: 'ELIGIBLE', description: 'Show drives you are eligible for' },
                 { label: 'Not Eligible', mode: 'NOT_ELIGIBLE', description: 'Show drives you are not eligible for' },
                 { label: 'Joined', mode: 'JOINED', description: 'Show drives you have joined' },
-                { label: 'SPOC / Coordinator', mode: 'SPOC', description: 'Show drives where you are a SPOC' }
+                { label: 'SPOC / Coordinator', mode: 'SPOC', description: 'Show drives where you are a SPOC' },
+                ...(user?.role === 'HEAD' ? [{ label: 'Setup Pending', mode: 'SETUP_PENDING', description: 'Drives still missing role, CTC or eligible branches' }] : [])
               ].map(opt => {
                 const isActive = filterMode === opt.mode;
                 return (

@@ -119,6 +119,23 @@ export default function DriveRoom() {
     }
   };
 
+  // Notifies the rest of the drive's SPOC team (not HEADs - that's
+  // logActivityToHeads) about a change, skipping whoever made it. Fire-
+  // and-forget: this is a side effect, never a precondition for the UI.
+  const notifyDriveTeam = (drive, action, actorEmail) => {
+    const actor = actorEmail?.split('@')[0] || 'Someone';
+    const recipients = [drive.coordinator, ...(drive.secondarySpocs || [])]
+      .filter(email => email && email !== actorEmail);
+    Promise.all([...new Set(recipients)].map(recipient => addDoc(collection(db, 'notifications'), {
+      recipient,
+      message: `${actor} ${action}`,
+      type: 'ACTIVITY',
+      actor: actorEmail || '',
+      read: false,
+      timestamp: new Date().toISOString()
+    }))).catch(err => console.error('Drive team notification failed', err));
+  };
+
 
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -371,7 +388,9 @@ export default function DriveRoom() {
       });
       triggerToast("Drive details updated successfully!");
       setShowEditBranchesModal(false);
-      logActivityToHeads(`updated the drive details for ${editCompany} (role, CTC and ${editBranches.length} eligible branch${editBranches.length === 1 ? '' : 'es'}).`);
+      const actionDesc = `updated the drive details for ${editCompany} (role, CTC and ${editBranches.length} eligible branch${editBranches.length === 1 ? '' : 'es'}).`;
+      logActivityToHeads(actionDesc);
+      notifyDriveTeam(currentDrive, actionDesc, user?.email);
     } catch(err) {
       console.error(err);
       toast.error("Couldn't save those changes. Please try again.");
@@ -382,6 +401,12 @@ export default function DriveRoom() {
     e.preventDefault();
     const assignedEmail = newSecSpocEmail;
     const slot = editingSpocIndex;
+    const otherSlot = slot === 0 ? 1 : 0;
+    const otherSecSpoc = (currentDrive.secondarySpocs || ['', ''])[otherSlot];
+    if (otherSecSpoc && assignedEmail.trim().toLowerCase() === otherSecSpoc.trim().toLowerCase()) {
+      toast.error('That person is already the other Secondary SPOC.');
+      return;
+    }
     try {
       const updatedSpocs = [...(currentDrive.secondarySpocs || ['', ''])];
       updatedSpocs[slot] = assignedEmail;
@@ -1370,7 +1395,9 @@ export default function DriveRoom() {
                       await updateDoc(doc(db, 'drives', id), { status: reopening ? 'Active' : 'Closed' });
                       setShowSettingsModal(false);
                       triggerToast(`Drive ${reopening ? 'Reopened' : 'Closed'}!`);
-                      logActivityToHeads(`${reopening ? 'reopened' : 'closed'} the ${currentDrive.company} drive.`);
+                      const actionDesc = `${reopening ? 'reopened' : 'closed'} the ${currentDrive.company} drive.`;
+                      logActivityToHeads(actionDesc);
+                      notifyDriveTeam(currentDrive, actionDesc, user?.email);
                     } catch(err) {
                       console.error(err);
                       toast.error(`Couldn't ${reopening ? 'reopen' : 'close'} the drive. Please try again.`);
