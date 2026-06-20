@@ -17,9 +17,13 @@ const AuthContext = createContext();
 const CDC_HEADS = [
   'headpc@nitk.edu.in', 'siddanths.231cv149@nitk.edu.in',
   'testadmin@nitk.edu.in',
-  'head1@nitk.edu.in', 'head2@nitk.edu.in', 'head3@nitk.edu.in', 
+  'head1@nitk.edu.in', 'head2@nitk.edu.in', 'head3@nitk.edu.in',
   'head4@nitk.edu.in', 'head5@nitk.edu.in', 'head6@nitk.edu.in'
 ];
+
+// Exempted from the emailVerified gate below - internal test/admin account,
+// not a real mailbox that can click a verification link.
+const VERIFICATION_EXEMPT = ['testadmin@nitk.edu.in'];
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -60,7 +64,7 @@ export const AuthProvider = ({ children }) => {
         // accounts can land here unverified. Re-checked on every reload (not
         // just at sign-in) so a session started before this gate existed
         // can't keep working indefinitely.
-        if (!firebaseUser.emailVerified) {
+        if (!firebaseUser.emailVerified && !VERIFICATION_EXEMPT.includes(email)) {
           await signOut(auth);
           setUser(null);
           setLoading(false);
@@ -143,7 +147,7 @@ export const AuthProvider = ({ children }) => {
       }
       throw new Error(err.message);
     }
-    if (!result.user.emailVerified) {
+    if (!result.user.emailVerified && !VERIFICATION_EXEMPT.includes(email)) {
       await signOut(auth);
       throw new Error('VERIFICATION_REQUIRED');
     }
