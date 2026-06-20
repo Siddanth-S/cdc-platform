@@ -2,8 +2,9 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Send, ArrowLeft, ShieldAlert, Paperclip, X, MessageSquarePlus, LogOut, Edit3, Settings, Users, UserCog, Power, Maximize2, Minimize2, CornerUpLeft, ChevronDown, Copy, Trash2, Pin, PinOff } from 'lucide-react';
-import { db } from '../firebase';
+import { db, storage } from '../firebase';
 import { collection, addDoc, query, where, orderBy, onSnapshot, doc, getDocs, setDoc, updateDoc, increment, arrayUnion, arrayRemove, deleteField, deleteDoc } from 'firebase/firestore';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { toast } from 'react-hot-toast';
 import EmailAutocompleteInput from '../components/EmailAutocompleteInput';
 import { formatName } from '../utils/profileParser';
@@ -140,6 +141,7 @@ export default function DriveRoom() {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const chatBodyRef = useRef(null);
@@ -260,32 +262,49 @@ export default function DriveRoom() {
     if (!inputText.trim() && !selectedFile) return;
     if (!canMessage) return;
 
-    let fileData = null;
+    let fileURL = null;
     let fileName = null;
 
     if (selectedFile) {
-      const reader = new FileReader();
-      const promise = new Promise((resolve) => {
-        reader.onloadend = () => resolve(reader.result);
-      });
-      reader.readAsDataURL(selectedFile);
-      fileData = await promise;
-      fileName = selectedFile.name;
+      // Uploaded to Storage rather than inlined as base64 - Firestore caps a
+      // document at 1MB, which silently failed for anything much over
+      // ~700KB. The message just stores the resulting download URL.
+      try {
+        const path = `drives/${id}/${Date.now()}_${selectedFile.name}`;
+        const storageRef = ref(storage, path);
+        const uploadTask = uploadBytesResumable(storageRef, selectedFile);
+        setUploadProgress(0);
+        await new Promise((resolve, reject) => {
+          uploadTask.on('state_changed',
+            (snapshot) => setUploadProgress(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)),
+            reject,
+            resolve
+          );
+        });
+        fileURL = await getDownloadURL(uploadTask.snapshot.ref);
+        fileName = selectedFile.name;
+      } catch (error) {
+        console.error("Error uploading file", error);
+        toast.error("Couldn't upload that file. Please try again.");
+        setUploadProgress(null);
+        return;
+      }
+      setUploadProgress(null);
     }
-    
+
     try {
       await addDoc(collection(db, 'drives', id, 'messages'), {
         sender: user.email,
         role: user.role === 'HEAD' ? 'HEAD' : (currentDrive.coordinator === user.email ? 'SPOC' : 'SEC_SPOC'),
         text: inputText,
-        fileData,
+        fileURL,
         fileName,
         timestamp: new Date().toISOString(),
         replyTo: replyToMsg ? { id: replyToMsg.id, sender: replyToMsg.sender, text: replyToMsg.text } : null
       });
     } catch (error) {
       console.error("Error sending message", error);
-      toast.error(selectedFile ? "Couldn't send - that file is too large for chat. Try something under 500KB." : "Couldn't send your message. Please try again.");
+      toast.error("Couldn't send your message. Please try again.");
       return;
     }
 
@@ -341,11 +360,11 @@ export default function DriveRoom() {
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      // Firestore caps a document at 1MB, and the file is stored as base64
-      // (~33% bigger than the raw bytes) inside the message doc - the old
-      // 2MB check let files through that would silently fail to send.
-      if (e.target.files[0].size > 500 * 1024) {
-        toast.error("That file is too large - please choose something under 500KB.");
+      // Files upload to Storage now (not inlined into the Firestore
+      // document), so this just needs to be a sane attachment-size cap, not
+      // a workaround for Firestore's 1MB document limit.
+      if (e.target.files[0].size > 10 * 1024 * 1024) {
+        toast.error("That file is too large - please choose something under 10MB.");
         return;
       }
       setSelectedFile(e.target.files[0]);
@@ -862,6 +881,10 @@ export default function DriveRoom() {
             
             const isImage = msg.fileName && msg.fileName.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i);
             const isImageOnly = isImage && !msg.text;
+            // fileURL is the current (Storage-hosted) field; fileData is the
+            // old inline-base64 field, kept for messages sent before this
+            // switched over.
+            const fileSrc = msg.fileURL || msg.fileData;
 
             const allCoordinators = [
               currentDrive?.coordinator,
@@ -1052,7 +1075,7 @@ export default function DriveRoom() {
                   {isImageOnly ? (
                     <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '12px', width: 'fit-content' }}>
                       <img 
-                        src={msg.fileData} 
+                        src={fileSrc} 
                         alt={msg.fileName} 
                         style={{ 
                           maxWidth: '100%', 
@@ -1063,7 +1086,7 @@ export default function DriveRoom() {
                           border: '1px solid var(--border-color)',
                           display: 'block'
                         }}
-                        onClick={() => setLightboxImg(msg.fileData)}
+                        onClick={() => setLightboxImg(fileSrc)}
                       />
                       <div style={{
                         position: 'absolute',
@@ -1096,7 +1119,7 @@ export default function DriveRoom() {
                               return (
                                 <div style={{ marginTop: '0.4rem', overflow: 'hidden', borderRadius: '8px', display: 'block' }}>
                                   <img 
-                                    src={msg.fileData} 
+                                    src={fileSrc} 
                                     alt={msg.fileName} 
                                     style={{ 
                                       maxWidth: '100%', 
@@ -1107,7 +1130,7 @@ export default function DriveRoom() {
                                       border: '1px solid rgba(255,255,255,0.1)',
                                       display: 'block'
                                     }}
-                                    onClick={() => setLightboxImg(msg.fileData)}
+                                    onClick={() => setLightboxImg(fileSrc)}
                                   />
                                 </div>
                               );
@@ -1132,7 +1155,7 @@ export default function DriveRoom() {
                                     </span>
                                   </div>
                                   <a 
-                                    href={msg.fileData} 
+                                    href={fileSrc} 
                                     download={msg.fileName} 
                                     style={{ 
                                       color: '#f87171', 
@@ -1172,7 +1195,7 @@ export default function DriveRoom() {
                                     </span>
                                   </div>
                                   <a 
-                                    href={msg.fileData} 
+                                    href={fileSrc} 
                                     download={msg.fileName} 
                                     style={{ 
                                       color: '#34d399', 
@@ -1212,7 +1235,7 @@ export default function DriveRoom() {
                                     </span>
                                   </div>
                                   <a 
-                                    href={msg.fileData} 
+                                    href={fileSrc} 
                                     download={msg.fileName} 
                                     style={{ 
                                       color: 'var(--primary-color)', 
@@ -1318,31 +1341,35 @@ export default function DriveRoom() {
             )}
             {selectedFile && (
               <div style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--primary-color)', background: 'rgba(59, 130, 246, 0.1)', padding: '0.5rem', borderRadius: '8px', width: 'fit-content' }}>
-                <Paperclip size={14} /> {selectedFile.name}
-                <button onClick={() => setSelectedFile(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                  <X size={14} />
-                </button>
+                <Paperclip size={14} />
+                {uploadProgress !== null ? `Uploading ${selectedFile.name}... ${uploadProgress}%` : selectedFile.name}
+                {uploadProgress === null && (
+                  <button onClick={() => setSelectedFile(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                    <X size={14} />
+                  </button>
+                )}
               </div>
             )}
             <form onSubmit={handleSend} style={{ display: 'flex', gap: '0.75rem', position: 'relative' }}>
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                style={{ display: 'none' }} 
-                onChange={handleFileChange} 
+              <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
               />
-              <button type="button" onClick={() => fileInputRef.current.click()} className="btn btn-secondary" style={{ padding: '0.85rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Attach File">
+              <button type="button" disabled={uploadProgress !== null} onClick={() => fileInputRef.current.click()} className="btn btn-secondary" style={{ padding: '0.85rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: uploadProgress !== null ? 0.6 : 1 }} title="Attach File">
                 <Paperclip size={18} />
               </button>
-              <input 
-                type="text" 
-                className="cyber-input" 
-                placeholder="Type your official update here..." 
+              <input
+                type="text"
+                className="cyber-input"
+                placeholder="Type your official update here..."
                 value={inputText}
                 onChange={e => { setInputText(e.target.value); handleTyping(); }}
+                disabled={uploadProgress !== null}
                 style={{ marginBottom: 0, borderRadius: '24px', padding: '0.85rem 1.25rem', flex: 1 }}
               />
-              <button type="submit" className="cyber-btn" style={{ padding: '0.85rem 1.25rem', borderRadius: '24px' }}>
+              <button type="submit" disabled={uploadProgress !== null} className="cyber-btn" style={{ padding: '0.85rem 1.25rem', borderRadius: '24px', opacity: uploadProgress !== null ? 0.6 : 1 }}>
                 <Send size={18} />
               </button>
             </form>

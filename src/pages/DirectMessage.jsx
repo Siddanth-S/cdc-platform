@@ -2,8 +2,9 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Send, ArrowLeft, Paperclip, X, User, Maximize2, Minimize2, CornerUpLeft, ChevronDown, Copy, Trash2 } from 'lucide-react';
-import { db } from '../firebase';
+import { db, storage } from '../firebase';
 import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove, deleteField, runTransaction } from 'firebase/firestore';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { toast } from 'react-hot-toast';
 import { formatName } from '../utils/profileParser';
 
@@ -15,6 +16,7 @@ export default function DirectMessage() {
   const [dmData, setDmData] = useState(null);
   const [inputText, setInputText] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [hoveredMsgId, setHoveredMsgId] = useState(null);
   const [replyToMsg, setReplyToMsg] = useState(null);
@@ -135,26 +137,43 @@ export default function DirectMessage() {
     e.preventDefault();
     if (!inputText.trim() && !selectedFile) return;
 
-    let fileData = null;
+    let fileURL = null;
     let fileName = null;
 
     if (selectedFile) {
-      const reader = new FileReader();
-      const promise = new Promise((resolve) => {
-        reader.onloadend = () => resolve(reader.result);
-      });
-      reader.readAsDataURL(selectedFile);
-      fileData = await promise;
-      fileName = selectedFile.name;
+      // Uploaded to Storage rather than inlined as base64 - the whole DM
+      // history lives in one Firestore document's array field, so the old
+      // approach hit the 1MB document cap even faster than Drive chats did.
+      try {
+        const path = `dms/${id}/${Date.now()}_${selectedFile.name}`;
+        const storageRef = ref(storage, path);
+        const uploadTask = uploadBytesResumable(storageRef, selectedFile);
+        setUploadProgress(0);
+        await new Promise((resolve, reject) => {
+          uploadTask.on('state_changed',
+            (snapshot) => setUploadProgress(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)),
+            reject,
+            resolve
+          );
+        });
+        fileURL = await getDownloadURL(uploadTask.snapshot.ref);
+        fileName = selectedFile.name;
+      } catch (error) {
+        console.error("Error uploading file", error);
+        toast.error("Couldn't upload that file. Please try again.");
+        setUploadProgress(null);
+        return;
+      }
+      setUploadProgress(null);
     }
-    
+
     try {
       await updateDoc(doc(db, 'dms', id), {
         messages: arrayUnion({
           id: Date.now(),
           sender: user.email,
           text: inputText,
-          fileData,
+          fileURL,
           fileName,
           timestamp: new Date().toISOString(),
           replyTo: replyToMsg ? { id: replyToMsg.id, sender: replyToMsg.sender, text: replyToMsg.text } : null
@@ -162,7 +181,7 @@ export default function DirectMessage() {
       });
     } catch (err) {
       console.error("Error sending DM", err);
-      toast.error(selectedFile ? "Couldn't send - that file is too large for chat. Try something under 500KB." : "Couldn't send your message. Please try again.");
+      toast.error("Couldn't send your message. Please try again.");
       return;
     }
 
@@ -236,13 +255,11 @@ export default function DirectMessage() {
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      // DM messages live inside one shared document (array field, not a
-      // subcollection), so the 1MB Firestore document cap applies to the
-      // whole conversation's history, not just this file - stay well clear
-      // of it rather than the old 2MB check, which let files through that
-      // would silently fail to send.
-      if (e.target.files[0].size > 500 * 1024) {
-        toast.error("That file is too large - please choose something under 500KB.");
+      // Files upload to Storage now (not inlined into the DM document's
+      // messages array), so this just needs to be a sane attachment-size
+      // cap, not a workaround for Firestore's 1MB document limit.
+      if (e.target.files[0].size > 10 * 1024 * 1024) {
+        toast.error("That file is too large - please choose something under 10MB.");
         return;
       }
       setSelectedFile(e.target.files[0]);
@@ -452,7 +469,11 @@ export default function DirectMessage() {
             
             const isImage = msg.fileName && msg.fileName.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i);
             const isImageOnly = isImage && !msg.text;
-            
+            // fileURL is the current (Storage-hosted) field; fileData is the
+            // old inline-base64 field, kept for messages sent before this
+            // switched over.
+            const fileSrc = msg.fileURL || msg.fileData;
+
             return (
               <div 
                 key={msg.id} 
@@ -625,7 +646,7 @@ export default function DirectMessage() {
                   {isImageOnly ? (
                     <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '12px', width: 'fit-content' }}>
                       <img 
-                        src={msg.fileData} 
+                        src={fileSrc} 
                         alt={msg.fileName} 
                         style={{ 
                           maxWidth: '100%', 
@@ -636,7 +657,7 @@ export default function DirectMessage() {
                           border: '1px solid var(--border-color)',
                           display: 'block'
                         }}
-                        onClick={() => setLightboxImg(msg.fileData)}
+                        onClick={() => setLightboxImg(fileSrc)}
                       />
                       <div style={{
                         position: 'absolute',
@@ -668,7 +689,7 @@ export default function DirectMessage() {
                               return (
                                 <div style={{ marginTop: '0.4rem', overflow: 'hidden', borderRadius: '8px', display: 'block' }}>
                                   <img 
-                                    src={msg.fileData} 
+                                    src={fileSrc} 
                                     alt={msg.fileName} 
                                     style={{ 
                                       maxWidth: '100%', 
@@ -679,7 +700,7 @@ export default function DirectMessage() {
                                       border: '1px solid rgba(255,255,255,0.1)',
                                       display: 'block'
                                     }}
-                                    onClick={() => setLightboxImg(msg.fileData)}
+                                    onClick={() => setLightboxImg(fileSrc)}
                                   />
                                 </div>
                               );
@@ -704,7 +725,7 @@ export default function DirectMessage() {
                                     </span>
                                   </div>
                                   <a 
-                                    href={msg.fileData} 
+                                    href={fileSrc} 
                                     download={msg.fileName} 
                                     style={{ 
                                       color: '#f87171', 
@@ -744,7 +765,7 @@ export default function DirectMessage() {
                                     </span>
                                   </div>
                                   <a 
-                                    href={msg.fileData} 
+                                    href={fileSrc} 
                                     download={msg.fileName} 
                                     style={{ 
                                       color: '#34d399', 
@@ -784,7 +805,7 @@ export default function DirectMessage() {
                                     </span>
                                   </div>
                                   <a 
-                                    href={msg.fileData} 
+                                    href={fileSrc} 
                                     download={msg.fileName} 
                                     style={{ 
                                       color: 'var(--primary-color)', 
@@ -863,20 +884,32 @@ export default function DirectMessage() {
             <button onClick={() => setReplyToMsg(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.2rem' }}>&times;</button>
           </div>
         )}
+        {selectedFile && (
+          <div style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--primary-color)', background: 'rgba(59, 130, 246, 0.1)', padding: '0.5rem', borderRadius: '8px', width: 'fit-content' }}>
+            <Paperclip size={14} />
+            {uploadProgress !== null ? `Uploading ${selectedFile.name}... ${uploadProgress}%` : selectedFile.name}
+            {uploadProgress === null && (
+              <button onClick={() => setSelectedFile(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        )}
         <form onSubmit={handleSend} style={{ display: 'flex', gap: '0.75rem', position: 'relative' }}>
             <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileChange} />
-            <button type="button" onClick={() => fileInputRef.current.click()} className="btn btn-secondary" style={{ padding: '0.85rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Attach File">
+            <button type="button" disabled={uploadProgress !== null} onClick={() => fileInputRef.current.click()} className="btn btn-secondary" style={{ padding: '0.85rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: uploadProgress !== null ? 0.6 : 1 }} title="Attach File">
               <Paperclip size={18} />
             </button>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={inputText}
               onChange={e => { setInputText(e.target.value); handleTyping(); }}
               placeholder="Type a message..."
               className="cyber-input"
+              disabled={uploadProgress !== null}
               style={{ flex: 1, padding: '0.85rem 1.25rem', borderRadius: '30px' }}
             />
-            <button type="submit" className="cyber-btn" style={{ padding: '0.85rem 1.25rem', borderRadius: '24px' }}>
+            <button type="submit" disabled={uploadProgress !== null} className="cyber-btn" style={{ padding: '0.85rem 1.25rem', borderRadius: '24px', opacity: uploadProgress !== null ? 0.6 : 1 }}>
               <Send size={18} />
             </button>
           </form>
