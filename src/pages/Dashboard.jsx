@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Plus, Users, Search, Pin, CheckCircle2, Filter, X, Lock, LayoutDashboard, ArrowDown, ArrowUp } from 'lucide-react';
+import { Building2, Plus, Users, Search, Pin, CheckCircle2, Filter, X, Lock, LayoutDashboard, ArrowDown, ArrowUp, ArrowLeftRight } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, onSnapshot, doc, getDoc, getDocs, setDoc, updateDoc, increment, addDoc } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
@@ -368,49 +368,27 @@ export default function Dashboard() {
             />
           </div>
           <div>
-            <button 
-              onClick={() => setShowFilterModal(true)} 
-              className="cyber-input" 
-              style={{ 
-                padding: '0 1rem', 
-                height: '100%', 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.5rem', 
-                cursor: 'pointer', 
-                background: filterMode !== 'ALL' ? 'rgba(59, 130, 246, 0.15)' : 'transparent', 
-                color: filterMode !== 'ALL' ? 'var(--primary-color)' : 'var(--text-primary)', 
-                border: filterMode !== 'ALL' ? '1px solid var(--primary-color)' : '1px solid var(--border-color)', 
-                boxShadow: filterMode !== 'ALL' ? '0 0 15px rgba(59, 130, 246, 0.3)' : 'none', 
-                transition: 'all 0.3s ease' 
+            <button
+              onClick={() => setShowFilterModal(true)}
+              className="cyber-input"
+              style={{
+                padding: '0 1rem',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                cursor: 'pointer',
+                background: filterMode !== 'ALL' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                color: filterMode !== 'ALL' ? 'var(--primary-color)' : 'var(--text-primary)',
+                border: filterMode !== 'ALL' ? '1px solid var(--primary-color)' : '1px solid var(--border-color)',
+                boxShadow: filterMode !== 'ALL' ? '0 0 15px rgba(59, 130, 246, 0.3)' : 'none',
+                transition: 'all 0.3s ease'
               }}
             >
               <Filter size={18} /> Filter{filterMode !== 'ALL' ? `: ${filterMode.charAt(0) + filterMode.slice(1).toLowerCase().replace('_', ' ')}` : ''}
             </button>
           </div>
         </div>
-
-        <button
-          onClick={() => setSortMode(sortMode === 'CTC_DESC' ? 'CTC_ASC' : 'CTC_DESC')}
-          className="cyber-input"
-          title="Click to flip sort direction"
-          style={{
-            padding: '0 1rem',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            cursor: 'pointer',
-            color: 'var(--primary-color)',
-            border: '1px solid var(--primary-color)',
-            background: 'rgba(59, 130, 246, 0.15)',
-            boxShadow: '0 0 15px rgba(59, 130, 246, 0.3)',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          {sortMode === 'CTC_DESC' ? <ArrowDown size={16} /> : <ArrowUp size={16} />}
-          CTC: {sortMode === 'CTC_DESC' ? 'High to Low' : 'Low to High'}
-        </button>
       </div>
 
       <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
@@ -839,22 +817,60 @@ export default function Dashboard() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {/* Sort isn't a filter choice - it doesn't close the modal, just flips. */}
+              <button
+                onClick={() => setSortMode(sortMode === 'CTC_DESC' ? 'CTC_ASC' : 'CTC_DESC')}
+                style={{
+                  background: 'rgba(34, 197, 94, 0.1)',
+                  border: '1px solid rgba(34, 197, 94, 0.4)',
+                  borderRadius: '10px',
+                  padding: '0.6rem 0.85rem',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  width: '100%',
+                  color: 'inherit',
+                  marginBottom: '0.25rem'
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: '600', color: '#4ade80', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    {sortMode === 'CTC_DESC' ? <ArrowDown size={14} /> : <ArrowUp size={14} />}
+                    Sort by CTC: {sortMode === 'CTC_DESC' ? 'High to Low' : 'Low to High'}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '1px' }}>Tap to flip direction</div>
+                </div>
+                <ArrowLeftRight size={14} style={{ color: '#4ade80', opacity: 0.7 }} />
+              </button>
+
+              <div style={{ height: '1px', background: 'var(--border-color)', margin: '0.1rem 0' }} />
+
               {[
-                { label: 'All Drives', mode: 'ALL', description: 'Show all available drives' },
-                { label: 'Active', mode: 'ACTIVE', description: 'Only show currently active drives' },
-                { label: 'Closed', mode: 'CLOSED', description: 'Only show closed/ended drives' },
-                { label: 'Eligible', mode: 'ELIGIBLE', description: 'Show drives you are eligible for' },
-                { label: 'Not Eligible', mode: 'NOT_ELIGIBLE', description: 'Show drives you are not eligible for' },
-                { label: 'Joined', mode: 'JOINED', description: 'Show drives you have joined' },
-                { label: 'SPOC / Coordinator', mode: 'SPOC', description: 'Show drives where you are a SPOC' },
-                ...(user?.role === 'HEAD' ? [{ label: 'Setup Pending', mode: 'SETUP_PENDING', description: 'Drives still missing role, CTC or eligible branches' }] : [])
+                { type: 'simple', label: 'All Drives', mode: 'ALL', description: 'Show all available drives' },
+                { type: 'toggle', activeMode: 'ACTIVE', inactiveMode: 'CLOSED', activeLabel: 'Active', inactiveLabel: 'Closed', activeDescription: 'Only show currently active drives', inactiveDescription: 'Only show closed/ended drives' },
+                { type: 'toggle', activeMode: 'ELIGIBLE', inactiveMode: 'NOT_ELIGIBLE', activeLabel: 'Eligible', inactiveLabel: 'Not Eligible', activeDescription: 'Show drives you are eligible for', inactiveDescription: 'Show drives you are not eligible for' },
+                { type: 'simple', label: 'Joined', mode: 'JOINED', description: 'Show drives you have joined' },
+                { type: 'simple', label: 'SPOC / Coordinator', mode: 'SPOC', description: 'Show drives where you are a SPOC' },
+                ...(user?.role === 'HEAD' ? [{ type: 'simple', label: 'Setup Pending', mode: 'SETUP_PENDING', description: 'Drives still missing role, CTC or eligible branches' }] : [])
               ].map(opt => {
-                const isActive = filterMode === opt.mode;
+                const isToggle = opt.type === 'toggle';
+                const isActive = isToggle
+                  ? (filterMode === opt.activeMode || filterMode === opt.inactiveMode)
+                  : filterMode === opt.mode;
+                const showingInactiveSide = isToggle && filterMode === opt.inactiveMode;
+                const label = isToggle ? (showingInactiveSide ? opt.inactiveLabel : opt.activeLabel) : opt.label;
+                const description = isToggle ? (showingInactiveSide ? opt.inactiveDescription : opt.activeDescription) : opt.description;
+
                 return (
                   <button
-                    key={opt.mode}
+                    key={isToggle ? opt.activeMode : opt.mode}
                     onClick={() => {
-                      setFilterMode(opt.mode);
+                      const nextMode = isToggle
+                        ? (filterMode === opt.activeMode ? opt.inactiveMode : opt.activeMode)
+                        : opt.mode;
+                      setFilterMode(nextMode);
                       setShowFilterModal(false);
                     }}
                     style={{
@@ -883,10 +899,14 @@ export default function Dashboard() {
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: '600', color: isActive ? 'var(--primary-color)' : 'var(--text-primary)', fontSize: '0.88rem' }}>{opt.label}</div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '1px' }}>{opt.description}</div>
+                      <div style={{ fontWeight: '600', color: isActive ? 'var(--primary-color)' : 'var(--text-primary)', fontSize: '0.88rem' }}>{label}</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '1px' }}>{description}</div>
                     </div>
-                    {isActive && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary-color)' }} />}
+                    {isToggle ? (
+                      <ArrowLeftRight size={14} style={{ color: isActive ? 'var(--primary-color)' : 'var(--text-secondary)', opacity: 0.7, flexShrink: 0 }} />
+                    ) : (
+                      isActive && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary-color)', flexShrink: 0 }} />
+                    )}
                   </button>
                 );
               })}

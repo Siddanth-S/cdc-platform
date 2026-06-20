@@ -142,6 +142,7 @@ export default function DriveRoom() {
   const [inputText, setInputText] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(null);
+  const uploadTaskRef = useRef(null);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const chatBodyRef = useRef(null);
@@ -273,23 +274,45 @@ export default function DriveRoom() {
         const path = `drives/${id}/${Date.now()}_${selectedFile.name}`;
         const storageRef = ref(storage, path);
         const uploadTask = uploadBytesResumable(storageRef, selectedFile);
+        uploadTaskRef.current = uploadTask;
         setUploadProgress(0);
+
         await new Promise((resolve, reject) => {
+          // Resumable uploads retry transient failures automatically, and
+          // some failure modes (CORS, a misconfigured bucket) make that
+          // retry loop spin forever instead of ever calling the error
+          // callback - this is what "gets stuck" looked like. Cancel and
+          // bail out if there's no progress for 20s straight, rather than
+          // trusting the SDK to eventually give up on its own.
+          let stallTimer;
+          const resetStallTimer = () => {
+            clearTimeout(stallTimer);
+            stallTimer = setTimeout(() => {
+              uploadTask.cancel();
+              reject(new Error('Upload stalled - no progress for 20s'));
+            }, 20000);
+          };
+          resetStallTimer();
           uploadTask.on('state_changed',
-            (snapshot) => setUploadProgress(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)),
-            reject,
-            resolve
+            (snapshot) => {
+              resetStallTimer();
+              setUploadProgress(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100));
+            },
+            (err) => { clearTimeout(stallTimer); reject(err); },
+            () => { clearTimeout(stallTimer); resolve(); }
           );
         });
         fileURL = await getDownloadURL(uploadTask.snapshot.ref);
         fileName = selectedFile.name;
       } catch (error) {
         console.error("Error uploading file", error);
-        toast.error("Couldn't upload that file. Please try again.");
+        toast.error(error?.code === 'storage/canceled' ? "Upload cancelled." : "Couldn't upload that file. Check your connection and try again.");
         setUploadProgress(null);
+        uploadTaskRef.current = null;
         return;
       }
       setUploadProgress(null);
+      uploadTaskRef.current = null;
     }
 
     try {
@@ -1343,11 +1366,19 @@ export default function DriveRoom() {
               <div style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--primary-color)', background: 'rgba(59, 130, 246, 0.1)', padding: '0.5rem', borderRadius: '8px', width: 'fit-content' }}>
                 <Paperclip size={14} />
                 {uploadProgress !== null ? `Uploading ${selectedFile.name}... ${uploadProgress}%` : selectedFile.name}
-                {uploadProgress === null && (
-                  <button onClick={() => setSelectedFile(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                    <X size={14} />
-                  </button>
-                )}
+                <button
+                  onClick={() => {
+                    if (uploadProgress !== null) {
+                      uploadTaskRef.current?.cancel();
+                    } else {
+                      setSelectedFile(null);
+                    }
+                  }}
+                  title={uploadProgress !== null ? 'Cancel upload' : 'Remove attachment'}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                >
+                  <X size={14} />
+                </button>
               </div>
             )}
             <form onSubmit={handleSend} style={{ display: 'flex', gap: '0.75rem', position: 'relative' }}>
