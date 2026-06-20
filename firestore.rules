@@ -40,16 +40,17 @@ service cloud.firestore {
 
       // Field-scoped update:
       // - HEAD: any field.
-      // - Primary SPOC: eligibleBranches/status (Edit Branches, close/reopen) + the
-      //   self-service fields below. Cannot reassign coordinator/secondarySpocs
-      //   (matches the isHead-only gate on those modals in DriveRoom.jsx).
+      // - Primary SPOC: company/role/ctc/eligibleBranches/status (Edit Drive
+      //   Details, close/reopen) + the self-service fields below. Cannot
+      //   reassign coordinator/secondarySpocs (matches the isHead-only gate
+      //   on those modals in DriveRoom.jsx).
       // - Any signed-in user: only the self-service fields written by everyone
       //   (join/leave count, typing indicator, presence heartbeat).
       allow update: if isSignedIn() && (
         isHead() ||
         (isPrimarySpoc(resource.data) &&
           request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['eligibleBranches', 'status', 'joined', 'typing', 'activeUsers', 'lastRead'])) ||
+            .hasOnly(['company', 'role', 'ctc', 'eligibleBranches', 'status', 'joined', 'typing', 'activeUsers', 'lastRead'])) ||
         request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['joined', 'typing', 'activeUsers', 'lastRead'])
       );

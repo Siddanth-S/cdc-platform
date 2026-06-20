@@ -124,6 +124,7 @@ export default function Dashboard() {
       setShowProfileModal(false);
     } catch (err) {
       console.error(err);
+      toast.error("Couldn't save your profile. Please try again.");
     }
   };
 
@@ -138,17 +139,23 @@ export default function Dashboard() {
   const handleCreate = async (e) => {
     e.preventDefault();
     const newId = String(Date.now());
-    await setDoc(doc(db, 'drives', newId), {
-      id: newId,
-      company: newDrive.company,
-      role: newDrive.role,
-      ctc: newDrive.ctc,
-      coordinator: newDrive.coordinator,
-      secondarySpocs: [newDrive.secondarySpoc1, newDrive.secondarySpoc2],
-      joined: 0,
-      eligibleBranches: newDrive.eligibleBranches,
-      status: 'Active'
-    });
+    try {
+      await setDoc(doc(db, 'drives', newId), {
+        id: newId,
+        company: newDrive.company,
+        role: newDrive.role,
+        ctc: newDrive.ctc,
+        coordinator: newDrive.coordinator,
+        secondarySpocs: [newDrive.secondarySpoc1, newDrive.secondarySpoc2],
+        joined: 0,
+        eligibleBranches: newDrive.eligibleBranches,
+        status: 'Active'
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error("Couldn't create the drive. Please try again.");
+      return;
+    }
     setShowModal(false);
     triggerToast(`Drive for ${newDrive.company} created successfully! The Primary SPOC can add the role, CTC and eligibility before students can join.`);
     setNewDrive(emptyNewDrive);

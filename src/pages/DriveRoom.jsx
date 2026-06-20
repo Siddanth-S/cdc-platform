@@ -332,27 +332,32 @@ export default function DriveRoom() {
 
   const handleChangeSpoc = async (e) => {
     e.preventDefault();
+    const assignedEmail = newSpocEmail;
     try {
+      // The drive update is the only part that has to succeed before we tell
+      // the user it worked - the notification and HEAD activity log are
+      // side effects, not preconditions, so they shouldn't hold up the UI.
       await updateDoc(doc(db, 'drives', id), {
-        coordinator: newSpocEmail
+        coordinator: assignedEmail
       });
 
-      await addDoc(collection(db, 'notifications'), {
-        recipient: newSpocEmail,
+      triggerToast("Primary SPOC changed successfully!");
+      setNewSpocEmail('');
+      setShowSpocModal(false);
+
+      addDoc(collection(db, 'notifications'), {
+        recipient: assignedEmail,
         message: `You have been assigned as the new PRIMARY SPOC for ${currentDrive.company}.`,
         type: 'SPOC_ASSIGNED',
         read: false,
         timestamp: new Date().toISOString()
-      });
+      }).catch(err => console.error('SPOC notification failed', err));
 
-      await logActivityToHeads(`changed the Primary SPOC of ${currentDrive.company} to ${newSpocEmail.split('@')[0]}.`);
-
-      triggerToast("Primary SPOC changed successfully!");
+      logActivityToHeads(`changed the Primary SPOC of ${currentDrive.company} to ${assignedEmail.split('@')[0]}.`);
     } catch (err) {
       console.error(err);
+      toast.error("Couldn't change the Primary SPOC. Please try again.");
     }
-    setNewSpocEmail('');
-    setShowSpocModal(false);
   };
 
   const handleEditBranchesSubmit = async (e) => {
@@ -364,42 +369,46 @@ export default function DriveRoom() {
         ctc: editCtc,
         eligibleBranches: editBranches
       });
-      await logActivityToHeads(`updated the drive details for ${editCompany} (role, CTC and ${editBranches.length} eligible branch${editBranches.length === 1 ? '' : 'es'}).`);
       triggerToast("Drive details updated successfully!");
       setShowEditBranchesModal(false);
+      logActivityToHeads(`updated the drive details for ${editCompany} (role, CTC and ${editBranches.length} eligible branch${editBranches.length === 1 ? '' : 'es'}).`);
     } catch(err) {
       console.error(err);
+      toast.error("Couldn't save those changes. Please try again.");
     }
   };
 
   const handleChangeSecSpoc = async (e) => {
     e.preventDefault();
+    const assignedEmail = newSecSpocEmail;
+    const slot = editingSpocIndex;
     try {
       const updatedSpocs = [...(currentDrive.secondarySpocs || ['', ''])];
-      updatedSpocs[editingSpocIndex] = newSecSpocEmail;
-      
+      updatedSpocs[slot] = assignedEmail;
+
       await updateDoc(doc(db, 'drives', id), {
         secondarySpocs: updatedSpocs
       });
 
-      // Notify the new secondary SPOC
-      await addDoc(collection(db, 'notifications'), {
-        recipient: newSecSpocEmail,
-        message: `You have been assigned as Secondary SPOC ${editingSpocIndex + 1} for ${currentDrive.company}.`,
+      triggerToast(`Secondary SPOC ${slot + 1} updated!`);
+      setNewSecSpocEmail('');
+      setShowSecSpocModal(false);
+
+      // Notify the new secondary SPOC (side effect, doesn't block the UI)
+      addDoc(collection(db, 'notifications'), {
+        recipient: assignedEmail,
+        message: `You have been assigned as Secondary SPOC ${slot + 1} for ${currentDrive.company}.`,
         type: 'SPOC_ASSIGNED',
         read: false,
         timestamp: new Date().toISOString()
-      });
+      }).catch(err => console.error('SPOC notification failed', err));
 
-      // Broadcast the activity to all HEADs
-      await logActivityToHeads(`changed Secondary SPOC ${editingSpocIndex + 1} of ${currentDrive.company} to ${newSecSpocEmail.split('@')[0]}.`);
-
-      triggerToast(`Secondary SPOC ${editingSpocIndex + 1} updated!`);
+      // Broadcast the activity to all HEADs (also a side effect)
+      logActivityToHeads(`changed Secondary SPOC ${slot + 1} of ${currentDrive.company} to ${assignedEmail.split('@')[0]}.`);
     } catch (err) {
       console.error(err);
+      toast.error("Couldn't change that Secondary SPOC. Please try again.");
     }
-    setNewSecSpocEmail('');
-    setShowSecSpocModal(false);
   };
 
   const handleInitiateDM = async (targetEmail) => {
@@ -1356,13 +1365,16 @@ export default function DriveRoom() {
               {(isHead || isPriSpoc) && (
                 <button 
                   onClick={async () => {
+                    const reopening = currentDrive.status === 'Closed';
                     try {
-                      const reopening = currentDrive.status === 'Closed';
                       await updateDoc(doc(db, 'drives', id), { status: reopening ? 'Active' : 'Closed' });
-                      await logActivityToHeads(`${reopening ? 'reopened' : 'closed'} the ${currentDrive.company} drive.`);
                       setShowSettingsModal(false);
                       triggerToast(`Drive ${reopening ? 'Reopened' : 'Closed'}!`);
-                    } catch(err) { console.error(err); }
+                      logActivityToHeads(`${reopening ? 'reopened' : 'closed'} the ${currentDrive.company} drive.`);
+                    } catch(err) {
+                      console.error(err);
+                      toast.error(`Couldn't ${reopening ? 'reopen' : 'close'} the drive. Please try again.`);
+                    }
                   }}
                   className={`cyber-menu-btn ${currentDrive.status === 'Closed' ? '' : 'danger'}`}
                   style={{ marginTop: '0.5rem' }}
