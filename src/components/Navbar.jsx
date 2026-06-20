@@ -13,18 +13,23 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const profileBtnRef = useRef(null);
-  const [dropdownPos, setDropdownPos] = useState({ left: 0, top: 0, width: 320, arrowLeft: 160 });
+  const [dropdownPos, setDropdownPos] = useState({ right: 16, top: 0, width: 280, arrowLeft: 130 });
 
   const computeDropdownPos = () => {
     const btn = profileBtnRef.current;
     if (!btn) return;
     const rect = btn.getBoundingClientRect();
     const margin = 16;
-    const width = Math.min(320, window.innerWidth - margin * 2);
-    const idealLeft = rect.left + rect.width / 2 - width / 2;
-    const left = Math.min(Math.max(idealLeft, margin), window.innerWidth - width - margin);
-    const arrowLeft = Math.min(Math.max(rect.left + rect.width / 2 - left, 24), width - 24);
-    setDropdownPos({ left, top: rect.bottom + 12, width, arrowLeft });
+    const width = Math.min(280, window.innerWidth - margin * 2);
+    // Anchored to the viewport's right edge (matching the profile button,
+    // which is the rightmost element in the navbar) instead of centered
+    // under the button - centering a fairly wide card under a button that
+    // sits near the screen edge just pushed the whole thing toward the
+    // middle of the screen instead of tucking it under the icon.
+    const right = margin;
+    const panelLeft = window.innerWidth - right - width;
+    const arrowLeft = Math.min(Math.max(rect.left + rect.width / 2 - panelLeft, 24), width - 24);
+    setDropdownPos({ right, top: rect.bottom + 12, width, arrowLeft });
   };
 
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
@@ -190,7 +195,7 @@ export default function Navbar() {
               <div className="animate-fade-in navbar-profile-dropdown" style={{
                 position: 'fixed',
                 top: `${dropdownPos.top}px`,
-                left: `${dropdownPos.left}px`,
+                right: `${dropdownPos.right}px`,
                 width: `${dropdownPos.width}px`,
                 background: 'var(--dropdown-bg)',
                 backdropFilter: 'blur(12px)',

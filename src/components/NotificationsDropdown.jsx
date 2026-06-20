@@ -12,14 +12,20 @@ export default function NotificationsDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const triggerRef = useRef(null);
   const panelRef = useRef(null);
-  const [panelPos, setPanelPos] = useState({ top: 0, right: 0, width: 320 });
+  const [panelPos, setPanelPos] = useState({ top: 0, right: 16, width: 300 });
 
   const computePos = () => {
     const btn = triggerRef.current;
     if (!btn) return;
     const rect = btn.getBoundingClientRect();
-    const width = Math.min(320, window.innerWidth - 32);
-    setPanelPos({ top: rect.bottom + 8, right: Math.max(window.innerWidth - rect.right, 16), width });
+    const margin = 12;
+    // Anchored to the viewport edge rather than the bell's own rect.right -
+    // the bell isn't the rightmost element (the profile button sits further
+    // right), so anchoring to its own edge left a big gap and made the panel
+    // look like it was drifting toward the center instead of hugging the
+    // right side directly under the icon cluster.
+    const width = Math.min(300, window.innerWidth - margin * 2);
+    setPanelPos({ top: rect.bottom + 8, right: margin, width });
   };
 
   // Close dropdown when clicking outside - the panel itself is portaled to

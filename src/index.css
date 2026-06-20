@@ -1083,11 +1083,6 @@ p {
     grid-template-columns: 1fr !important;
   }
   
-  /* Modals */
-  .cyber-modal-container {
-    margin: 1rem !important;
-  }
-
   .login-content-pad {
     padding: 1.5rem 1rem !important;
   }
