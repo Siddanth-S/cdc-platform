@@ -9,7 +9,7 @@ import {
   sendEmailVerification
 } from 'firebase/auth';
 import { auth, googleProvider, db } from '../firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 const AuthContext = createContext();
 
@@ -25,18 +25,19 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Determine role by scanning Firestore drives
+  // Determine role via two targeted indexed queries instead of scanning every
+  // drive - keeps login cost flat as the number of drives grows across
+  // placement seasons, rather than growing with it.
   const determineRole = async (email) => {
     if (CDC_HEADS.includes(email)) return 'HEAD';
 
     try {
-      const snapshot = await getDocs(collection(db, 'drives'));
-      for (const doc of snapshot.docs) {
-        const data = doc.data();
-        if (data.coordinator === email || data.secondarySpocs?.includes(email)) {
-          return 'COORDINATOR';
-        }
-      }
+      const drivesRef = collection(db, 'drives');
+      const [primarySnap, secondarySnap] = await Promise.all([
+        getDocs(query(drivesRef, where('coordinator', '==', email))),
+        getDocs(query(drivesRef, where('secondarySpocs', 'array-contains', email)))
+      ]);
+      if (!primarySnap.empty || !secondarySnap.empty) return 'COORDINATOR';
     } catch (err) {
       console.error('Error checking SPOC status:', err);
     }
@@ -46,17 +47,20 @@ export const AuthProvider = ({ children }) => {
 
   // Listen for auth state changes (persists across refreshes)
   useEffect(() => {
-    const mockUserStr = sessionStorage.getItem('mock_user');
-    if (mockUserStr) {
-      setUser(JSON.parse(mockUserStr));
-      setLoading(false);
-      return;
-    }
-
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const email = firebaseUser.email;
         if (!email.endsWith('@nitk.edu.in')) {
+          await signOut(auth);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+        // Google sign-in is always pre-verified by Google; only email/password
+        // accounts can land here unverified. Re-checked on every reload (not
+        // just at sign-in) so a session started before this gate existed
+        // can't keep working indefinitely.
+        if (!firebaseUser.emailVerified) {
           await signOut(auth);
           setUser(null);
           setLoading(false);
@@ -124,22 +128,9 @@ export const AuthProvider = ({ children }) => {
     if (!email.endsWith('@nitk.edu.in')) {
       throw new Error('Only @nitk.edu.in emails are allowed.');
     }
-    if (password === 'cdc_demo_bypass') {
-      const role = await determineRole(email);
-      const mockUserData = {
-        email,
-        role,
-        displayName: email.split('@')[0],
-        photoURL: null,
-        uid: 'mock_uid_' + email.replace(/[^a-zA-Z0-9]/g, ''),
-        emailVerified: true
-      };
-      sessionStorage.setItem('mock_user', JSON.stringify(mockUserData));
-      setUser(mockUserData);
-      return;
-    }
+    let result;
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      result = await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {
       if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
         throw new Error('Invalid email or password. Please try again.');
@@ -152,6 +143,31 @@ export const AuthProvider = ({ children }) => {
       }
       throw new Error(err.message);
     }
+    if (!result.user.emailVerified) {
+      await signOut(auth);
+      throw new Error('VERIFICATION_REQUIRED');
+    }
+  };
+
+  // Resend the verification link - reuses the credentials already entered
+  // on the sign-in form, since the account must already be signed out
+  // (blocked by the emailVerified gate) to need this.
+  const resendVerificationEmail = async (email, password) => {
+    if (!email.endsWith('@nitk.edu.in')) {
+      throw new Error('Only @nitk.edu.in emails are allowed.');
+    }
+    let result;
+    try {
+      result = await signInWithEmailAndPassword(auth, email, password);
+    } catch {
+      throw new Error('Could not sign in with those credentials to resend the link.');
+    }
+    if (result.user.emailVerified) {
+      await signOut(auth);
+      throw new Error('This email is already verified - just sign in normally.');
+    }
+    await sendEmailVerification(result.user);
+    await signOut(auth);
   };
 
   // Forgot Password
@@ -170,7 +186,6 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    sessionStorage.removeItem('mock_user');
     await signOut(auth);
     setUser(null);
   };
@@ -184,9 +199,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, loginWithGoogle, loginWithEmail, signUp, resetPassword, 
-      logout, loading, refreshRole, CDC_HEADS 
+    <AuthContext.Provider value={{
+      user, loginWithGoogle, loginWithEmail, signUp, resetPassword,
+      resendVerificationEmail, logout, loading, refreshRole, CDC_HEADS
     }}>
       {children}
     </AuthContext.Provider>

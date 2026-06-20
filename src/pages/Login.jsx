@@ -12,8 +12,9 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [needsVerification, setNeedsVerification] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { loginWithGoogle, loginWithEmail, signUp, resetPassword, logout, user } = useAuth();
+  const { loginWithGoogle, loginWithEmail, signUp, resetPassword, resendVerificationEmail, logout, user } = useAuth();
   const navigate = useNavigate();
   // createUserWithEmailAndPassword auto-signs the new user in, which would
   // otherwise race this redirect and skip straight to the dashboard before
@@ -46,12 +47,18 @@ export default function Login() {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setNeedsVerification(false);
     setIsLoading(true);
     try {
       await loginWithEmail(email, password);
       // navigation handled by useEffect when user state updates
     } catch (err) {
-      setError(err.message);
+      if (err.message === 'VERIFICATION_REQUIRED') {
+        setError('Please verify your email before signing in.');
+        setNeedsVerification(true);
+      } else {
+        setError(err.message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -91,6 +98,21 @@ export default function Login() {
     }
   };
 
+  const handleResendVerification = async () => {
+    setError('');
+    setSuccess('');
+    setIsLoading(true);
+    try {
+      await resendVerificationEmail(email, password);
+      setNeedsVerification(false);
+      setSuccess('Verification email resent! Check your inbox.');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     setError('');
@@ -110,6 +132,7 @@ export default function Login() {
     setMode(newMode);
     setError('');
     setSuccess('');
+    setNeedsVerification(false);
     setPassword('');
     setConfirmPassword('');
   };
@@ -168,6 +191,16 @@ export default function Login() {
                 style={{ color: 'var(--danger-color)', fontSize: '0.85rem', marginBottom: '1.25rem', background: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)', textAlign: 'left' }}
               >
                 {error}
+                {needsVerification && (
+                  <button
+                    type="button"
+                    onClick={handleResendVerification}
+                    disabled={isLoading}
+                    style={{ display: 'block', marginTop: '0.5rem', background: 'none', border: 'none', color: 'var(--danger-color)', fontSize: '0.8rem', fontWeight: '600', textDecoration: 'underline', cursor: isLoading ? 'not-allowed' : 'pointer', padding: 0 }}
+                  >
+                    Resend verification email
+                  </button>
+                )}
               </motion.div>
             )}
             {success && (
