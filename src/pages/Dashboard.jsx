@@ -66,7 +66,8 @@ export default function Dashboard() {
   }, []);
 
   const [showModal, setShowModal] = useState(false);
-  const [newDrive, setNewDrive] = useState({ company: '', role: '', coordinator: '', secondarySpoc1: '', secondarySpoc2: '', eligibleBranches: [...btechBranches, ...pgBranches] });
+  const emptyNewDrive = { company: '', role: '', ctc: '', coordinator: '', secondarySpoc1: '', secondarySpoc2: '', eligibleBranches: [] };
+  const [newDrive, setNewDrive] = useState(emptyNewDrive);
   
   const triggerToast = (msg) => {
     toast.success(msg, {
@@ -141,6 +142,7 @@ export default function Dashboard() {
       id: newId,
       company: newDrive.company,
       role: newDrive.role,
+      ctc: newDrive.ctc,
       coordinator: newDrive.coordinator,
       secondarySpocs: [newDrive.secondarySpoc1, newDrive.secondarySpoc2],
       joined: 0,
@@ -148,12 +150,20 @@ export default function Dashboard() {
       status: 'Active'
     });
     setShowModal(false);
-    triggerToast(`Drive for ${newDrive.company} created successfully!`);
-    setNewDrive({ company: '', role: '', coordinator: '', secondarySpoc1: '', secondarySpoc2: '', eligibleBranches: [...btechBranches, ...pgBranches] });
+    triggerToast(`Drive for ${newDrive.company} created successfully! The Primary SPOC can add the role, CTC and eligibility before students can join.`);
+    setNewDrive(emptyNewDrive);
   };
 
   const isDrivePinned = (drive) => {
     return pinnedDrives.includes(String(drive.id));
+  };
+
+  // Role/CTC/eligibility are optional when a HEAD creates a drive - the
+  // Primary SPOC fills them in afterwards. Until all three are set, the
+  // drive isn't open for students to join (SPOCs/HEAD can still enter the
+  // room to finish setting it up).
+  const isDriveSetupComplete = (drive) => {
+    return !!(drive.role?.trim() && drive.ctc?.trim() && drive.eligibleBranches?.length > 0);
   };
 
   const togglePin = (e, drive) => {
@@ -291,14 +301,19 @@ export default function Dashboard() {
           const isSpoc = isPrimarySpoc || drive.secondarySpocs?.includes(user?.email);
           const isJoined = joinedDrives.includes(String(drive.id)) || user?.role === 'HEAD' || isSpoc;
           const isPinned = isDrivePinned(drive) || isSpoc;
+          const isComplete = isDriveSetupComplete(drive);
           const isEligible = user?.role === 'HEAD' || !drive.eligibleBranches || (userProfile?.branch && drive.eligibleBranches.includes(userProfile.branch)) || isSpoc;
-          
+          // SPOCs/HEAD can always open the room (that's how the Primary SPOC
+          // finishes setup); everyone else needs the drive complete AND
+          // themselves eligible before they're allowed in.
+          const canInteract = isJoined || (isComplete && isEligible);
+
           return (
-            <div 
-              key={drive.id} 
-              className="cyber-card" 
-              style={{ display: 'flex', flexDirection: 'column', position: 'relative', borderLeft: isJoined ? '4px solid var(--success-color)' : (isPinned ? '4px solid var(--warning-color)' : '1px solid rgba(255, 255, 255, 0.05)'), cursor: isEligible ? 'pointer' : 'not-allowed', opacity: isEligible ? (drive.status === 'Closed' ? 0.65 : 1) : 0.4, filter: drive.status === 'Closed' ? 'grayscale(50%)' : 'none', transition: 'all 0.3s ease' }}
-              onClick={() => isEligible && handleCardClick(drive)}
+            <div
+              key={drive.id}
+              className="cyber-card"
+              style={{ display: 'flex', flexDirection: 'column', position: 'relative', borderLeft: isJoined ? '4px solid var(--success-color)' : (isPinned ? '4px solid var(--warning-color)' : '1px solid rgba(255, 255, 255, 0.05)'), cursor: canInteract ? 'pointer' : 'not-allowed', opacity: canInteract ? (drive.status === 'Closed' ? 0.65 : 1) : 0.4, filter: drive.status === 'Closed' ? 'grayscale(50%)' : 'none', transition: 'all 0.3s ease' }}
+              onClick={() => canInteract && handleCardClick(drive)}
             >
               {/* Header */}
               <div className="cyber-card-header" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -343,15 +358,29 @@ export default function Dashboard() {
                           {isPrimarySpoc ? 'Primary SPOC' : 'Secondary SPOC'}
                         </span>
                       )}
-                      {userProfile?.branch !== 'ADMIN' && (
-                        <span style={{ 
-                          fontSize: '0.65rem', 
-                          background: isEligible ? 'rgba(56, 189, 248, 0.15)' : 'rgba(244, 63, 94, 0.15)', 
-                          color: isEligible ? '#38bdf8' : '#f43f5e', 
+                      {!isComplete ? (
+                        <span style={{
+                          fontSize: '0.65rem',
+                          background: 'rgba(251, 191, 36, 0.15)',
+                          color: '#fbbf24',
+                          border: '1px solid rgba(251, 191, 36, 0.4)',
+                          padding: '0.15rem 0.5rem',
+                          borderRadius: '12px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          boxShadow: '0 0 8px rgba(251, 191, 36, 0.3)'
+                        }}>
+                          Setup Pending
+                        </span>
+                      ) : userProfile?.branch !== 'ADMIN' && (
+                        <span style={{
+                          fontSize: '0.65rem',
+                          background: isEligible ? 'rgba(56, 189, 248, 0.15)' : 'rgba(244, 63, 94, 0.15)',
+                          color: isEligible ? '#38bdf8' : '#f43f5e',
                           border: `1px solid ${isEligible ? 'rgba(56, 189, 248, 0.4)' : 'rgba(244, 63, 94, 0.4)'}`,
-                          padding: '0.15rem 0.5rem', 
-                          borderRadius: '12px', 
-                          textTransform: 'uppercase', 
+                          padding: '0.15rem 0.5rem',
+                          borderRadius: '12px',
+                          textTransform: 'uppercase',
                           letterSpacing: '0.5px',
                           boxShadow: isEligible ? '0 0 8px rgba(56, 189, 248, 0.3)' : '0 0 8px rgba(244, 63, 94, 0.3)'
                         }}>
@@ -359,7 +388,12 @@ export default function Dashboard() {
                         </span>
                       )}
                     </div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>{drive.role}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem', flexWrap: 'wrap' }}>
+                      {drive.role && <span>{drive.role}</span>}
+                      {drive.role && drive.ctc && <span style={{ opacity: 0.45 }}>•</span>}
+                      {drive.ctc && <span style={{ color: 'var(--success-color)', fontWeight: 600 }}>{drive.ctc}</span>}
+                      {!drive.role && !drive.ctc && <span style={{ fontStyle: 'italic', opacity: 0.7 }}>Role & CTC pending</span>}
+                    </div>
                   </div>
                 </div>
                 <button 
@@ -387,8 +421,16 @@ export default function Dashboard() {
               
               <div className="cyber-card-footer" style={{ padding: '1.5rem', borderTop: '1px solid var(--border-color)', background: 'var(--input-bg)' }}>
                 {!isJoined ? (
-                  isEligible ? (
-                    <button 
+                  !isComplete ? (
+                    <button
+                      disabled
+                      className="cyber-btn w-full"
+                      style={{ padding: '0.85rem', fontSize: '0.95rem', background: 'var(--input-bg)', color: 'var(--text-secondary)', cursor: 'not-allowed', border: '1px solid var(--border-color)' }}
+                    >
+                      Awaiting Setup by SPOC
+                    </button>
+                  ) : isEligible ? (
+                    <button
                       onClick={(e) => { e.stopPropagation(); setDriveToJoin(drive); }}
                       className="cyber-btn w-full"
                       style={{ padding: '0.85rem', fontSize: '0.95rem' }}
@@ -396,7 +438,7 @@ export default function Dashboard() {
                       Join Drive
                     </button>
                   ) : (
-                    <button 
+                    <button
                       disabled
                       className="cyber-btn w-full"
                       style={{ padding: '0.85rem', fontSize: '0.95rem', background: 'var(--input-bg)', color: 'var(--text-secondary)', cursor: 'not-allowed', border: '1px solid var(--border-color)' }}
@@ -427,17 +469,26 @@ export default function Dashboard() {
               <h2 style={{ margin: 0 }}>Create New Drive</h2>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '1.5rem' }}>&times;</button>
             </div>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '-0.5rem', marginBottom: '1.25rem', lineHeight: '1.4' }}>
+              Only the company name and SPOCs are required here. The Primary SPOC fills in the role, CTC and eligible branches afterwards - students can't join until all three are set.
+            </p>
             <form onSubmit={handleCreate}>
               <div className="input-group">
                 <label className="input-label">Company Name *</label>
                 <input required className="input-field" value={newDrive.company} onChange={e => setNewDrive({...newDrive, company: e.target.value})} />
               </div>
-              <div className="input-group">
-                <label className="input-label">Role *</label>
-                <input required className="input-field" value={newDrive.role} onChange={e => setNewDrive({...newDrive, role: e.target.value})} />
+              <div className="mobile-stack-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="input-group">
+                  <label className="input-label">Role (optional)</label>
+                  <input className="input-field" value={newDrive.role} onChange={e => setNewDrive({...newDrive, role: e.target.value})} placeholder="e.g. SDE Intern" />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">CTC (optional)</label>
+                  <input className="input-field" value={newDrive.ctc} onChange={e => setNewDrive({...newDrive, ctc: e.target.value})} placeholder="e.g. 12 LPA" />
+                </div>
               </div>
               <div className="input-group">
-                <label className="input-label" style={{ marginBottom: '0.5rem' }}>Eligible Branches *</label>
+                <label className="input-label" style={{ marginBottom: '0.5rem' }}>Eligible Branches (optional)</label>
                 <div style={{ maxHeight: '180px', overflowY: 'auto', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
                   
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>

@@ -45,6 +45,9 @@ export default function DriveRoom() {
 
   const [showEditBranchesModal, setShowEditBranchesModal] = useState(false);
   const [editBranches, setEditBranches] = useState([]);
+  const [editCompany, setEditCompany] = useState('');
+  const [editRole, setEditRole] = useState('');
+  const [editCtc, setEditCtc] = useState('');
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [activeMenuMsgId, setActiveMenuMsgId] = useState(null);
@@ -356,10 +359,13 @@ export default function DriveRoom() {
     e.preventDefault();
     try {
       await updateDoc(doc(db, 'drives', id), {
+        company: editCompany,
+        role: editRole,
+        ctc: editCtc,
         eligibleBranches: editBranches
       });
-      await logActivityToHeads(`updated the eligible branches for ${currentDrive.company} (${editBranches.length} branch${editBranches.length === 1 ? '' : 'es'} now eligible).`);
-      triggerToast("Eligibility branches updated successfully!");
+      await logActivityToHeads(`updated the drive details for ${editCompany} (role, CTC and ${editBranches.length} eligible branch${editBranches.length === 1 ? '' : 'es'}).`);
+      triggerToast("Drive details updated successfully!");
       setShowEditBranchesModal(false);
     } catch(err) {
       console.error(err);
@@ -1321,8 +1327,15 @@ export default function DriveRoom() {
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {(isHead || isPriSpoc) && (
-                <button onClick={() => { setShowSettingsModal(false); setEditBranches(currentDrive.eligibleBranches || []); setShowEditBranchesModal(true); }} className="cyber-menu-btn">
-                  <Edit3 size={20} className="text-primary" /> Edit Eligibility
+                <button onClick={() => {
+                  setShowSettingsModal(false);
+                  setEditCompany(currentDrive.company || '');
+                  setEditRole(currentDrive.role || '');
+                  setEditCtc(currentDrive.ctc || '');
+                  setEditBranches(currentDrive.eligibleBranches || []);
+                  setShowEditBranchesModal(true);
+                }} className="cyber-menu-btn">
+                  <Edit3 size={20} className="text-primary" /> Edit Drive Details
                 </button>
               )}
               
@@ -1408,12 +1421,27 @@ export default function DriveRoom() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', overflowY: 'auto', padding: '1rem', zIndex: 1000 }}>
           <div className="glass-card cyber-modal-container animate-fade-in" style={{ margin: 'auto', width: '100%', maxWidth: '500px', padding: '1.5rem' }}>
             <div className="flex justify-between items-center mb-4">
-              <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Edit3 size={20} className="text-primary" /> Edit Eligibility</h2>
+              <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Edit3 size={20} className="text-primary" /> Edit Drive Details</h2>
               <button onClick={() => setShowEditBranchesModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '1.5rem' }}>&times;</button>
             </div>
             <form onSubmit={handleEditBranchesSubmit}>
+              <div className="input-group">
+                <label className="input-label">Company Name *</label>
+                <input required className="input-field" value={editCompany} onChange={e => setEditCompany(e.target.value)} />
+              </div>
+              <div className="mobile-stack-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="input-group">
+                  <label className="input-label">Role</label>
+                  <input className="input-field" value={editRole} onChange={e => setEditRole(e.target.value)} placeholder="e.g. SDE Intern" />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">CTC</label>
+                  <input className="input-field" value={editCtc} onChange={e => setEditCtc(e.target.value)} placeholder="e.g. 12 LPA" />
+                </div>
+              </div>
+              <label className="input-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Eligible Branches</label>
               <div style={{ maxHeight: '350px', overflowY: 'auto', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', marginBottom: '1rem' }}>
-                  
+
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
                   <div style={{ fontWeight: 'bold', color: 'var(--primary-color)', fontSize: '0.85rem' }}>B.Tech Branches</div>
                   <button type="button" onClick={() => {
@@ -1467,7 +1495,7 @@ export default function DriveRoom() {
               </div>
               <div className="flex gap-3 justify-center">
                 <button type="button" onClick={() => setShowEditBranchesModal(false)} className="btn btn-secondary w-full" style={{ padding: '0.8rem' }}>Cancel</button>
-                <button type="submit" className="btn btn-primary w-full" style={{ padding: '0.8rem' }}>Save Eligibility</button>
+                <button type="submit" className="btn btn-primary w-full" style={{ padding: '0.8rem' }}>Save Changes</button>
               </div>
             </form>
           </div>
