@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { LogOut, CircleUserRound, Edit3, Sun, Moon } from 'lucide-react';
@@ -177,8 +178,14 @@ export default function Navbar() {
             </span>
           </button>
 
-          {showHoverCard && profileData && (
+          {showHoverCard && profileData && createPortal(
             <>
+              {/* .navbar-cyber has its own z-index + backdrop-filter, which
+                  creates a stacking context - any descendant, even one
+                  with position:fixed and a higher z-index, gets trapped
+                  inside it and stacks behind unrelated siblings like the
+                  mobile DM panel regardless of its own z-index value.
+                  Portal this out to document.body to escape that. */}
               <div style={{ position: 'fixed', inset: 0, zIndex: 1199 }} onClick={() => { setShowHoverCard(false); setIsEditingInline(false); }}></div>
               <div className="animate-fade-in navbar-profile-dropdown" style={{
                 position: 'fixed',
@@ -341,7 +348,8 @@ export default function Navbar() {
                   </form>
                 )}
               </div>
-            </>
+            </>,
+            document.body
           )}
 
         </div>

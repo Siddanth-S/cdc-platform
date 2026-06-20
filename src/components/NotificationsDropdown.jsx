@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, CheckCircle2, Circle } from 'lucide-react';
 import { collection, query, where, onSnapshot, updateDoc, doc, orderBy } from 'firebase/firestore';
@@ -9,18 +10,37 @@ export default function NotificationsDropdown() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const triggerRef = useRef(null);
+  const panelRef = useRef(null);
+  const [panelPos, setPanelPos] = useState({ top: 0, right: 0, width: 320 });
 
-  // Close dropdown when clicking outside
+  const computePos = () => {
+    const btn = triggerRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const width = Math.min(320, window.innerWidth - 32);
+    setPanelPos({ top: rect.bottom + 8, right: Math.max(window.innerWidth - rect.right, 16), width });
+  };
+
+  // Close dropdown when clicking outside - the panel itself is portaled to
+  // document.body (see below), so "outside" has to check both the trigger
+  // button and the portaled panel, not just this component's own subtree.
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
+      if (triggerRef.current?.contains(event.target)) return;
+      if (panelRef.current?.contains(event.target)) return;
+      setIsOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    computePos();
+    window.addEventListener('resize', computePos);
+    return () => window.removeEventListener('resize', computePos);
+  }, [isOpen]);
 
   // Fetch notifications
   useEffect(() => {
@@ -63,9 +83,10 @@ export default function NotificationsDropdown() {
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
+    <div className="relative">
+      <button
+        ref={triggerRef}
+        onClick={() => { if (!isOpen) computePos(); setIsOpen(!isOpen); }}
         className={`logo-glow ${unreadCount > 0 ? 'logo-glow-pulse' : ''}`}
         style={{
           position: 'relative',
@@ -119,28 +140,34 @@ export default function NotificationsDropdown() {
         )}
       </button>
 
-      <AnimatePresence>
+      {createPortal(
+        <AnimatePresence>
         {isOpen && (
           <motion.div
+            ref={panelRef}
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
             style={{
-              position: 'absolute',
-              top: 'calc(100% + 0.5rem)',
-              right: 0,
-              width: '320px',
-              maxWidth: 'calc(100vw - 2rem)',
+              // .navbar-cyber has its own z-index + backdrop-filter, which
+              // creates a stacking context - any descendant, even one with
+              // a higher z-index, gets trapped inside it and stacks behind
+              // unrelated siblings like the mobile DM panel regardless of
+              // its own z-index value. Portaled to document.body (and
+              // switched to fixed + computed coordinates, since it can no
+              // longer rely on being positioned relative to the bell icon)
+              // to escape that.
+              position: 'fixed',
+              top: `${panelPos.top}px`,
+              right: `${panelPos.right}px`,
+              width: `${panelPos.width}px`,
               background: 'var(--dropdown-bg)',
               backdropFilter: 'blur(16px)',
               border: '1px solid var(--border-color)',
               borderRadius: '16px',
               boxShadow: '0 10px 30px var(--glass-shadow), 0 0 20px rgba(59, 130, 246, 0.15)',
               overflow: 'hidden',
-              // The mobile Direct Messages panel is a full-screen overlay at
-              // z-index 1000 - this has to clear that or it renders hidden
-              // behind it when both are mounted at once.
               zIndex: 1200
             }}
           >
@@ -200,7 +227,9 @@ export default function NotificationsDropdown() {
             </div>
           </motion.div>
         )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

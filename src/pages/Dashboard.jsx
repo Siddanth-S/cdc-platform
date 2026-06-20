@@ -871,7 +871,10 @@ export default function Dashboard() {
                         ? (filterMode === opt.activeMode ? opt.inactiveMode : opt.activeMode)
                         : opt.mode;
                       setFilterMode(nextMode);
-                      setShowFilterModal(false);
+                      // Toggle rows just flip in place, same as the CTC
+                      // sort row above - only a one-shot pick closes the
+                      // modal.
+                      if (!isToggle) setShowFilterModal(false);
                     }}
                     style={{
                       background: isActive ? 'rgba(59, 130, 246, 0.1)' : 'transparent',

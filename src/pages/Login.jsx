@@ -13,15 +13,20 @@ export default function Login() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { loginWithGoogle, loginWithEmail, signUp, resetPassword, user } = useAuth();
+  const { loginWithGoogle, loginWithEmail, signUp, resetPassword, logout, user } = useAuth();
   const navigate = useNavigate();
+  // createUserWithEmailAndPassword auto-signs the new user in, which would
+  // otherwise race this redirect and skip straight to the dashboard before
+  // they ever see the "verification email sent" message - suppress it while
+  // signup is wrapping up and signing them back out.
+  const [skipAutoRedirect, setSkipAutoRedirect] = useState(false);
 
   // Navigate AFTER user state is fully set by onAuthStateChanged
   useEffect(() => {
-    if (user) {
+    if (user && !skipAutoRedirect) {
       navigate('/dashboard', { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, skipAutoRedirect, navigate]);
 
   const handleGoogleSignIn = async () => {
     setError('');
@@ -67,9 +72,14 @@ export default function Login() {
     }
 
     setIsLoading(true);
+    setSkipAutoRedirect(true);
     try {
       await signUp(email, password);
-      setSuccess('Account created! A verification email has been sent to your inbox. You can now sign in.');
+      // signUp leaves the new account signed in client-side; sign back out
+      // so they land on the sign-in form and actually see this message
+      // instead of being whisked straight to the dashboard unverified.
+      await logout();
+      setSuccess('Account created! A verification email has been sent to your inbox. Please verify your email, then sign in below.');
       setMode('signin');
       setPassword('');
       setConfirmPassword('');
@@ -77,6 +87,7 @@ export default function Login() {
       setError(err.message);
     } finally {
       setIsLoading(false);
+      setSkipAutoRedirect(false);
     }
   };
 
@@ -109,9 +120,9 @@ export default function Login() {
     // 16px floor: under that, iOS Safari auto-zooms the page on focus.
     fontSize: '1rem',
     borderRadius: '10px',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    background: 'rgba(15, 23, 42, 0.6)',
-    color: '#fff',
+    border: '1px solid var(--border-color)',
+    background: 'var(--input-bg)',
+    color: 'var(--text-primary)',
     outline: 'none',
     transition: 'all 0.3s ease',
     boxSizing: 'border-box'
@@ -175,9 +186,9 @@ export default function Login() {
             disabled={isLoading}
             style={{ 
               width: '100%', padding: '0.85rem 1.5rem', fontSize: '0.95rem', fontWeight: '600',
-              borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '10px', border: '1px solid var(--border-color)',
               background: 'linear-gradient(135deg, rgba(66, 133, 244, 0.15), rgba(66, 133, 244, 0.05))',
-              color: '#fff', cursor: isLoading ? 'not-allowed' : 'pointer',
+              color: 'var(--text-primary)', cursor: isLoading ? 'not-allowed' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
               transition: 'all 0.3s ease', opacity: isLoading ? 0.7 : 1,
               boxShadow: '0 4px 15px rgba(66, 133, 244, 0.15)'
@@ -196,9 +207,9 @@ export default function Login() {
 
           {/* Divider */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '1.5rem 0' }}>
-            <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
+            <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>or</span>
-            <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
+            <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
           </div>
 
           {/* Email/Password Form */}
@@ -218,7 +229,7 @@ export default function Login() {
                     onChange={e => setEmail(e.target.value)} required
                     style={inputStyle}
                     onFocus={e => { e.target.style.borderColor = 'rgba(59, 130, 246, 0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'; }}
-                    onBlur={e => { e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'; e.target.style.boxShadow = 'none'; }}
+                    onBlur={e => { e.target.style.borderColor = 'var(--border-color)'; e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
                 <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
@@ -228,7 +239,7 @@ export default function Login() {
                     onChange={e => setPassword(e.target.value)} required
                     style={inputStyle}
                     onFocus={e => { e.target.style.borderColor = 'rgba(59, 130, 246, 0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'; }}
-                    onBlur={e => { e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'; e.target.style.boxShadow = 'none'; }}
+                    onBlur={e => { e.target.style.borderColor = 'var(--border-color)'; e.target.style.boxShadow = 'none'; }}
                   />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', padding: '0.25rem' }}>
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -269,7 +280,7 @@ export default function Login() {
                     onChange={e => setEmail(e.target.value)} required
                     style={inputStyle}
                     onFocus={e => { e.target.style.borderColor = 'rgba(59, 130, 246, 0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'; }}
-                    onBlur={e => { e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'; e.target.style.boxShadow = 'none'; }}
+                    onBlur={e => { e.target.style.borderColor = 'var(--border-color)'; e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
                 <div style={{ position: 'relative', marginBottom: '0.85rem' }}>
@@ -279,7 +290,7 @@ export default function Login() {
                     onChange={e => setPassword(e.target.value)} required minLength={6}
                     style={inputStyle}
                     onFocus={e => { e.target.style.borderColor = 'rgba(59, 130, 246, 0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'; }}
-                    onBlur={e => { e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'; e.target.style.boxShadow = 'none'; }}
+                    onBlur={e => { e.target.style.borderColor = 'var(--border-color)'; e.target.style.boxShadow = 'none'; }}
                   />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', padding: '0.25rem' }}>
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -292,7 +303,7 @@ export default function Login() {
                     onChange={e => setConfirmPassword(e.target.value)} required minLength={6}
                     style={inputStyle}
                     onFocus={e => { e.target.style.borderColor = 'rgba(59, 130, 246, 0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'; }}
-                    onBlur={e => { e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'; e.target.style.boxShadow = 'none'; }}
+                    onBlur={e => { e.target.style.borderColor = 'var(--border-color)'; e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
 
@@ -327,7 +338,7 @@ export default function Login() {
                     onChange={e => setEmail(e.target.value)} required
                     style={inputStyle}
                     onFocus={e => { e.target.style.borderColor = 'rgba(59, 130, 246, 0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'; }}
-                    onBlur={e => { e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'; e.target.style.boxShadow = 'none'; }}
+                    onBlur={e => { e.target.style.borderColor = 'var(--border-color)'; e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
 
