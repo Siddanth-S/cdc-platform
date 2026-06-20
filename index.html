@@ -5,6 +5,17 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CDC Portal</title>
+    <script>
+      // Applies the saved theme before React mounts, so the very first paint
+      // (including the Login page, which never mounts the navbar where the
+      // toggle itself lives) already reflects the user's last choice instead
+      // of flashing the dark-mode default.
+      (function () {
+        if (localStorage.getItem('theme') === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -270,6 +270,7 @@ p {
 .text-center { text-align: center; }
 .text-primary { color: var(--primary-color); }
 .text-secondary { color: var(--text-secondary); }
+.text-danger { color: var(--danger-color); }
 .mt-2 { margin-top: 0.5rem; }
 .mt-4 { margin-top: 1rem; }
 .mb-2 { margin-bottom: 0.5rem; }
@@ -1225,7 +1226,26 @@ p {
     padding: 0.75rem !important;
   }
   .navbar-profile-dropdown {
-    padding: 1rem !important;
+    padding: 0.85rem !important;
+    gap: 0.35rem !important;
+  }
+  .navbar-profile-name-block {
+    margin-bottom: 0.3rem !important;
+  }
+  .navbar-profile-name-block > div:first-child {
+    font-size: 0.95rem !important;
+  }
+  .navbar-profile-details-grid {
+    gap: 0.4rem 0.75rem !important;
+    font-size: 0.78rem !important;
+  }
+  .profile-dropdown-divider {
+    margin: 0.3rem 0 !important;
+  }
+  .navbar-profile-dropdown button {
+    padding: 0.5rem 0.6rem !important;
+    font-size: 0.8rem !important;
+    margin-bottom: 0.3rem !important;
   }
 
   /* Navbar: logo, brand text and the icon cluster are all sized for
@@ -1426,7 +1446,10 @@ p {
 
 /* Modern Create Drive Button */
 .btn-create-glow {
-  background: linear-gradient(135deg, var(--primary-color) 0%, #2563eb 100%);
+  /* Both stops need to be theme-aware - the old hardcoded #2563eb end-stop
+     happens to equal --primary-color exactly in light mode, so the
+     "gradient" flattened into one solid color and the glow looked off. */
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
   color: #ffffff;
   border: 1px solid rgba(59, 130, 246, 0.5);
   box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
@@ -1488,7 +1511,7 @@ p {
 
 /* Centralized Manage Menu Buttons */
 .cyber-menu-btn {
-  background: rgba(15, 23, 42, 0.5);
+  background: var(--card-bg-end);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(96, 165, 250, 0.2);
@@ -1508,18 +1531,18 @@ p {
 }
 
 .cyber-menu-btn:hover {
-  background: linear-gradient(90deg, rgba(59, 130, 246, 0.2) 0%, rgba(15, 23, 42, 0.5) 100%);
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.2) 0%, var(--card-bg-end) 100%);
   border: 1px solid rgba(96, 165, 250, 0.6);
   box-shadow: 0 0 25px rgba(59, 130, 246, 0.3), inset 0 0 20px rgba(59, 130, 246, 0.15);
   transform: translateX(6px);
-  color: #fff;
+  color: var(--primary-color);
 }
 
 .cyber-menu-btn.danger:hover {
-  background: linear-gradient(90deg, rgba(239, 68, 68, 0.2) 0%, rgba(15, 23, 42, 0.5) 100%);
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.2) 0%, var(--card-bg-end) 100%);
   border: 1px solid rgba(248, 113, 113, 0.6);
   box-shadow: 0 0 25px rgba(239, 68, 68, 0.3), inset 0 0 20px rgba(239, 68, 68, 0.15);
-  color: #fca5a5;
+  color: var(--danger-color);
 }
 
 .cyber-modal-container {

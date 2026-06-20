@@ -138,7 +138,10 @@ export default function NotificationsDropdown() {
               borderRadius: '16px',
               boxShadow: '0 10px 30px var(--glass-shadow), 0 0 20px rgba(59, 130, 246, 0.15)',
               overflow: 'hidden',
-              zIndex: 100
+              // The mobile Direct Messages panel is a full-screen overlay at
+              // z-index 1000 - this has to clear that or it renders hidden
+              // behind it when both are mounted at once.
+              zIndex: 1200
             }}
           >
             <div style={{

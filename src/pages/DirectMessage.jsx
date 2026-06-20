@@ -162,8 +162,10 @@ export default function DirectMessage() {
       });
     } catch (err) {
       console.error("Error sending DM", err);
+      toast.error(selectedFile ? "Couldn't send - that file is too large for chat. Try something under 500KB." : "Couldn't send your message. Please try again.");
+      return;
     }
-    
+
     setInputText('');
     setSelectedFile(null);
     setReplyToMsg(null);
@@ -234,8 +236,13 @@ export default function DirectMessage() {
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      if (e.target.files[0].size > 2 * 1024 * 1024) {
-        alert("For this demo, please select a file smaller than 2MB.");
+      // DM messages live inside one shared document (array field, not a
+      // subcollection), so the 1MB Firestore document cap applies to the
+      // whole conversation's history, not just this file - stay well clear
+      // of it rather than the old 2MB check, which let files through that
+      // would silently fail to send.
+      if (e.target.files[0].size > 500 * 1024) {
+        toast.error("That file is too large - please choose something under 500KB.");
         return;
       }
       setSelectedFile(e.target.files[0]);

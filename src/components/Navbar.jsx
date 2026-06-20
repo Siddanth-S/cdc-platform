@@ -179,7 +179,7 @@ export default function Navbar() {
 
           {showHoverCard && profileData && (
             <>
-              <div style={{ position: 'fixed', inset: 0, zIndex: 999 }} onClick={() => { setShowHoverCard(false); setIsEditingInline(false); }}></div>
+              <div style={{ position: 'fixed', inset: 0, zIndex: 1199 }} onClick={() => { setShowHoverCard(false); setIsEditingInline(false); }}></div>
               <div className="animate-fade-in navbar-profile-dropdown" style={{
                 position: 'fixed',
                 top: `${dropdownPos.top}px`,
@@ -191,7 +191,10 @@ export default function Navbar() {
                 borderRadius: '16px',
                 padding: '1.2rem',
                 boxShadow: '0 10px 30px var(--glass-shadow), 0 0 20px rgba(59, 130, 246, 0.2)',
-                zIndex: 1000,
+                // The mobile Direct Messages panel is a full-screen overlay
+                // at z-index 1000 - this has to clear that or it renders
+                // hidden behind it when both are mounted at once.
+                zIndex: 1200,
                 pointerEvents: 'auto',
                 display: 'flex',
                 flexDirection: 'column',
@@ -208,16 +211,16 @@ export default function Navbar() {
                   borderRight: '10px solid transparent',
                   borderBottom: '10px solid var(--primary-color)'
                 }}></div>
-                <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+                <div className="navbar-profile-name-block" style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
                   <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', fontSize: '1.1rem', letterSpacing: '0.5px' }}>{profileData.name}</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{user?.email}</div>
                 </div>
                 
-                <div style={{ height: '1px', background: 'rgba(59, 130, 246, 0.3)', margin: '0.5rem 0' }}></div>
+                <div className="profile-dropdown-divider" style={{ height: '1px', background: 'rgba(59, 130, 246, 0.3)', margin: '0.5rem 0' }}></div>
                 
                 {!isEditingInline ? (
                   <>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.6rem 1rem', fontSize: '0.85rem', padding: '0 0.5rem' }}>
+                    <div className="navbar-profile-details-grid" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.6rem 1rem', fontSize: '0.85rem', padding: '0 0.5rem' }}>
                       <span style={{ color: 'var(--primary-color)', fontWeight: '600' }}>Degree:</span>
                       <span style={{ color: 'var(--text-primary)' }}>{profileData.degree}</span>
                       
@@ -241,7 +244,7 @@ export default function Navbar() {
                       )}
                     </div>
                     
-                    <div style={{ height: '1px', background: 'rgba(59, 130, 246, 0.3)', margin: '0.5rem 0' }}></div>
+                    <div className="profile-dropdown-divider" style={{ height: '1px', background: 'rgba(59, 130, 246, 0.3)', margin: '0.5rem 0' }}></div>
                     
                     {/* Theme Toggle Switch inside Profile Menu */}
                     <button 
@@ -277,7 +280,7 @@ export default function Navbar() {
                       </div>
                     </button>
 
-                    <div style={{ height: '1px', background: 'rgba(59, 130, 246, 0.3)', margin: '0.5rem 0' }}></div>
+                    <div className="profile-dropdown-divider" style={{ height: '1px', background: 'rgba(59, 130, 246, 0.3)', margin: '0.5rem 0' }}></div>
 
                     <button 
                       onClick={handleOpenProfile}

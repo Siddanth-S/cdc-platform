@@ -56,7 +56,7 @@ export default function Layout() {
       <div 
         className="mobile-toggle" 
         onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-        style={{ padding: '0.5rem 1rem', display: 'none', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.2)', cursor: 'pointer' }}
+        style={{ padding: '0.5rem 1rem', display: 'none', alignItems: 'center', justifyContent: 'space-between', background: 'var(--input-bg)', borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }}
       >
         <span style={{ fontSize: '0.9rem', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '0.5rem', pointerEvents: 'none' }}>
           <MessageSquare size={16} className="text-primary" /> Direct Messages

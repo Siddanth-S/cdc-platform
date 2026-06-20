@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Plus, Users, Search, Pin, CheckCircle2, Filter, X, Lock, LayoutDashboard, ArrowUpDown } from 'lucide-react';
+import { Building2, Plus, Users, Search, Pin, CheckCircle2, Filter, X, Lock, LayoutDashboard, ArrowDown, ArrowUp } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, onSnapshot, doc, getDoc, getDocs, setDoc, updateDoc, increment, addDoc } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
@@ -147,7 +147,7 @@ export default function Dashboard() {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [sortMode, setSortMode] = useState(() => {
     const saved = localStorage.getItem(`sort_${user?.email}`);
-    return ['DEFAULT', 'CTC_DESC', 'CTC_ASC'].includes(saved) ? saved : 'DEFAULT';
+    return saved === 'CTC_ASC' ? 'CTC_ASC' : 'CTC_DESC';
   });
 
   // Pulls the leading number out of a free-text CTC string ("12 LPA" -> 12)
@@ -321,14 +321,12 @@ export default function Dashboard() {
       const bPinned = isDrivePinned(b) || bIsSpoc;
       if (aPinned && !bPinned) return -1;
       if (!aPinned && bPinned) return 1;
-      if (sortMode === 'CTC_DESC' || sortMode === 'CTC_ASC') {
-        const aCtc = parseCtc(a.ctc);
-        const bCtc = parseCtc(b.ctc);
-        if (aCtc === null && bCtc !== null) return 1;
-        if (aCtc !== null && bCtc === null) return -1;
-        if (aCtc !== null && bCtc !== null && aCtc !== bCtc) {
-          return sortMode === 'CTC_DESC' ? bCtc - aCtc : aCtc - bCtc;
-        }
+      const aCtc = parseCtc(a.ctc);
+      const bCtc = parseCtc(b.ctc);
+      if (aCtc === null && bCtc !== null) return 1;
+      if (aCtc !== null && bCtc === null) return -1;
+      if (aCtc !== null && bCtc !== null && aCtc !== bCtc) {
+        return sortMode === 'CTC_DESC' ? bCtc - aCtc : aCtc - bCtc;
       }
       return Number(a.id) - Number(b.id);
     });
@@ -392,27 +390,27 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-          <ArrowUpDown size={15} style={{ position: 'absolute', left: '0.85rem', color: 'var(--text-secondary)', pointerEvents: 'none' }} />
-          <select
-            value={sortMode}
-            onChange={e => setSortMode(e.target.value)}
-            className="cyber-input"
-            title="Sort by CTC"
-            style={{
-              padding: '0 1rem 0 2.4rem',
-              height: '100%',
-              cursor: 'pointer',
-              appearance: 'none',
-              color: sortMode !== 'DEFAULT' ? 'var(--primary-color)' : 'var(--text-primary)',
-              border: sortMode !== 'DEFAULT' ? '1px solid var(--primary-color)' : '1px solid var(--border-color)',
-            }}
-          >
-            <option value="DEFAULT">Sort: Default</option>
-            <option value="CTC_DESC">CTC: High to Low</option>
-            <option value="CTC_ASC">CTC: Low to High</option>
-          </select>
-        </div>
+        <button
+          onClick={() => setSortMode(sortMode === 'CTC_DESC' ? 'CTC_ASC' : 'CTC_DESC')}
+          className="cyber-input"
+          title="Click to flip sort direction"
+          style={{
+            padding: '0 1rem',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            cursor: 'pointer',
+            color: 'var(--primary-color)',
+            border: '1px solid var(--primary-color)',
+            background: 'rgba(59, 130, 246, 0.15)',
+            boxShadow: '0 0 15px rgba(59, 130, 246, 0.3)',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          {sortMode === 'CTC_DESC' ? <ArrowDown size={16} /> : <ArrowUp size={16} />}
+          CTC: {sortMode === 'CTC_DESC' ? 'High to Low' : 'Low to High'}
+        </button>
       </div>
 
       <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>

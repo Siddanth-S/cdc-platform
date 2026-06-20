@@ -285,8 +285,10 @@ export default function DriveRoom() {
       });
     } catch (error) {
       console.error("Error sending message", error);
+      toast.error(selectedFile ? "Couldn't send - that file is too large for chat. Try something under 500KB." : "Couldn't send your message. Please try again.");
+      return;
     }
-    
+
     setInputText('');
     setSelectedFile(null);
     setReplyToMsg(null);
@@ -339,8 +341,11 @@ export default function DriveRoom() {
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      if (e.target.files[0].size > 2 * 1024 * 1024) {
-        alert("For this demo, please select a file smaller than 2MB.");
+      // Firestore caps a document at 1MB, and the file is stored as base64
+      // (~33% bigger than the raw bytes) inside the message doc - the old
+      // 2MB check let files through that would silently fail to send.
+      if (e.target.files[0].size > 500 * 1024) {
+        toast.error("That file is too large - please choose something under 500KB.");
         return;
       }
       setSelectedFile(e.target.files[0]);
@@ -1350,13 +1355,13 @@ export default function DriveRoom() {
       </div>
 
       {showSettingsModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', overflowY: 'auto', padding: '1rem', zIndex: 1000 }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflowY: 'auto', padding: '1rem', zIndex: 1000 }}>
           <div className="glass-card cyber-modal-container animate-fade-in" style={{ margin: 'auto', width: '100%', maxWidth: '420px', padding: '1.5rem' }}>
-            <div className="flex justify-between items-center mb-8" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
+            <div className="flex justify-between items-center mb-8" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
               <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.75rem', fontWeight: '700', letterSpacing: '0.5px' }}>
                 <Settings className="text-primary" size={28} /> Manage Drive
               </h2>
-              <button onClick={() => setShowSettingsModal(false)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', cursor: 'pointer', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.5)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}><X size={18} /></button>
+              <button onClick={() => setShowSettingsModal(false)} style={{ background: 'var(--input-bg)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.5)'} onMouseLeave={e => e.currentTarget.style.background = 'var(--input-bg)'}><X size={18} /></button>
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
