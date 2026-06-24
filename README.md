@@ -1,16 +1,30 @@
-# React + Vite
+# NITK Placement Portal
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A real-time messaging and placement drive coordination platform for NITK's campus recruitment system.
 
-Currently, two official plugins are available:
+**Stack:** React 19 + Vite, Firebase (Firestore + Auth), React Router, Framer Motion
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**Live on:** [Vercel](https://cdc-platform.vercel.app)
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- 🎯 Company placement drives with eligibility filtering
+- 💬 Real-time group chat per drive with pin/reply/reactions
+- 👥 Direct messaging between coordinators and students
+- 🔐 Role-based access (Admin, Coordinator, Student)
+- 📱 Responsive mobile-first design
+- 🔔 Notifications system
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm install
+npm run dev
+```
+
+## Project Structure
+
+- `src/pages/` — Main pages (Dashboard, DriveRoom, DirectMessage, Login)
+- `src/components/` — Reusable UI components
+- `src/contexts/` — React context (auth, state)
+- `src/utils/` — Helper functions

@@ -13,8 +13,8 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 
 const AuthContext = createContext();
 
-// CDC Heads — these emails get full admin access
-const CDC_HEADS = [
+// Admin accounts — these emails get full admin access
+const ADMIN_HEADS = [
   'headpc@nitk.edu.in', 'siddanths.231cv149@nitk.edu.in',
   'testadmin@nitk.edu.in',
   'head1@nitk.edu.in', 'head2@nitk.edu.in', 'head3@nitk.edu.in',
@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
   // drive - keeps login cost flat as the number of drives grows across
   // placement seasons, rather than growing with it.
   const determineRole = async (email) => {
-    if (CDC_HEADS.includes(email)) return 'HEAD';
+    if (ADMIN_HEADS.includes(email)) return 'HEAD';
 
     try {
       const drivesRef = collection(db, 'drives');
@@ -205,7 +205,7 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={{
       user, loginWithGoogle, loginWithEmail, signUp, resetPassword,
-      resendVerificationEmail, logout, loading, refreshRole, CDC_HEADS
+      resendVerificationEmail, logout, loading, refreshRole, ADMIN_HEADS
     }}>
       {children}
     </AuthContext.Provider>

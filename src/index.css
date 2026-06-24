@@ -531,14 +531,14 @@ p {
   animation: icon-glow 3s infinite ease-in-out;
 }
 
-/* Full CDC crest, background removed, recolored via mask so it tracks
-   --primary-color across themes instead of baking in a fixed color. */
-.cdc-logo-mark {
+/* Generic placeholder mark, recolored via mask so it tracks --primary-color
+   across themes instead of baking in a fixed color. */
+.app-logo-mark {
   display: inline-block;
   flex-shrink: 0;
   background-color: var(--primary-color);
-  -webkit-mask-image: url('/cdc-logo-mark.png');
-  mask-image: url('/cdc-logo-mark.png');
+  -webkit-mask-image: url('/logo-mark.svg');
+  mask-image: url('/logo-mark.svg');
   -webkit-mask-size: contain;
   mask-size: contain;
   -webkit-mask-repeat: no-repeat;
@@ -547,19 +547,19 @@ p {
   mask-position: center;
   /* Static by default - an animated filter on a masked element repaints
      every frame forever, which is real cost if the element is always
-     mounted (e.g. the navbar). Use .cdc-logo-mark-breathe to opt in to
+     mounted (e.g. the navbar). Use .app-logo-mark-breathe to opt in to
      the pulse animation on a single, occasionally-mounted instance like
      the login page, where that cost doesn't multiply. */
   filter: drop-shadow(0 0 6px rgba(96, 165, 250, 0.75));
 }
 
-@keyframes cdc-logo-breathe {
+@keyframes app-logo-breathe {
   0%, 100% { transform: scale(1); filter: drop-shadow(0 0 6px rgba(96, 165, 250, 0.75)); }
   50% { transform: scale(1.08); filter: drop-shadow(0 0 16px rgba(96, 165, 250, 1)); }
 }
 
-.cdc-logo-mark-breathe {
-  animation: cdc-logo-breathe 2.8s infinite ease-in-out;
+.app-logo-mark-breathe {
+  animation: app-logo-breathe 2.8s infinite ease-in-out;
 }
 
 

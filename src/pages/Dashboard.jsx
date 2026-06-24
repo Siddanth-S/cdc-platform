@@ -12,7 +12,7 @@ const btechBranches = ['CSE', 'IT', 'AI', 'DS', 'ECE', 'EEE', 'MECH', 'CIVIL', '
 const pgBranches = ['Construction Tech & Management', 'MBA', 'Environmental Eng', 'Geotechnical Eng', 'Transportation Eng', 'Structural Eng', 'Power Electronics', 'Mechanical Design', 'Thermal Eng', 'Manufacturing Eng', 'Mechatronics', 'Water Resources', 'Marine Structures', 'Geoinformatics', 'MCA', 'Chemistry', 'Physics', 'Signal Processing & ML', 'Communication Eng & Networks', 'VLSI Design', 'Information Security', 'Industrial Biotechnology', 'Environmental Science & Tech', 'Materials Eng', 'Nanotechnology'];
 
 export default function Dashboard() {
-  const { user, CDC_HEADS } = useAuth();
+  const { user, ADMIN_HEADS } = useAuth();
   const navigate = useNavigate();
   
   const [drives, setDrives] = useState([]);
@@ -116,7 +116,7 @@ export default function Dashboard() {
   const logActivityToHeads = (action) => {
     const actor = user?.email?.split('@')[0] || 'Someone';
     const stamp = new Date().toISOString();
-    const heads = CDC_HEADS || [];
+    const heads = ADMIN_HEADS || [];
     Promise.all(heads.map(head => addDoc(collection(db, 'notifications'), {
       recipient: head,
       message: `${actor} ${action}`,
@@ -698,7 +698,7 @@ export default function Dashboard() {
               {(lockedFields.name || lockedFields.degree || lockedFields.branch || lockedFields.gradYear) && (
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.78rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.6rem 0.75rem', marginBottom: '1.25rem', lineHeight: '1.4' }}>
                   <Lock size={14} style={{ flexShrink: 0, marginTop: '1px', color: 'var(--primary-color)' }} />
-                  <span>Fields marked with a lock are detected from your NITK email and can't be edited here.</span>
+                  <span>Fields marked with a lock are detected from your email and can't be edited here.</span>
                 </div>
               )}
 

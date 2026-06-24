@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ' *)",
+      "Bash(grep -v '^$')",
+      "Bash(command -v claude)",
+      "Bash(claude --version)",
+      "Bash(claude mcp *)",
+      "mcp__chrome-devtools__take_snapshot",
+      "mcp__chrome-devtools__fill",
+      "mcp__chrome-devtools__click",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__wait_for",
+      "mcp__chrome-devtools__list_console_messages",
+      "mcp__chrome-devtools__evaluate_script",
+      "mcp__chrome-devtools__performance_start_trace",
+      "mcp__chrome-devtools__press_key",
+      "mcp__chrome-devtools__performance_stop_trace",
+      "mcp__chrome-devtools__emulate",
+      "mcp__chrome-devtools__performance_analyze_insight",
+      "mcp__chrome-devtools__list_pages",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/)",
+      "Bash(grep -rn \"width: '[0-9]\\\\{3,\\\\}px'\\\\|width: [0-9]\\\\{3,\\\\}px\\\\|minWidth: '[0-9]\\\\{3,\\\\}px'\" pages/ components/)",
+      "mcp__chrome-devtools__new_page",
+      "mcp__chrome-devtools__resize_page",
+      "mcp__chrome-devtools__navigate_page",
+      "Bash(git checkout *)",
+      "Bash(grep -n \"handleEditBranchesSubmit\\\\|logActivityToHeads\\(\\\\`updated the drive\" pages/DriveRoom.jsx)",
+      "Bash(grep -n \"localStorage.setItem\\(\\\\`filter_\" pages/Dashboard.jsx)",
+      "Bash(awk 'NR==181,NR==320 {print NR\": \"$0}' components/Navbar.jsx)",
+      "Bash(awk 'NR==320,NR==360 {print NR\": \"$0}' components/Navbar.jsx)",
+      "Bash(sips -g pixelWidth -g pixelHeight public/cdc-logo-mark.png)"
+    ]
+  }
+}

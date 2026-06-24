@@ -14,7 +14,7 @@ const pgBranches = ['Construction Tech & Management', 'MBA', 'Environmental Eng'
 
 export default function DriveRoom() {
   const { id } = useParams();
-  const { user, CDC_HEADS } = useAuth();
+  const { user, ADMIN_HEADS } = useAuth();
   const navigate = useNavigate();
   
   const [currentDrive, setCurrentDrive] = useState(null);
@@ -106,7 +106,7 @@ export default function DriveRoom() {
     try {
       const actor = user?.email?.split('@')[0] || 'Someone';
       const stamp = new Date().toISOString();
-      const heads = CDC_HEADS || [];
+      const heads = ADMIN_HEADS || [];
       await Promise.all(heads.map(head => addDoc(collection(db, 'notifications'), {
         recipient: head,
         message: `${actor} ${action}`,
@@ -912,7 +912,7 @@ export default function DriveRoom() {
             const allCoordinators = [
               currentDrive?.coordinator,
               ...(currentDrive?.secondarySpocs || []),
-              ...(CDC_HEADS || [])
+              ...(ADMIN_HEADS || [])
             ].filter(Boolean);
             const uniqueCoordinators = [...new Set(allCoordinators)];
             
