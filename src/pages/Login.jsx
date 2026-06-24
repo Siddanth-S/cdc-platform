@@ -181,7 +181,7 @@ export default function Login() {
             <span className="app-logo-mark app-logo-mark-breathe" style={{ width: 84, height: 80 }} aria-hidden="true" />
           </div>
           <h1 style={{ marginBottom: '0.25rem', fontSize: '1.6rem', letterSpacing: '-0.5px' }}>Placement Portal</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.75rem' }}>NITK Campus Recruitment</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.75rem' }}>Campus Recruitment</p>
         
           {/* Alerts */}
           <AnimatePresence mode="wait">

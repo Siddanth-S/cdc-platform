@@ -1,6 +1,6 @@
-# NITK Placement Portal
+# Placement Portal
 
-A real-time messaging and placement drive coordination platform for NITK's campus recruitment system.
+A real-time messaging and placement drive coordination platform for campus recruitment.
 
 **Stack:** React 19 + Vite, Firebase (Firestore + Auth), React Router, Framer Motion
 
